@@ -19,7 +19,7 @@ copy-key: clean
 
 install:
 	@echo "Installing Dependencies..."
-	@rm -rf $(VENDOR_PATH)
+	@rm -rf $(LIB_PATH) $(VENDOR_PATH)
 	@mkdir -p $(VENDOR_PATH) || exit 2
 	@GOPATH=$(VENDOR_PATH) go get github.com/jigish/go-flags
 	@GOPATH=$(VENDOR_PATH) go get github.com/jigish/gozk-recipes
