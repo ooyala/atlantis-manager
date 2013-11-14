@@ -30,7 +30,7 @@ var (
 	}
 )
 
-func notFound(w http.ResponseWriter, r *http.Request) {
+func NotFound(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
 	w.WriteHeader(http.StatusNotFound)
 	fmt.Fprint(w, notFoundHTML)
@@ -45,7 +45,7 @@ func serverError(w http.ResponseWriter, r *http.Request) {
 func Init(listenAddr string) error {
 	gmux := mux.NewRouter() // Use gorilla mux for APIs to make things easier
 
-	gmux.NotFoundHandler = http.HandlerFunc(notFound)
+	gmux.NotFoundHandler = http.HandlerFunc(NotFound)
 	// APIs should go here
 	gmux.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, staticDir+"/img/favicon.ico")
@@ -198,25 +198,7 @@ func Output(obj map[string]interface{}, err error) string {
 	return string(bytes)
 }
 
-func ListenBrew() {
-	gmux := mux.NewRouter() // Use gorilla mux for APIs to make things easier
-	gmux.NotFoundHandler = http.HandlerFunc(notFound)
-	// APIs should go here
-	gmux.HandleFunc("/atlantis-manager.rb", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "bin/atlantis-manager.rb")
-	})
-	gmux.HandleFunc("/{tarball:manager_[0-9]+\\.[0-9]+\\.[0-9]+-[0-9]+\\.tar.gz}",
-		func(w http.ResponseWriter, r *http.Request) {
-			vars := mux.Vars(r)
-			http.ServeFile(w, r, "bin/"+vars["tarball"])
-		})
-	server := &http.Server{Addr: ":8080", Handler: gmux}
-	log.Println("[BREW] Listening on", ":8080")
-	log.Fatal(server.ListenAndServe())
-}
-
 func Listen() {
-	go ListenBrew()
 	if server == nil {
 		panic("Not Initialized.")
 	}
