@@ -51,5 +51,10 @@ else
 	@echo "ok."
 endif
 
+.PHONY: example
+example: copy-key
+	@go build -o example/manager example/manager.go
+	@go build -o example/client example/client.go
+
 fmt:
 	@find src -name \*.go -exec gofmt -l -w {} \;
