@@ -116,6 +116,44 @@ func deployToHostsInZones(manifest *Manifest, sha, env string, hosts map[string]
 	return deployedContainers, nil
 }
 
+func devDeployToHosts(manifest *Manifest, sha, env string, hosts []string, t *Task) ([]*Container, error) {
+	// deploy to hosts
+	deployedContainers := []*Container{}
+	deployedIds := []string{}
+	for _, host := range hosts {
+		instance, err := datamodel.CreateInstance(manifest.Internal, manifest.Name, sha, env, host)
+		t.LogStatus("Deploying %s to %s", instance.Id, host)
+		ihReply, err := supervisor.Deploy(host, manifest.Name, sha, env, instance.Id, manifest)
+		if err != nil {
+			instance.Delete()
+			t.LogStatus("Supervisor " + host + " Deploy " + instance.Id + " Failed: " + err.Error())
+			continue // try another host
+		}
+		if ihReply.Status != StatusOk {
+			instance.Delete()
+			t.LogStatus("Supervisor " + host + " Deploy " + instance.Id + " Status Not OK: " + ihReply.Status)
+			continue // try another host
+		}
+		ihReply.Container.Host = host
+		instance.SetPort(ihReply.Container.PrimaryPort)
+		datamodel.Host(host).SetContainerAndPort(instance.Id, ihReply.Container.PrimaryPort)
+		deployedContainers = append(deployedContainers, ihReply.Container)
+		deployedIds = append(deployedIds, ihReply.Container.Id)
+		AddAppShaToEnv(manifest.Name, sha, env)
+		break // only deploy 1
+	}
+	if len(deployedContainers) == 0 {
+		return nil, errors.New("Could not deploy to any hosts")
+	}
+	t.LogStatus("Updating Router")
+	err := datamodel.AddToPool(deployedIds)
+	if err != nil { // if we can't add the pool, clean up and fail
+		cleanup(deployedContainers, t)
+		return nil, errors.New("Update Pool Error: " + err.Error())
+	}
+	return deployedContainers, nil
+}
+
 func deploy(auth *ManagerAuthArg, manifest *Manifest, sha, env string, t *Task) ([]*Container, error) {
 	if err := validateDeploy(auth, manifest, sha, env, t); err != nil {
 		return nil, err
@@ -128,6 +166,25 @@ func deploy(auth *ManagerAuthArg, manifest *Manifest, sha, env string, t *Task) 
 		return nil, errors.New("Choose Hosts Error: " + err.Error())
 	}
 	return deployToHostsInZones(manifest, sha, env, hosts, AvailableZones, t)
+}
+
+func devDeploy(auth *ManagerAuthArg, manifest *Manifest, sha, env string, t *Task) ([]*Container, error) {
+	manifest.Instances = 1 // set to 1 instance regardless of what came in
+	if err := validateDeploy(auth, manifest, sha, env, t); err != nil {
+		return nil, err
+	}
+	// choose hosts
+	t.LogStatus("Choosing Hosts")
+	list, err := datamodel.ChooseHostsList(manifest.Name, sha, env, manifest.CPUShares, manifest.MemoryLimit,
+		AvailableZones, map[string]bool{})
+	if err != nil {
+		return nil, errors.New("Choose Hosts Error: " + err.Error())
+	}
+	hosts := make([]string, len(list))
+	for i, elem := range list {
+		hosts[i] = elem.Host
+	}
+	return devDeployToHosts(manifest, sha, env, hosts, t)
 }
 
 func moveContainer(auth *ManagerAuthArg, cont *Container, t *Task) (*Container, error) {

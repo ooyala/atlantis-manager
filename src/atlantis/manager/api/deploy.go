@@ -27,6 +27,11 @@ func Deploy(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "{\"error\": \"%s\"}", err.Error())
 		return
 	}
+	dev, err := strconv.ParseBool(r.FormValue("Dev"))
+	if err != nil {
+		fmt.Fprintf(w, "{\"error\": \"%s\"}", err.Error())
+		return
+	}
 	dArg := ManagerDeployArg{
 		ManagerAuthArg: auth,
 		App:            vars["App"],
@@ -35,6 +40,7 @@ func Deploy(w http.ResponseWriter, r *http.Request) {
 		Instances:      uint(instances),
 		CPUShares:      uint(cpushares),
 		MemoryLimit:    uint(memlimit),
+		Dev:            bool(dev),
 	}
 	var reply AsyncReply
 	err = manager.Deploy(dArg, &reply)

@@ -144,6 +144,7 @@ type ManagerDeployArg struct {
 	Instances   uint
 	CPUShares   uint // relative shares
 	MemoryLimit uint // MBytes
+	Dev         bool // if true, only install 1 instance in 1 zone
 }
 
 type ManagerDeployReply struct {

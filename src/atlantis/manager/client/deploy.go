@@ -13,6 +13,7 @@ type DeployCommand struct {
 	Instances   uint   `short:"i" long:"instances" default:"1" description:"the number of instances to deploy"`
 	CPUShares   uint   `short:"c" long:"cpu-shares" default:"0" description:"the number of CPU shares per instance"`
 	MemoryLimit uint   `short:"m" long:"memory-limit" default:"0" description:"the MBytes of memory per instance"`
+	Dev         bool   `long:"dev" description:"only deploy 1 instance in 1 AZ"`
 	Wait        bool   `long:"wait" description:"wait until the deploy is done before exiting"`
 }
 
@@ -34,6 +35,7 @@ func (c *DeployCommand) Execute(args []string) error {
 		Instances:      c.Instances,
 		CPUShares:      c.CPUShares,
 		MemoryLimit:    c.MemoryLimit,
+		Dev:            c.Dev,
 	}
 	var reply atlantis.AsyncReply
 	if err := rpcClient.Call("Deploy", arg, &reply); err != nil {

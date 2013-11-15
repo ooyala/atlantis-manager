@@ -213,9 +213,8 @@ func (h HostAndWeightList) Swap(i, j int) {
 	h[i], h[j] = h[j], h[i]
 }
 
-// Choses hosts and sorts them based on how "free" they are. returns a map of zone -> host slice.
-func ChooseHosts(app, sha, env string, instances, cpu, memory uint, zones []string,
-	excludeHosts map[string]bool) (map[string][]string, error) {
+func ChooseHostsList(app, sha, env string, cpu, memory uint, zones []string,
+	excludeHosts map[string]bool) (HostAndWeightList, error) {
 	hosts, err := ListHostsForApp(app)
 	if err != nil {
 		log.Println("Error listing hosts for app "+app+":", err)
@@ -257,6 +256,16 @@ func ChooseHosts(app, sha, env string, instances, cpu, memory uint, zones []stri
 		list = append(list, HostAndWeight{Host: host, Zone: health.Zone, Free: free, Weight: weight})
 	}
 	sort.Sort(list) // sort in weight order, lowest to highest
+	return list, nil
+}
+
+// Choses hosts and sorts them based on how "free" they are. returns a map of zone -> host slice.
+func ChooseHosts(app, sha, env string, instances, cpu, memory uint, zones []string,
+	excludeHosts map[string]bool) (map[string][]string, error) {
+	list, err := ChooseHostsList(app, sha, env, cpu, memory, zones, excludeHosts)
+	if err != nil {
+		return nil, err
+	}
 	chosenHosts := map[string][]string{}
 	freeZones := map[string]uint{}
 	for _, host := range list {

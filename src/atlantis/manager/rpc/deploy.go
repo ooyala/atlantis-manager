@@ -82,7 +82,11 @@ func (e *DeployExecutor) Execute(t *Task) error {
 	} else if manifest.Instances == 0 {
 		manifest.Instances = uint(1) // default to 1 instance
 	}
-	e.reply.Containers, err = deploy(&e.arg.ManagerAuthArg, manifest, e.arg.Sha, e.arg.Env, t)
+	if e.arg.Dev {
+		e.reply.Containers, err = devDeploy(&e.arg.ManagerAuthArg, manifest, e.arg.Sha, e.arg.Env, t)
+	} else {
+		e.reply.Containers, err = deploy(&e.arg.ManagerAuthArg, manifest, e.arg.Sha, e.arg.Env, t)
+	}
 	return err
 }
 
