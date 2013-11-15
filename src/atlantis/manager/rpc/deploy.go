@@ -153,7 +153,7 @@ func (e *MoveContainerExecutor) Result() interface{} {
 }
 
 func (e *MoveContainerExecutor) Description() string {
-	return fmt.Sprintf("%s x%d", e.arg.ContainerId, e.arg.Instances)
+	return fmt.Sprintf("%s", e.arg.ContainerId)
 }
 
 func (e *MoveContainerExecutor) Authorize() error {

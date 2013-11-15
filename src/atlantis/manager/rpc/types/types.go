@@ -167,7 +167,6 @@ type ManagerCopyContainerArg struct {
 type ManagerMoveContainerArg struct {
 	ManagerAuthArg
 	ContainerId string
-	Instances   uint
 }
 
 // MoveContainer uses ManagerDeployReply

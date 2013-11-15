@@ -65,15 +65,9 @@ func CopyContainer(w http.ResponseWriter, r *http.Request) {
 func MoveContainer(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
-	instances, err := strconv.ParseUint(r.FormValue("Instances"), 10, 0)
-	if err != nil {
-		fmt.Fprintf(w, "{\"error\": \"%s\"}", err.Error())
-		return
-	}
-	ccArg := ManagerMoveContainerArg{ManagerAuthArg: auth, Instances: uint(instances),
-		ContainerId: vars["Id"]}
+	ccArg := ManagerMoveContainerArg{ManagerAuthArg: auth, ContainerId: vars["Id"]}
 	var reply AsyncReply
-	err = manager.MoveContainer(ccArg, &reply)
+	err := manager.MoveContainer(ccArg, &reply)
 	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Id": reply.Id}, err))
 }
 

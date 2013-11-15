@@ -10,7 +10,7 @@ type DeployCommand struct {
 	App         string `short:"a" long:"app" description:"the app to deploy"`
 	Sha         string `short:"s" long:"sha" description:"the sha to deploy"`
 	Env         string `short:"e" long:"env" description:"the environment to deploy"`
-	Instances   uint   `short:"i" long:"instances" default:"1" description:"the number of instances to deploy"`
+	Instances   uint   `short:"i" long:"instances" default:"1" description:"the number of instances to deploy in each AZ"`
 	CPUShares   uint   `short:"c" long:"cpu-shares" default:"0" description:"the number of CPU shares per instance"`
 	MemoryLimit uint   `short:"m" long:"memory-limit" default:"0" description:"the MBytes of memory per instance"`
 	Dev         bool   `long:"dev" description:"only deploy 1 instance in 1 AZ"`
@@ -50,7 +50,7 @@ func (c *DeployCommand) Execute(args []string) error {
 
 type CopyContainerCommand struct {
 	ContainerId string `short:"c" long:"container" description:"the id of the container to copy"`
-	Instances   uint   `short:"i" long:"instances" default:"1" description:"the number of instances to deploy"`
+	Instances   uint   `short:"i" long:"instances" default:"1" description:"the number of instances to deploy in each AZ"`
 	Wait        bool   `long:"wait" description:"wait until the deploy is done before exiting"`
 }
 
@@ -78,7 +78,6 @@ func (c *CopyContainerCommand) Execute(args []string) error {
 
 type MoveContainerCommand struct {
 	ContainerId string `short:"c" long:"container" description:"the id of the container to move"`
-	Instances   uint   `short:"i" long:"instances" default:"1" description:"the number of instances to deploy"`
 	Wait        bool   `long:"wait" description:"wait until the deploy is done before exiting"`
 }
 
@@ -92,7 +91,7 @@ func (c *MoveContainerCommand) Execute(args []string) error {
 		return err
 	}
 	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerMoveContainerArg{ManagerAuthArg: authArg, ContainerId: c.ContainerId, Instances: c.Instances}
+	arg := ManagerMoveContainerArg{ManagerAuthArg: authArg, ContainerId: c.ContainerId}
 	var reply atlantis.AsyncReply
 	if err := rpcClient.Call("MoveContainer", arg, &reply); err != nil {
 		return OutputError(err)
