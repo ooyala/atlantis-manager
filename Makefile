@@ -12,7 +12,7 @@ all: test
 
 clean:
 	@rm -rf $(ATLANTIS_PATH)/src/atlantis/crypto/key.go $(PROJECT_ROOT)/src/atlantis/manager/crypto/cert.go
-	@rm example/client example/manager
+	@rm -f example/client example/manager
 
 copy-key: clean
 	@cp $(ATLANTIS_SECRET_DIR)/atlantis_key.go $(ATLANTIS_PATH)/src/atlantis/crypto/key.go
