@@ -1,6 +1,11 @@
 PROJECT_ROOT := $(shell pwd)
-VENDOR_PATH  := $(PROJECT_ROOT)/vendor
-LIB_PATH := $(PROJECT_ROOT)/lib
+ifeq ($(shell pwd | xargs dirname | xargs basename),"lib")
+	LIB_PATH := $(PROJECT_ROOT)/lib
+	VENDOR_PATH := $(PROJECT_ROOT)/vendor
+else
+	LIB_PATH := $(shell pwd | xargs dirname)
+	VENDOR_PATH := $(shell pwd | xargs dirname | xargs dirname)/vendor
+endif
 ATLANTIS_PATH := $(LIB_PATH)/atlantis
 SUPERVISOR_PATH := $(LIB_PATH)/atlantis-supervisor
 ROUTER_PATH := $(LIB_PATH)/atlantis-router
@@ -40,6 +45,9 @@ install-deps:
 	@echo "Done."
 
 test: clean copy-key
+	echo $(LIB_PATH)
+	echo $(VENDOR_PATH)
+	echo $(GOPATH)
 ifdef TEST_PACKAGE
 	@echo "Testing $$TEST_PACKAGE..."
 	@go test $$TEST_PACKAGE $$VERBOSE $$RACE
