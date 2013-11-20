@@ -124,7 +124,7 @@ func (s *HelperSuite) TestGetRegionAppAlias(c *C) {
 }
 
 func (s *HelperSuite) TestGetZoneAppAlias(c *C) {
-	c.Assert(GetZoneAppAlias(app, env, Region+"1",  "atlantis.com"), Equals,
+	c.Assert(GetZoneAppAlias(app, env, Region+"1", "atlantis.com"), Equals,
 		app+"."+env+"."+Region+"1.atlantis.com")
 }
 

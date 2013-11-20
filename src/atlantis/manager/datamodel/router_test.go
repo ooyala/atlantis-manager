@@ -9,7 +9,6 @@ import (
 	"sort"
 )
 
-
 func (s *DatamodelSuite) TestRouterModel(c *C) {
 	Zk.RecursiveDelete(helper.GetBaseRouterPath())
 	CreateRouterPaths()

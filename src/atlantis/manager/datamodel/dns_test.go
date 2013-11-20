@@ -5,7 +5,6 @@ import (
 	. "launchpad.net/gocheck"
 )
 
-
 func (s *DatamodelSuite) TestDNSModel(c *C) {
 	Zk.RecursiveDelete(helper.GetBaseDNSPath())
 	zkDNS := DNS(app, env)
