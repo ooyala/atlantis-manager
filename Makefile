@@ -45,9 +45,6 @@ install-deps:
 	@echo "Done."
 
 test: clean copy-key
-	echo $(LIB_PATH)
-	echo $(VENDOR_PATH)
-	echo $(GOPATH)
 ifdef TEST_PACKAGE
 	@echo "Testing $$TEST_PACKAGE..."
 	@go test $$TEST_PACKAGE $$VERBOSE $$RACE
