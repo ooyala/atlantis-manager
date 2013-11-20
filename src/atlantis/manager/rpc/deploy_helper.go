@@ -4,6 +4,7 @@ import (
 	. "atlantis/common"
 	. "atlantis/manager/constant"
 	"atlantis/manager/datamodel"
+	"atlantis/manager/dns"
 	. "atlantis/manager/rpc/types"
 	"atlantis/manager/supervisor"
 	. "atlantis/supervisor/rpc/types"
@@ -113,6 +114,15 @@ func deployToHostsInZones(manifest *Manifest, sha, env string, hosts map[string]
 		cleanup(deployedContainers, t)
 		return nil, errors.New("Update Pool Error: " + err.Error())
 	}
+	if manifest.Internal {
+		t.LogStatus("Updating DNS")
+		// if we're internal, handle the DNS stuff
+		err := dns.CreateAppAliases(manifest.Name, sha, env)
+		if err != nil { // if DNS fails, clean up and fail
+			cleanup(deployedContainers, t)
+			return nil, errors.New("Update DNS Error: " + err.Error())
+		}
+	}
 	return deployedContainers, nil
 }
 
@@ -150,6 +160,15 @@ func devDeployToHosts(manifest *Manifest, sha, env string, hosts []string, t *Ta
 	if err != nil { // if we can't add the pool, clean up and fail
 		cleanup(deployedContainers, t)
 		return nil, errors.New("Update Pool Error: " + err.Error())
+	}
+	if manifest.Internal {
+		t.LogStatus("Updating DNS")
+		// if we're internal, handle the DNS stuff
+		err := dns.CreateAppAliases(manifest.Name, sha, env)
+		if err != nil { // if DNS fails, clean up and fail
+			cleanup(deployedContainers, t)
+			return nil, errors.New("Update DNS Error: " + err.Error())
+		}
 	}
 	return deployedContainers, nil
 }

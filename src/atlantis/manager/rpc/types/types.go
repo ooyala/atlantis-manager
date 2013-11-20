@@ -11,6 +11,14 @@ type App struct {
 	Root string
 }
 
+type Router struct {
+	Zone          string
+	IP            string
+	CName         string
+	HealthCheckId string
+	RecordIds     []string
+}
+
 // Manager RPC Types
 
 // ------------ Health Check ------------
@@ -81,6 +89,42 @@ type ManagerListRegisteredAppsArg struct {
 type ManagerListRegisteredAppsReply struct {
 	Apps   []string
 	Status string
+}
+
+// ------------ Register Router ------------
+// Used to register an Router
+type ManagerRegisterRouterArg struct {
+	ManagerAuthArg
+	Zone string
+	IP   string
+}
+
+type ManagerRegisterRouterReply struct {
+	Status string
+}
+
+// ------------ Get Router ------------
+// Used to get an Router
+type ManagerGetRouterArg struct {
+	ManagerAuthArg
+	Zone string
+	IP   string
+}
+
+type ManagerGetRouterReply struct {
+	Status string
+	Router *Router
+}
+
+// ------------ ListRouters ------------
+// List all apps
+type ManagerListRoutersArg struct {
+	ManagerAuthArg
+}
+
+type ManagerListRoutersReply struct {
+	Routers map[string][]string
+	Status  string
 }
 
 // ------------ List Supervisors ------------

@@ -7,6 +7,7 @@ import (
 	"atlantis/manager/builder"
 	. "atlantis/manager/constant"
 	"atlantis/manager/datamodel"
+	"atlantis/manager/dns"
 	"atlantis/manager/ldap"
 	"atlantis/manager/rpc"
 	iconst "atlantis/supervisor/constant"
@@ -110,6 +111,10 @@ func New() *ManagerServer {
 
 func (m *ManagerServer) SetHandlerFunc(handlerFunc func(http.Handler) http.Handler) {
 	api.HandlerFunc = handlerFunc
+}
+
+func (m *ManagerServer) SetDNSProvider(provider dns.DNSProvider) {
+	dns.Provider = provider
 }
 
 func (m *ManagerServer) AddCommand(cmd, desc, longDesc string, data interface{}) {

@@ -4,11 +4,154 @@ import (
 	. "atlantis/common"
 	. "atlantis/manager/constant"
 	"atlantis/manager/datamodel"
+	"atlantis/manager/router"
 	. "atlantis/manager/rpc/types"
 	"atlantis/manager/supervisor"
 	"errors"
 	"fmt"
 )
+
+// ----------------------------------------------------------------------------------------------------------
+// Register Router
+// ----------------------------------------------------------------------------------------------------------
+
+type RegisterRouterExecutor struct {
+	arg   ManagerRegisterRouterArg
+	reply *ManagerRegisterRouterReply
+}
+
+func (e *RegisterRouterExecutor) Request() interface{} {
+	return e.arg
+}
+
+func (e *RegisterRouterExecutor) Result() interface{} {
+	return e.reply
+}
+
+func (e *RegisterRouterExecutor) Description() string {
+	return fmt.Sprintf("%s in %s", e.arg.IP, e.arg.Zone)
+}
+
+func (e *RegisterRouterExecutor) Authorize() error {
+	return AuthorizeSuperUser(&e.arg.ManagerAuthArg)
+}
+
+func (e *RegisterRouterExecutor) Execute(t *Task) error {
+	if e.arg.IP == "" {
+		return errors.New("Please specify an IP register")
+	}
+	if e.arg.Zone == "" {
+		return errors.New("Please specify a zone")
+	}
+	err := router.Register(e.arg.Zone, e.arg.IP)
+	if err != nil {
+		e.reply.Status = StatusError
+	}
+	e.reply.Status = StatusOk
+	return err
+}
+
+type UnregisterRouterExecutor struct {
+	arg   ManagerRegisterRouterArg
+	reply *ManagerRegisterRouterReply
+}
+
+func (e *UnregisterRouterExecutor) Request() interface{} {
+	return e.arg
+}
+
+func (e *UnregisterRouterExecutor) Result() interface{} {
+	return e.reply
+}
+
+func (e *UnregisterRouterExecutor) Description() string {
+	return fmt.Sprintf("%s in %s", e.arg.IP, e.arg.Zone)
+}
+
+func (e *UnregisterRouterExecutor) Authorize() error {
+	return AuthorizeSuperUser(&e.arg.ManagerAuthArg)
+}
+
+func (e *UnregisterRouterExecutor) Execute(t *Task) error {
+	if e.arg.IP == "" {
+		return errors.New("Please specify an IP register")
+	}
+	if e.arg.Zone == "" {
+		return errors.New("Please specify a zone")
+	}
+	err := router.Unregister(e.arg.Zone, e.arg.IP)
+	if err != nil {
+		e.reply.Status = StatusError
+	}
+	e.reply.Status = StatusOk
+	return err
+}
+
+type ListRoutersExecutor struct {
+	arg   ManagerListRoutersArg
+	reply *ManagerListRoutersReply
+}
+
+func (e *ListRoutersExecutor) Request() interface{} {
+	return e.arg
+}
+
+func (e *ListRoutersExecutor) Result() interface{} {
+	return e.reply
+}
+
+func (e *ListRoutersExecutor) Description() string {
+	return "ListRouters"
+}
+
+func (e *ListRoutersExecutor) Authorize() error {
+	return SimpleAuthorize(&e.arg.ManagerAuthArg)
+}
+
+func (e *ListRoutersExecutor) Execute(t *Task) (err error) {
+	e.reply.Routers, err = datamodel.ListRouters()
+	if err != nil {
+		e.reply.Status = StatusError
+	}
+	e.reply.Status = StatusOk
+	return err
+}
+
+type GetRouterExecutor struct {
+	arg   ManagerGetRouterArg
+	reply *ManagerGetRouterReply
+}
+
+func (e *GetRouterExecutor) Request() interface{} {
+	return e.arg
+}
+
+func (e *GetRouterExecutor) Result() interface{} {
+	return e.reply
+}
+
+func (e *GetRouterExecutor) Description() string {
+	return fmt.Sprintf("%s in %s", e.arg.IP, e.arg.Zone)
+}
+
+func (e *GetRouterExecutor) Authorize() error {
+	return SimpleAuthorize(&e.arg.ManagerAuthArg)
+}
+
+func (e *GetRouterExecutor) Execute(t *Task) error {
+	zkRouter, err := datamodel.GetRouter(e.arg.Zone, e.arg.IP)
+	castedRouter := Router(*zkRouter)
+	e.reply.Router = &castedRouter
+	if err != nil {
+		e.reply.Status = StatusError
+	}
+	e.reply.Status = StatusOk
+	return err
+}
+
+// ----------------------------------------------------------------------------------------------------------
+// Register App
+// ----------------------------------------------------------------------------------------------------------
 
 type RegisterAppExecutor struct {
 	arg   ManagerRegisterAppArg
@@ -42,6 +185,10 @@ func (e *RegisterAppExecutor) Execute(t *Task) error {
 		return errors.New("Please specify the repo's root")
 	}
 	_, err := datamodel.CreateOrUpdateApp(e.arg.Name, e.arg.Repo, e.arg.Root)
+	if err != nil {
+		e.reply.Status = StatusError
+	}
+	e.reply.Status = StatusOk
 	return err
 }
 
@@ -72,9 +219,15 @@ func (e *UnregisterAppExecutor) Execute(t *Task) error {
 	}
 	app, err := datamodel.GetApp(e.arg.Name)
 	if err != nil || app == nil {
+		e.reply.Status = StatusError
 		return errors.New("App " + e.arg.Name + " does not exist")
 	}
-	return app.Delete()
+	if err = app.Delete(); err != nil {
+		e.reply.Status = StatusError
+		return err
+	}
+	e.reply.Status = StatusOk
+	return nil
 }
 
 type GetAppExecutor struct {
@@ -104,9 +257,12 @@ func (e *GetAppExecutor) Execute(t *Task) error {
 	}
 	app, err := datamodel.GetApp(e.arg.Name)
 	if err != nil || app == nil {
+		e.reply.Status = StatusError
 		return errors.New("App " + e.arg.Name + " does not exist")
 	}
-	e.reply.App = &App{Name: app.Name, Repo: app.Repo, Root: app.Root}
+	e.reply.Status = StatusOk
+	castedApp := App(*app)
+	e.reply.App = &castedApp
 	return nil
 }
 
@@ -140,6 +296,10 @@ func (e *ListRegisteredAppsExecutor) Execute(t *Task) (err error) {
 	}
 	return err
 }
+
+// ----------------------------------------------------------------------------------------------------------
+// Register Supervisor
+// ----------------------------------------------------------------------------------------------------------
 
 type RegisterSupervisorExecutor struct {
 	arg   ManagerRegisterSupervisorArg
@@ -189,7 +349,7 @@ func (e *RegisterSupervisorExecutor) Execute(t *Task) error {
 }
 
 func (e *RegisterSupervisorExecutor) Authorize() error {
-	return SimpleAuthorize(&e.arg.ManagerAuthArg)
+	return AuthorizeSuperUser(&e.arg.ManagerAuthArg)
 }
 
 type UnregisterSupervisorExecutor struct {
@@ -228,7 +388,7 @@ func (e *UnregisterSupervisorExecutor) Execute(t *Task) error {
 }
 
 func (e *UnregisterSupervisorExecutor) Authorize() error {
-	return SimpleAuthorize(&e.arg.ManagerAuthArg)
+	return AuthorizeSuperUser(&e.arg.ManagerAuthArg)
 }
 
 type ListSupervisorsExecutor struct {
@@ -261,6 +421,10 @@ func (e *ListSupervisorsExecutor) Execute(t *Task) (err error) {
 func (e *ListSupervisorsExecutor) Authorize() error {
 	return SimpleAuthorize(&e.arg.ManagerAuthArg)
 }
+
+// ----------------------------------------------------------------------------------------------------------
+// Register Manager
+// ----------------------------------------------------------------------------------------------------------
 
 type RegisterManagerExecutor struct {
 	arg   ManagerRegisterManagerArg
@@ -309,7 +473,7 @@ func (e *RegisterManagerExecutor) Execute(t *Task) error {
 }
 
 func (e *RegisterManagerExecutor) Authorize() error {
-	return SimpleAuthorize(&e.arg.ManagerAuthArg)
+	return AuthorizeSuperUser(&e.arg.ManagerAuthArg)
 }
 
 type UnregisterManagerExecutor struct {
@@ -349,7 +513,7 @@ func (e *UnregisterManagerExecutor) Execute(t *Task) error {
 }
 
 func (e *UnregisterManagerExecutor) Authorize() error {
-	return SimpleAuthorize(&e.arg.ManagerAuthArg)
+	return AuthorizeSuperUser(&e.arg.ManagerAuthArg)
 }
 
 type ListManagersExecutor struct {
@@ -383,6 +547,22 @@ func (e *ListManagersExecutor) Authorize() error {
 	return SimpleAuthorize(&e.arg.ManagerAuthArg)
 }
 
+func (o *Manager) RegisterRouter(arg ManagerRegisterRouterArg, reply *ManagerRegisterRouterReply) error {
+	return NewTask("RegisterRouter", &RegisterRouterExecutor{arg, reply}).Run()
+}
+
+func (o *Manager) UnregisterRouter(arg ManagerRegisterRouterArg, reply *ManagerRegisterRouterReply) error {
+	return NewTask("UnregisterRouter", &UnregisterRouterExecutor{arg, reply}).Run()
+}
+
+func (o *Manager) GetRouter(arg ManagerGetRouterArg, reply *ManagerGetRouterReply) error {
+	return NewTask("GetRouter", &GetRouterExecutor{arg, reply}).Run()
+}
+
+func (o *Manager) ListRouters(arg ManagerListRoutersArg, reply *ManagerListRoutersReply) error {
+	return NewTask("ListRouters", &ListRoutersExecutor{arg, reply}).Run()
+}
+
 func (o *Manager) RegisterApp(arg ManagerRegisterAppArg, reply *ManagerRegisterAppReply) error {
 	return NewTask("RegisterApp", &RegisterAppExecutor{arg, reply}).Run()
 }
@@ -391,7 +571,7 @@ func (o *Manager) UnregisterApp(arg ManagerRegisterAppArg, reply *ManagerRegiste
 	return NewTask("UnregisterApp", &UnregisterAppExecutor{arg, reply}).Run()
 }
 
-func (o *Manager) GetApps(arg ManagerGetAppArg, reply *ManagerGetAppReply) error {
+func (o *Manager) GetApp(arg ManagerGetAppArg, reply *ManagerGetAppReply) error {
 	return NewTask("GetApp", &GetAppExecutor{arg, reply}).Run()
 }
 

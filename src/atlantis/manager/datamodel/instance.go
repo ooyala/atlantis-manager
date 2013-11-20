@@ -47,8 +47,9 @@ func CreateInstance(internal bool, app, sha, env, host string) (*ZkInstance, err
 	return zi, nil
 }
 
-func (zi *ZkInstance) Delete() error {
+func (zi *ZkInstance) Delete() (bool, error) { // true if this was the last instance of app+sha+env
 	var (
+		last bool
 		err  error
 		err2 error
 		list []string
@@ -58,39 +59,40 @@ func (zi *ZkInstance) Delete() error {
 	err = Zk.RecursiveDelete(zi.dataPath())
 	err2 = Zk.RecursiveDelete(zi.path())
 	if err != nil {
-		return err
+		return last, err
 	}
 	if err2 != nil {
-		return err2
+		return last, err2
 	}
 	// check if we can delete parent directories
 	if list, err = ListInstances(zi.App, zi.Sha, zi.Env); err != nil {
 		log.Printf("Warning: clean up fail during instance delete: %s", err)
-		return nil // this is extra, no need to return the error if we couldn't get them
+		return last, nil // this is extra, no need to return the error if we couldn't get them
 	} else if list != nil && len(list) > 0 {
-		return nil
+		return last, nil
 	}
+	last = true
 	Zk.RecursiveDelete(helper.GetBaseInstancePath(zi.App, zi.Sha, zi.Env))
 	if dataErr != nil {
 		log.Printf("Warning: could not fetch data to clean up pool: %s", err)
 	}
 	if list, err = ListAppEnvs(zi.App, zi.Sha); err != nil {
 		log.Printf("Warning: clean up fail during instance delete: %s", err)
-		return nil // this is extra, no need to return the error if we couldn't get them
+		return last, nil // this is extra, no need to return the error if we couldn't get them
 	} else if list != nil && len(list) > 0 {
-		return nil
+		return last, nil
 	}
 	Zk.RecursiveDelete(helper.GetBaseInstancePath(zi.App, zi.Sha))
 	// no need to kill pools, they should have been cleaned up when we deleted the instances
 	if list, err = ListShas(zi.App); err != nil {
 		log.Printf("Warning: clean up fail during instance delete: %s", err)
-		return nil // this is extra, no need to return the error if we couldn't get them
+		return last, nil // this is extra, no need to return the error if we couldn't get them
 	} else if list != nil && len(list) > 0 {
-		return nil
+		return last, nil
 	}
 	Zk.RecursiveDelete(helper.GetBaseInstancePath(zi.App))
 	// no need to kill pools, they should have been cleaned up when we deleted the instances
-	return nil
+	return last, nil
 }
 
 func (zi *ZkInstance) SetPort(port uint16) error {

@@ -1,12 +1,43 @@
 package datamodel
 
 import (
+	. "atlantis/manager/constant"
 	"atlantis/manager/helper"
 	"atlantis/router/config"
 	routerzk "atlantis/router/zk"
 	. "launchpad.net/gocheck"
 	"sort"
 )
+
+
+func (s *DatamodelSuite) TestRouterModel(c *C) {
+	Zk.RecursiveDelete(helper.GetBaseRouterPath())
+	CreateRouterPaths()
+	routers, err := ListRouters()
+	c.Assert(err, IsNil)
+	for _, routersInZone := range routers {
+		c.Assert(len(routersInZone), Equals, 0)
+	}
+	zkRouter := Router(Region, "1.1.1.1")
+	err = zkRouter.Save()
+	c.Assert(err, IsNil)
+	fetchedRouter, err := GetRouter(Region, "1.1.1.1")
+	c.Assert(err, IsNil)
+	c.Assert(zkRouter, DeepEquals, fetchedRouter)
+	zkRouter.CName = "mycname"
+	zkRouter.HealthCheckId = "healthcheckid"
+	zkRouter.RecordIds = []string{"rid1", "rid2"}
+	zkRouter.Save()
+	fetchedRouter, err = GetRouter(Region, "1.1.1.1")
+	c.Assert(err, IsNil)
+	c.Assert(zkRouter, DeepEquals, fetchedRouter)
+	routers, err = ListRouters()
+	c.Assert(len(routers[Region]), Equals, 1)
+	err = zkRouter.Delete()
+	c.Assert(err, IsNil)
+	routers, err = ListRouters()
+	c.Assert(len(routers[Region]), Equals, 0)
+}
 
 func (s *DatamodelSuite) TestRouterPoolNaming(c *C) {
 	c.Assert(helper.CreatePoolName(app, sha, env), Matches, app+"."+sha+"."+env)

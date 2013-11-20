@@ -1,6 +1,7 @@
 package datamodel
 
 import (
+	. "atlantis/manager/constant"
 	"atlantis/manager/helper"
 	routerzk "atlantis/router/zk"
 	zookeeper "github.com/jigish/gozk-recipes"
@@ -16,6 +17,9 @@ func CreateRouterPaths() {
 	helper.SetRouterRoot(false)
 	for _, path := range routerzk.ZkPaths {
 		Zk.Touch(path)
+	}
+	for _, zone := range AvailableZones {
+		Zk.Touch(helper.GetBaseRouterPath(zone))
 	}
 }
 

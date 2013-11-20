@@ -2,11 +2,81 @@ package datamodel
 
 import (
 	"atlantis/manager/helper"
+	"atlantis/manager/rpc/types"
 	"atlantis/router/config"
 	routerzk "atlantis/router/zk"
 	"fmt"
 	"log"
 )
+
+// Router Registration
+
+type ZkRouter types.Router
+
+func Router(zone, ip string) *ZkRouter {
+	return &ZkRouter{Zone: zone, IP: ip}
+}
+
+func (r *ZkRouter) Save() error {
+	return setJson(r.path(), r)
+}
+
+func (r *ZkRouter) Delete() error {
+	return Zk.RecursiveDelete(r.path())
+}
+
+func ListRouterZones() (zones []string, err error) {
+	basePath := helper.GetBaseRouterPath()
+	zones, _, err = Zk.Children(basePath)
+	if err != nil {
+		log.Printf("Error getting list of zones. Error: %s.", err.Error())
+	}
+	if zones == nil {
+		log.Println("No zones found. Returning empty list.")
+		zones = []string{}
+	}
+	return
+}
+
+func ListRoutersInZone(zone string) (routers []string, err error) {
+	basePath := helper.GetBaseRouterPath(zone)
+	routers, _, err = Zk.Children(basePath)
+	if err != nil {
+		log.Printf("Error getting list of routers for zone %s. Error: %s.", zone, err.Error())
+	}
+	if routers == nil {
+		log.Printf("No routers found in zone %s", zone)
+		routers = []string{}
+	}
+	return
+}
+
+func ListRouters() (routers map[string][]string, err error) {
+	routers = map[string][]string{}
+	zones, err := ListRouterZones()
+	if err != nil {
+		return
+	}
+	for _, zone := range zones {
+		routers[zone], err = ListRoutersInZone(zone)
+		if err != nil {
+			return
+		}
+	}
+	return
+}
+
+func GetRouter(zone, ip string) (zr *ZkRouter, err error) {
+	zr = &ZkRouter{}
+	err = getJson(helper.GetBaseRouterPath(zone, ip), zr)
+	return
+}
+
+func (r *ZkRouter) path() string {
+	return helper.GetBaseRouterPath(r.Zone, r.IP)
+}
+
+// Routing Datamodel
 
 func defaultPool(name string, internal bool) config.Pool {
 	return config.Pool{

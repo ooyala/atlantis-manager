@@ -4,6 +4,121 @@ import (
 	. "atlantis/manager/rpc/types"
 )
 
+type RegisterRouterCommand struct {
+	Zone string `short:"z" long:"zone" description:"the zone to register in"`
+	IP   string `short:"i" long:"ip" description:"the IP to register"`
+}
+
+func (c *RegisterRouterCommand) Execute(args []string) error {
+	err := Init()
+	if err != nil {
+		return OutputError(err)
+	}
+	Log("Register Router...")
+	args = ExtractArgs([]*string{&c.Zone, &c.IP}, args)
+	user, secret, err := GetSecret()
+	if err != nil {
+		return err
+	}
+	authArg := ManagerAuthArg{user, "", secret}
+	arg := ManagerRegisterRouterArg{ManagerAuthArg: authArg, Zone: c.Zone, IP: c.IP}
+	var reply ManagerRegisterRouterReply
+	err = rpcClient.Call("RegisterRouter", arg, &reply)
+	if err != nil {
+		return OutputError(err)
+	}
+	Log("-> status: %s", reply.Status)
+	return Output(map[string]interface{}{"status": reply.Status}, nil, nil)
+}
+
+type UnregisterRouterCommand struct {
+	Zone string `short:"z" long:"zone" description:"the zone to register in"`
+	IP   string `short:"i" long:"ip" description:"the IP to register"`
+}
+
+func (c *UnregisterRouterCommand) Execute(args []string) error {
+	err := Init()
+	if err != nil {
+		return OutputError(err)
+	}
+	Log("Unregister Router...")
+	args = ExtractArgs([]*string{&c.Zone, &c.IP}, args)
+	user, secret, err := GetSecret()
+	if err != nil {
+		return err
+	}
+	authArg := ManagerAuthArg{user, "", secret}
+	arg := ManagerRegisterRouterArg{ManagerAuthArg: authArg, Zone: c.Zone, IP: c.IP}
+	var reply ManagerRegisterRouterReply
+	err = rpcClient.Call("UnregisterRouter", arg, &reply)
+	if err != nil {
+		return OutputError(err)
+	}
+	Log("-> status: %s", reply.Status)
+	return Output(map[string]interface{}{"status": reply.Status}, nil, nil)
+}
+
+type GetRouterCommand struct {
+	Zone string `short:"z" long:"zone" description:"the zone to register in"`
+	IP   string `short:"i" long:"ip" description:"the IP to register"`
+}
+
+func (c *GetRouterCommand) Execute(args []string) error {
+	err := Init()
+	if err != nil {
+		return OutputError(err)
+	}
+	Log("Get Router...")
+	args = ExtractArgs([]*string{&c.Zone, &c.IP}, args)
+	user, secret, err := GetSecret()
+	if err != nil {
+		return err
+	}
+	authArg := ManagerAuthArg{user, "", secret}
+	arg := ManagerGetRouterArg{ManagerAuthArg: authArg, Zone: c.Zone, IP: c.IP}
+	var reply ManagerGetRouterReply
+	err = rpcClient.Call("GetRouter", arg, &reply)
+	if err != nil {
+		return OutputError(err)
+	}
+	Log("-> status: %s", reply.Status)
+	Log("-> zone            : %s", reply.Router.Zone)
+	Log("-> ip              : %s", reply.Router.IP)
+	Log("-> cname           : %s", reply.Router.CName)
+	Log("-> health check id : %s", reply.Router.HealthCheckId)
+	return Output(map[string]interface{}{"status": reply.Status, "router": reply.Router}, nil, nil)
+}
+
+type ListRoutersCommand struct {
+}
+
+func (c *ListRoutersCommand) Execute(args []string) error {
+	err := Init()
+	if err != nil {
+		return OutputError(err)
+	}
+	Log("List Routers..")
+	user, secret, err := GetSecret()
+	if err != nil {
+		return err
+	}
+	authArg := ManagerAuthArg{user, "", secret}
+	arg := ManagerListRoutersArg{authArg}
+	var reply ManagerListRoutersReply
+	err = rpcClient.Call("ListRouters", arg, &reply)
+	if err != nil {
+		return OutputError(err)
+	}
+	Log("-> status: %s", reply.Status)
+	for zone, routers := range reply.Routers {
+		Log("->   %s", zone)
+		for _, router := range routers {
+			Log("->     %s", router)
+		}
+	}
+	return Output(map[string]interface{}{"status": reply.Status, "routers": reply.Routers}, reply.Routers, nil)
+}
+
 type RegisterAppCommand struct {
 	App  string `short:"a" long:"app" description:"the app to register"`
 	Repo string `short:"g" long:"git" description:"the app's git repository"`

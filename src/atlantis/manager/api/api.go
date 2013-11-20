@@ -71,15 +71,22 @@ func Init(listenAddr string) error {
 	gmux.HandleFunc("/supervisors/{Host}", RegisterSupervisor).Methods("PUT")
 	gmux.HandleFunc("/supervisors/{Host}", UnregisterSupervisor).Methods("DELETE")
 
+	// Router Management
+	gmux.HandleFunc("/routers", ListRouters).Methods("GET")
+	gmux.HandleFunc("/routers/{Zone}/{IP}", GetRouter).Methods("GET")
+	gmux.HandleFunc("/routers/{Zone}/{IP}", RegisterRouter).Methods("PUT")
+	gmux.HandleFunc("/routers/{Zone}/{IP}", UnregisterRouter).Methods("DELETE")
+
 	// App Management
 	gmux.HandleFunc("/apps", ListRegisteredApps).Methods("GET")
+	gmux.HandleFunc("/apps/{App}", GetApp).Methods("GET")
 	gmux.HandleFunc("/apps/{App}", RegisterApp).Methods("PUT")
 	gmux.HandleFunc("/apps/{App}", UnregisterApp).Methods("DELETE")
 
 	// Container Health
 	gmux.HandleFunc("/healthz", ContainerHealthzGet).Methods("GET")
 
-	// Router Management
+	// Router Config Management
 	gmux.HandleFunc("/pools", ListPools).Methods("GET")
 	gmux.HandleFunc("/pools/{PoolName}", GetPool).Methods("GET")
 	gmux.HandleFunc("/pools/{PoolName}", UpdatePool).Methods("PUT")

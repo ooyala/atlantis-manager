@@ -19,7 +19,8 @@ func (s *DatamodelSuite) TestInstance(c *C) {
 	c.Assert(externalInst.SetPort(uint16(1337)), IsNil)
 	otherExtInst, err := GetInstance(externalInst.Id)
 	c.Assert(*otherExtInst, Equals, *externalInst)
-	err = externalInst.Delete()
+	last, err := externalInst.Delete()
+	c.Assert(last, Equals, true)
 	c.Assert(err, IsNil)
 	internalInst, err := CreateInstance(true, app, sha, env, host)
 	c.Assert(err, IsNil)
@@ -30,7 +31,8 @@ func (s *DatamodelSuite) TestInstance(c *C) {
 	c.Assert(internalInst.Internal, Equals, true)
 	otherInttInst, err := GetInstance(internalInst.Id)
 	c.Assert(*otherInttInst, Equals, *internalInst)
-	err = internalInst.Delete()
+	last, err = internalInst.Delete()
+	c.Assert(last, Equals, true)
 	c.Assert(err, IsNil)
 }
 
@@ -92,7 +94,7 @@ func (s *DatamodelSuite) TestInstanceListers(c *C) {
 	}
 
 	for _, inst := range instances {
-		err = inst.Delete()
+		_, err = inst.Delete()
 		c.Assert(err, IsNil)
 	}
 

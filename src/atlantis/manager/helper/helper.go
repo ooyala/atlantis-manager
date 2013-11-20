@@ -6,6 +6,7 @@ import (
 	routerzk "atlantis/router/zk"
 	"fmt"
 	"path"
+	"strings"
 )
 
 const contRandIdSize = 6
@@ -60,6 +61,16 @@ func SetRouterRoot(internal bool) {
 	routerzk.SetZkRoot(root)
 }
 
+func GetBaseDNSPath(args ...string) string {
+	base := fmt.Sprintf("/atlantis/dns/%s", Region)
+	return JoinWithBase(base, args...)
+}
+
+func GetBaseRouterPath(args ...string) string {
+	base := fmt.Sprintf("/atlantis/routers/%s", Region)
+	return JoinWithBase(base, args...)
+}
+
 func GetBaseManagerPath(args ...string) string {
 	base := "/atlantis/managers"
 	return JoinWithBase(base, args...)
@@ -84,4 +95,31 @@ func GetBaseEnvPath(args ...string) string {
 func GetBaseLockPath(args ...string) string {
 	base := fmt.Sprintf("/atlantis/lock/%s", Region)
 	return JoinWithBase(base, args...)
+}
+
+func GetRegionRouterCName(suffix string) string {
+	return fmt.Sprintf("router.%s.%s", Region, suffix)
+}
+
+func GetZoneRouterCName(zone, suffix string) string {
+	return fmt.Sprintf("router.%s.%s", RegionAndZone(zone), suffix)
+}
+
+func GetRouterCName(num int, zone, suffix string) string {
+	return fmt.Sprintf("router%d.%s.%s", num, RegionAndZone(zone), suffix)
+}
+
+func GetRegionAppAlias(app, env, suffix string) string {
+	return fmt.Sprintf("%s.%s.%s.%s", app, env, Region, suffix)
+}
+
+func GetZoneAppAlias(app, env, zone, suffix string) string {
+	return fmt.Sprintf("%s.%s.%s.%s", app, env, RegionAndZone(zone), suffix)
+}
+
+func RegionAndZone(zone string) string {
+	if strings.Contains(zone, Region) {
+		return zone
+	}
+	return Region + zone
 }

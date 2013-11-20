@@ -4,6 +4,7 @@ import (
 	. "atlantis/common"
 	"atlantis/manager/builder"
 	"atlantis/manager/datamodel"
+	"atlantis/manager/dns"
 	. "atlantis/manager/rpc/types"
 	"atlantis/manager/supervisor"
 	. "atlantis/supervisor/rpc/types"
@@ -264,8 +265,13 @@ func (e *TeardownExecutor) Execute(t *Task) error {
 			if err != nil {
 				continue
 			}
-			instance.Delete()
-			DeleteAppShaFromEnv(instance.App, instance.Sha, instance.Env)
+			last, _ := instance.Delete()
+			if last {
+				if instance.Internal {
+					dns.DeleteAppAliases(instance.App, instance.Sha, instance.Env)
+				}
+				DeleteAppShaFromEnv(instance.App, instance.Sha, instance.Env)
+			}
 		}
 	}
 	e.reply.ContainerIds = tornContainers

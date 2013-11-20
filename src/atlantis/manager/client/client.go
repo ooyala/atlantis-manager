@@ -209,11 +209,17 @@ func New() *ManagerClient {
 	o.AddCommand("unregister-supervisor", "unregister an supervisor", "", &UnregisterSupervisorCommand{})
 	o.AddCommand("list-supervisors", "list available supervisors", "", &ListSupervisorsCommand{})
 
+	// Router Management
+	o.AddCommand("register-router", "register an router", "", &RegisterRouterCommand{})
+	o.AddCommand("unregister-router", "unregister an router", "", &UnregisterRouterCommand{})
+	o.AddCommand("list-routers", "list routers", "", &ListRoutersCommand{})
+	o.AddCommand("get-router", "get an router", "", &GetRouterCommand{})
+
 	// App Management
 	o.AddCommand("register-app", "register an app", "", &RegisterAppCommand{})
 	o.AddCommand("unregister-app", "unregister an app", "", &UnregisterAppCommand{})
 	o.AddCommand("list-registered-apps", "list registered apps", "", &ListRegisteredAppsCommand{})
-	o.AddCommand("get-app", "get a registered apps", "", &GetAppCommand{})
+	o.AddCommand("get-app", "get a registered app", "", &GetAppCommand{})
 
 	// Environment Management
 	o.AddCommand("create-dep", "create a dependency", "", &UpdateDepCommand{}) // alias to update
@@ -237,7 +243,7 @@ func New() *ManagerClient {
 	o.AddCommand("teardown", "[async] teardown something", "", &TeardownCommand{})
 	o.AddCommand("get-container", "get a container", "", &GetContainerCommand{})
 
-	// Router Management
+	// Router Config Management
 	o.AddCommand("create-pool", "create a router pool", "", &UpdatePoolCommand{}) // alias to update
 	o.AddCommand("update-pool", "update a router pool", "", &UpdatePoolCommand{})
 	o.AddCommand("delete-pool", "delete a router pool", "", &DeletePoolCommand{})

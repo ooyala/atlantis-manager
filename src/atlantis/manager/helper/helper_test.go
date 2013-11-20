@@ -18,6 +18,7 @@ const (
 	trie = "my-trie"
 	dep  = "my-dep"
 	opt  = "my-opt"
+	zone = "my-zone"
 )
 
 func TestDatamodel(t *testing.T) { TestingT(t) }
@@ -63,7 +64,7 @@ func (s *HelperSuite) TestHelperPoolName(c *C) {
 	c.Assert(CreatePoolName(app, sha, env), Matches, app+"."+sha+"."+env)
 }
 
-func (s *HelperSuite) TestHelperRouterPath(c *C) {
+func (s *HelperSuite) TestHelperRouterRoot(c *C) {
 	SetRouterRoot(true)
 	c.Assert(routerzk.ZkPaths["pools"], Equals, "/atlantis/router/"+Region+"/internal/pools")
 	c.Assert(routerzk.ZkPaths["rules"], Equals, "/atlantis/router/"+Region+"/internal/rules")
@@ -72,6 +73,18 @@ func (s *HelperSuite) TestHelperRouterPath(c *C) {
 	c.Assert(routerzk.ZkPaths["pools"], Equals, "/atlantis/router/"+Region+"/external/pools")
 	c.Assert(routerzk.ZkPaths["rules"], Equals, "/atlantis/router/"+Region+"/external/rules")
 	c.Assert(routerzk.ZkPaths["tries"], Equals, "/atlantis/router/"+Region+"/external/tries")
+}
+
+func (s *HelperSuite) TestHelperRouterPath(c *C) {
+	c.Assert(GetBaseRouterPath(), Equals, "/atlantis/routers/"+Region)
+	c.Assert(GetBaseRouterPath(zone), Equals, "/atlantis/routers/"+Region+"/"+zone)
+	c.Assert(GetBaseRouterPath(zone, host), Equals, "/atlantis/routers/"+Region+"/"+zone+"/"+host)
+}
+
+func (s *HelperSuite) TestHelperDNSPath(c *C) {
+	c.Assert(GetBaseDNSPath(), Equals, "/atlantis/dns/"+Region)
+	c.Assert(GetBaseDNSPath(app), Equals, "/atlantis/dns/"+Region+"/"+app)
+	c.Assert(GetBaseDNSPath(app, env), Equals, "/atlantis/dns/"+Region+"/"+app+"/"+env)
 }
 
 func (s *HelperSuite) TestHelperManagerPath(c *C) {
@@ -92,4 +105,30 @@ func (s *HelperSuite) TestHelperEnvPath(c *C) {
 func (s *HelperSuite) TestHelperLockPath(c *C) {
 	c.Assert(GetBaseLockPath(), Equals, "/atlantis/lock/"+Region)
 	c.Assert(GetBaseLockPath("deploy"), Equals, "/atlantis/lock/"+Region+"/deploy")
+}
+
+func (s *HelperSuite) TestGetRegionRouterCName(c *C) {
+	c.Assert(GetRegionRouterCName("atlantis.com"), Equals, "router."+Region+".atlantis.com")
+}
+
+func (s *HelperSuite) TestGetZoneRouterCName(c *C) {
+	c.Assert(GetZoneRouterCName(Region+"1", "atlantis.com"), Equals, "router."+Region+"1.atlantis.com")
+}
+
+func (s *HelperSuite) TestGetRouterCName(c *C) {
+	c.Assert(GetRouterCName(1, Region+"1", "atlantis.com"), Equals, "router1."+Region+"1.atlantis.com")
+}
+
+func (s *HelperSuite) TestGetRegionAppAlias(c *C) {
+	c.Assert(GetRegionAppAlias(app, env, "atlantis.com"), Equals, app+"."+env+"."+Region+".atlantis.com")
+}
+
+func (s *HelperSuite) TestGetZoneAppAlias(c *C) {
+	c.Assert(GetZoneAppAlias(app, env, Region+"1",  "atlantis.com"), Equals,
+		app+"."+env+"."+Region+"1.atlantis.com")
+}
+
+func (s *HelperSuite) TestHelperRegionAndZone(c *C) {
+	c.Assert(RegionAndZone(Region+"1"), Equals, Region+"1")
+	c.Assert(RegionAndZone("1"), Equals, Region+"1")
 }

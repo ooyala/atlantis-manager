@@ -2,14 +2,11 @@ package datamodel
 
 import (
 	"atlantis/manager/helper"
+	"atlantis/manager/rpc/types"
 	"log"
 )
 
-type ZkApp struct {
-	Name string
-	Repo string
-	Root string
-}
+type ZkApp types.App
 
 func GetApp(name string) (za *ZkApp, err error) {
 	za = &ZkApp{}

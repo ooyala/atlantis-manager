@@ -7,6 +7,41 @@ import (
 	"net/http"
 )
 
+func ListRouters(w http.ResponseWriter, r *http.Request) {
+	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
+	arg := ManagerListRoutersArg{auth}
+	var reply ManagerListRoutersReply
+	err := manager.ListRouters(arg, &reply)
+	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Routers": reply.Routers, "Status": reply.Status}, err))
+}
+
+func RegisterRouter(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
+	arg := ManagerRegisterRouterArg{ManagerAuthArg: auth, Zone: vars["Zone"], IP: vars["IP"]}
+	var reply ManagerRegisterRouterReply
+	err := manager.RegisterRouter(arg, &reply)
+	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Status": reply.Status}, err))
+}
+
+func UnregisterRouter(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
+	arg := ManagerRegisterRouterArg{ManagerAuthArg: auth, Zone: vars["Zone"], IP: vars["IP"]}
+	var reply ManagerRegisterRouterReply
+	err := manager.UnregisterRouter(arg, &reply)
+	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Status": reply.Status}, err))
+}
+
+func GetRouter(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
+	arg := ManagerGetRouterArg{ManagerAuthArg: auth, Zone: vars["Zone"], IP: vars["IP"]}
+	var reply ManagerGetRouterReply
+	err := manager.GetRouter(arg, &reply)
+	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Status": reply.Status, "Router": reply.Router}, err))
+}
+
 func ListRegisteredApps(w http.ResponseWriter, r *http.Request) {
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
 	arg := ManagerListRegisteredAppsArg{auth}
@@ -36,6 +71,15 @@ func UnregisterApp(w http.ResponseWriter, r *http.Request) {
 	var reply ManagerRegisterAppReply
 	err := manager.UnregisterApp(arg, &reply)
 	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Status": reply.Status}, err))
+}
+
+func GetApp(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
+	arg := ManagerGetAppArg{ManagerAuthArg: auth, Name: vars["App"]}
+	var reply ManagerGetAppReply
+	err := manager.GetApp(arg, &reply)
+	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Status": reply.Status, "App": reply.App}, err))
 }
 
 func ListSupervisors(w http.ResponseWriter, r *http.Request) {
