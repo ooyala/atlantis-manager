@@ -9,6 +9,7 @@ import (
 type Route53Provider struct {
 	r53  *route53.Route53
 	Zone route53.HostedZone
+	TTL  uint
 }
 
 func (r *Route53Provider) createRecords(comment string, rrsets ...route53.RRSet) (error, chan error) {
@@ -38,7 +39,7 @@ func (r *Route53Provider) CreateAliases(comment string, aliases []Alias) (error,
 			Failover:             failover,
 			Name:                 alias.Alias,
 			Type:                 "A",
-			TTL:                  5 * 60, // 5 minutes
+			TTL:                  r.TTL,
 			SetIdentifier:        alias.Id(),
 			Weight:               0,
 			HostedZoneId:         r.Zone.Id,
@@ -62,7 +63,7 @@ func (r *Route53Provider) CreateCNames(comment string, cnames []CName) (error, c
 			Failover:      failover,
 			Name:          cname.CName,
 			Type:          "A",
-			TTL:           10 * 60, // 10 minutes
+			TTL:           r.TTL,
 			Values:        []string{cname.IP},
 			HealthCheckId: cname.HealthCheckId,
 			SetIdentifier: cname.Id(),
@@ -124,7 +125,7 @@ func (r *Route53Provider) Suffix() string {
 	return r.Zone.Name
 }
 
-func NewRoute53Provider(zoneId string) (*Route53Provider, error) {
+func NewRoute53Provider(zoneId string, ttl uint) (*Route53Provider, error) {
 	route53.DebugOn()
 	auth, err := aws.GetAuth("", "", "", time.Time{})
 	if err != nil {
@@ -135,5 +136,5 @@ func NewRoute53Provider(zoneId string) (*Route53Provider, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Route53Provider{r53: r53, Zone: zone}, nil
+	return &Route53Provider{r53: r53, Zone: zone, TTL: ttl}, nil
 }
