@@ -7,23 +7,23 @@ import (
 	"atlantis/manager/helper"
 )
 
-func Register(zone, ip string) error {
+func Register(zone, ip string) (*datamodel.ZkRouter, error) {
 	// create ZkRouter
 	zkRouter := datamodel.Router(zone, ip)
 	if dns.Provider == nil {
 		// if we have no dns provider then just save here
-		return zkRouter.Save()
+		return zkRouter, zkRouter.Save()
 	}
 	// choose cname
 	routers, err := datamodel.ListRoutersInZone(zone)
 	if err != nil {
-		return err
+		return zkRouter, err
 	}
 	routerMap := map[string]bool{}
 	for _, router := range routers {
 		tmpRouter, err := datamodel.GetRouter(zone, router)
 		if err != nil {
-			return err
+			return zkRouter, err
 		}
 		routerMap[tmpRouter.CName] = true
 	}
@@ -35,7 +35,7 @@ func Register(zone, ip string) error {
 	// create basic health check for router
 	zkRouter.HealthCheckId, err = dns.Provider.CreateHealthCheck(zkRouter.IP)
 	if err != nil {
-		return err
+		return zkRouter, err
 	}
 	// create the basic entries for the new router
 	// e.g. region is us-east-1 && zone is us-east-1a && there are zones a, b, c, and d && this is the 2nd in a
@@ -83,13 +83,13 @@ func Register(zone, ip string) error {
 	}
 	err, errChan := dns.Provider.CreateCNames("CREATE_ROUTER "+ip+" in "+zone, cnames)
 	if err != nil {
-		return err
+		return zkRouter, err
 	}
 	err = <-errChan // wait for change to propagate
 	if err != nil {
-		return err
+		return zkRouter, err
 	}
-	return zkRouter.Save()
+	return zkRouter, zkRouter.Save()
 }
 
 func Unregister(zone, ip string) error {

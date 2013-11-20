@@ -43,10 +43,12 @@ func (e *RegisterRouterExecutor) Execute(t *Task) error {
 	if e.arg.Zone == "" {
 		return errors.New("Please specify a zone")
 	}
-	err := router.Register(e.arg.Zone, e.arg.IP)
+	routerObj, err := router.Register(e.arg.Zone, e.arg.IP)
 	if err != nil {
 		e.reply.Status = StatusError
 	}
+	castedRouter := Router(*routerObj)
+	e.reply.Router = &castedRouter
 	e.reply.Status = StatusOk
 	return err
 }

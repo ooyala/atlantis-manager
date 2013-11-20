@@ -21,7 +21,7 @@ func RegisterRouter(w http.ResponseWriter, r *http.Request) {
 	arg := ManagerRegisterRouterArg{ManagerAuthArg: auth, Zone: vars["Zone"], IP: vars["IP"]}
 	var reply ManagerRegisterRouterReply
 	err := manager.RegisterRouter(arg, &reply)
-	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Status": reply.Status}, err))
+	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Status": reply.Status, "Router": reply.Router}, err))
 }
 
 func UnregisterRouter(w http.ResponseWriter, r *http.Request) {

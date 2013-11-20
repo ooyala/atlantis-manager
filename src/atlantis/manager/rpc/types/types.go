@@ -100,6 +100,7 @@ type ManagerRegisterRouterArg struct {
 }
 
 type ManagerRegisterRouterReply struct {
+	Router *Router
 	Status string
 }
 

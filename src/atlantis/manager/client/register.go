@@ -28,6 +28,10 @@ func (c *RegisterRouterCommand) Execute(args []string) error {
 		return OutputError(err)
 	}
 	Log("-> status: %s", reply.Status)
+	Log("-> zone            : %s", reply.Router.Zone)
+	Log("-> ip              : %s", reply.Router.IP)
+	Log("-> cname           : %s", reply.Router.CName)
+	Log("-> health check id : %s", reply.Router.HealthCheckId)
 	return Output(map[string]interface{}{"status": reply.Status}, nil, nil)
 }
 
