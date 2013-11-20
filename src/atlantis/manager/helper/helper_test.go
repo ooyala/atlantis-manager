@@ -124,11 +124,56 @@ func (s *HelperSuite) TestGetRegionAppAlias(c *C) {
 }
 
 func (s *HelperSuite) TestGetZoneAppAlias(c *C) {
+	env := "oogabooga"
 	c.Assert(GetZoneAppAlias(app, env, Region+"1", "atlantis.com"), Equals,
 		app+"."+env+"."+Region+"1.atlantis.com")
+	env = "ooga-booga"
+	c.Assert(GetZoneAppAlias(app, env, Region+"1", "atlantis.com"), Equals,
+		app+"."+env+"."+Region+"1.atlantis.com")
+	env = "ooga_booga"
+	c.Assert(GetZoneAppAlias(app, env, Region+"1", "atlantis.com"), Equals,
+		app+"."+env+"."+Region+"1.atlantis.com")
+	env = "prodooga"
+	c.Assert(GetZoneAppAlias(app, env, Region+"1", "atlantis.com"), Equals,
+		app+"."+env+"."+Region+"1.atlantis.com")
+	env = "productionooga"
+	c.Assert(GetZoneAppAlias(app, env, Region+"1", "atlantis.com"), Equals,
+		app+"."+env+"."+Region+"1.atlantis.com")
+	env = "prod"
+	c.Assert(GetZoneAppAlias(app, env, Region+"1", "atlantis.com"), Equals,
+		app+"."+Region+"1.atlantis.com")
+	env = "production"
+	c.Assert(GetZoneAppAlias(app, env, Region+"1", "atlantis.com"), Equals,
+		app+"."+Region+"1.atlantis.com")
+	env = "prod-ooga"
+	c.Assert(GetZoneAppAlias(app, env, Region+"1", "atlantis.com"), Equals,
+		app+"."+Region+"1.atlantis.com")
+	env = "prod_ooga"
+	c.Assert(GetZoneAppAlias(app, env, Region+"1", "atlantis.com"), Equals,
+		app+"."+Region+"1.atlantis.com")
+	env = "production-ooga"
+	c.Assert(GetZoneAppAlias(app, env, Region+"1", "atlantis.com"), Equals,
+		app+"."+Region+"1.atlantis.com")
+	env = "production_ooga"
+	c.Assert(GetZoneAppAlias(app, env, Region+"1", "atlantis.com"), Equals,
+		app+"."+Region+"1.atlantis.com")
 }
 
 func (s *HelperSuite) TestHelperRegionAndZone(c *C) {
 	c.Assert(RegionAndZone(Region+"1"), Equals, Region+"1")
 	c.Assert(RegionAndZone("1"), Equals, Region+"1")
+}
+
+func (s *HelperSuite) TestHelperEmptyIfProdPrefix(c *C) {
+	c.Assert(EmptyIfProdPrefix("oogabooga"), Equals, ".oogabooga")
+	c.Assert(EmptyIfProdPrefix("ooga-booga"), Equals, ".ooga-booga")
+	c.Assert(EmptyIfProdPrefix("ooga_booga"), Equals, ".ooga_booga")
+	c.Assert(EmptyIfProdPrefix("prodooga"), Equals, ".prodooga")
+	c.Assert(EmptyIfProdPrefix("productionooga"), Equals, ".productionooga")
+	c.Assert(EmptyIfProdPrefix("prod"), Equals, "")
+	c.Assert(EmptyIfProdPrefix("production"), Equals, "")
+	c.Assert(EmptyIfProdPrefix("prod-ooga"), Equals, "")
+	c.Assert(EmptyIfProdPrefix("prod_ooga"), Equals, "")
+	c.Assert(EmptyIfProdPrefix("production-ooga-booga"), Equals, "")
+	c.Assert(EmptyIfProdPrefix("production_ooga-booga"), Equals, "")
 }

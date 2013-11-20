@@ -6,6 +6,7 @@ import (
 	routerzk "atlantis/router/zk"
 	"fmt"
 	"path"
+	"regexp"
 	"strings"
 )
 
@@ -110,11 +111,11 @@ func GetRouterCName(num int, zone, suffix string) string {
 }
 
 func GetRegionAppAlias(app, env, suffix string) string {
-	return fmt.Sprintf("%s.%s.%s.%s", app, env, Region, suffix)
+	return fmt.Sprintf("%s%s.%s.%s", app, EmptyIfProdPrefix(env), Region, suffix)
 }
 
 func GetZoneAppAlias(app, env, zone, suffix string) string {
-	return fmt.Sprintf("%s.%s.%s.%s", app, env, RegionAndZone(zone), suffix)
+	return fmt.Sprintf("%s%s.%s.%s", app, EmptyIfProdPrefix(env), RegionAndZone(zone), suffix)
 }
 
 func RegionAndZone(zone string) string {
@@ -122,4 +123,13 @@ func RegionAndZone(zone string) string {
 		return zone
 	}
 	return Region + zone
+}
+
+var envSuffixRegexp = regexp.MustCompile("^(prod|production)([_-]|$)")
+
+func EmptyIfProdPrefix(env string) string {
+	if envSuffixRegexp.MatchString(env) {
+		return ""
+	}
+	return "." + env
 }
