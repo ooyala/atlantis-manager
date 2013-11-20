@@ -356,6 +356,9 @@ func (e *UpdateDepExecutor) Execute(t *Task) (err error) {
 	if e.arg.Env == "" {
 		return errors.New("Please specify an environment")
 	}
+	if _, err := datamodel.GetApp(e.arg.Name); err == nil {
+		return errors.New("Dep name conflicts with a registered app")
+	}
 	env, err := datamodel.GetEnv(e.arg.Env)
 	if err != nil {
 		return err

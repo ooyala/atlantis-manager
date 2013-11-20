@@ -108,6 +108,36 @@ func (zi *ZkInstance) dataPath() string {
 	return helper.GetBaseInstanceDataPath(zi.Id)
 }
 
+func InternalAppExistsInEnv(app, env string) bool {
+	shas, err := ListShas(app)
+	if err != nil {
+		return false
+	}
+	for _, sha := range shas {
+		envs, err := ListAppEnvs(app, sha)
+		if err != nil {
+			continue
+		}
+		for _, checkEnv := range envs {
+			if checkEnv == env {
+				instances, err := ListInstances(app, sha, env)
+				if err != nil || len(instances) == 0 {
+					continue
+				}
+				// check first instance if it is internal
+				instance, err := GetInstance(instances[0])
+				if err != nil {
+					continue
+				}
+				if instance.Internal {
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+
 func ListApps() (apps []string, err error) {
 	apps, _, err = Zk.VisibleChildren(helper.GetBaseInstancePath())
 	if err != nil {

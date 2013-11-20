@@ -216,6 +216,19 @@ type ManagerMoveContainerArg struct {
 
 // MoveContainer uses ManagerDeployReply
 
+// ------------ ResolveDeps ------------
+// used to resolve deps in an environment to see what the deploy will contain
+type ManagerResolveDepsArg struct {
+	ManagerAuthArg
+	Env      string
+	DepNames []string
+}
+
+type ManagerResolveDepsReply struct {
+	Status string
+	Deps   map[string]string
+}
+
 // ------------ Teardown ------------
 // Teardown containers by app, app+sha, app+sha+container, or just simply all
 type ManagerTeardownArg struct {

@@ -154,7 +154,7 @@ func (e *ZkEnv) ResolveDepValues(deps []string) (map[string]string, error) {
 	}
 	only1, _ := DiffSlices(deps, valueKeys)
 	if len(only1) > 0 {
-		return values, errors.New(fmt.Sprintf("Could not fine all deps in %s. Missing %v.", e.Name, only1))
+		return values, errors.New(fmt.Sprintf("Could not find all deps in %s. Missing %v.", e.Name, only1))
 	}
 	return values, nil
 }

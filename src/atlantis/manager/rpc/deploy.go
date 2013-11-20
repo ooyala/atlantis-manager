@@ -183,6 +183,44 @@ func (o *Manager) MoveContainer(arg ManagerMoveContainerArg, reply *AsyncReply) 
 	return NewTask("MoveContainer", &MoveContainerExecutor{arg, &ManagerDeployReply{}}).RunAsync(reply)
 }
 
+type ResolveDepsExecutor struct {
+	arg   ManagerResolveDepsArg
+	reply *ManagerResolveDepsReply
+}
+
+func (e *ResolveDepsExecutor) Request() interface{} {
+	return e.arg
+}
+
+func (e *ResolveDepsExecutor) Result() interface{} {
+	return e.reply
+}
+
+func (e *ResolveDepsExecutor) Description() string {
+	return fmt.Sprintf("%s -> %v", e.arg.Env, e.arg.DepNames)
+}
+
+func (e *ResolveDepsExecutor) Authorize() error {
+	return SimpleAuthorize(&e.arg.ManagerAuthArg)
+}
+
+func (e *ResolveDepsExecutor) Execute(t *Task) error {
+	zkEnv, err := datamodel.GetEnv(e.arg.Env)
+	if err != nil {
+		return errors.New("Environment Error: " + err.Error())
+	}
+	e.reply.Deps, err = ResolveDepValues(zkEnv, e.arg.DepNames, false)
+	if err != nil {
+		return err
+	}
+	e.reply.Status = StatusOk
+	return nil
+}
+
+func (o *Manager) ResolveDeps(arg ManagerResolveDepsArg, reply *ManagerResolveDepsReply) error {
+	return NewTask("ResolveDeps", &ResolveDepsExecutor{arg, reply}).Run()
+}
+
 type TeardownExecutor struct {
 	arg   ManagerTeardownArg
 	reply *ManagerTeardownReply

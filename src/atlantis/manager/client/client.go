@@ -174,7 +174,8 @@ func (c *ClientConfig) RPCHostAndPort() string {
 }
 
 type ClientOpts struct {
-	Host       string `short:"O" long:"manager-host" description:"the manager host"`
+	// Only use capital letters here. Also, "H" is off limits. kthxbye.
+	Host       string `short:"M" long:"manager-host" description:"the manager host"`
 	Port       uint16 `short:"P" long:"manager-port" description:"the manager port"`
 	Config     string `short:"F" long:"config-file" default:"" description:"the config file to use"`
 	Region     string `short:"R" long:"manager-region" default:"us-east-1" description:"the region to use"`
@@ -225,6 +226,7 @@ func New() *ManagerClient {
 	o.AddCommand("create-dep", "create a dependency", "", &UpdateDepCommand{}) // alias to update
 	o.AddCommand("update-dep", "update a dependency", "", &UpdateDepCommand{})
 	o.AddCommand("get-dep", "get a dependency", "", &GetDepCommand{})
+	o.AddCommand("resolve-deps", "resolve dependencies in an environment", "", &ResolveDepsCommand{})
 	o.AddCommand("delete-dep", "delete a dependency", "", &DeleteDepCommand{})
 	o.AddCommand("create-env", "create a environment", "", &UpdateEnvCommand{}) // alias to update
 	o.AddCommand("update-env", "update a environment", "", &UpdateEnvCommand{})

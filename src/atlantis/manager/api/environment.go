@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"net/http"
+	"strings"
 )
 
 func ListEnvs(w http.ResponseWriter, r *http.Request) {
@@ -13,6 +14,16 @@ func ListEnvs(w http.ResponseWriter, r *http.Request) {
 	var reply ManagerListEnvsReply
 	err := manager.ListEnvs(arg, &reply)
 	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Envs": reply.Envs, "Status": reply.Status}, err))
+}
+
+func ResolveDeps(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
+	dnames := strings.Split(vars["DepNames"], ",")
+	dArg := ManagerResolveDepsArg{ManagerAuthArg: auth, Env: vars["Env"], DepNames: dnames}
+	var reply ManagerResolveDepsReply
+	err := manager.ResolveDeps(dArg, &reply)
+	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Deps": reply.Deps, "Status": reply.Status}, err))
 }
 
 func GetDep(w http.ResponseWriter, r *http.Request) {

@@ -30,6 +30,34 @@ func (c *UpdateDepCommand) Execute(args []string) error {
 	return Output(map[string]interface{}{"status": reply.Status, "value": reply.Value}, reply.Value, nil)
 }
 
+type ResolveDepsCommand struct {
+	Env      string   `short:"e" long:"env" description:"the environment of the dependencies to resolve"`
+	DepNames []string `short:"d" long:"dep" description:"the dep names to resolve"`
+}
+
+func (c *ResolveDepsCommand) Execute(args []string) error {
+	if err := Init(); err != nil {
+		return OutputError(err)
+	}
+	Log("Resolve Deps...")
+	user, secret, err := GetSecret()
+	if err != nil {
+		return err
+	}
+	authArg := ManagerAuthArg{user, "", secret}
+	arg := ManagerResolveDepsArg{ManagerAuthArg: authArg, Env: c.Env, DepNames: c.DepNames}
+	var reply ManagerResolveDepsReply
+	if err := rpcClient.Call("ResolveDeps", arg, &reply); err != nil {
+		return OutputError(err)
+	}
+	Log("-> status: %s", reply.Status)
+	Log("-> deps:")
+	for name, value := range reply.Deps {
+		Log("->   %s : %s", name, value)
+	}
+	return Output(map[string]interface{}{"status": reply.Status, "Deps": reply.Deps}, reply.Deps, nil)
+}
+
 type GetDepCommand struct {
 	Name string `short:"n" long:"name" description:"the name of the dependency"`
 	Env  string `short:"e" long:"env" description:"the environment of the dependency"`

@@ -2,9 +2,11 @@ package rpc
 
 import (
 	. "atlantis/common"
+	"atlantis/crypto"
 	. "atlantis/manager/constant"
 	"atlantis/manager/datamodel"
 	"atlantis/manager/dns"
+	"atlantis/manager/helper"
 	. "atlantis/manager/rpc/types"
 	"atlantis/manager/supervisor"
 	. "atlantis/supervisor/rpc/types"
@@ -20,6 +22,46 @@ func deployContainer(auth *ManagerAuthArg, cont *Container, instances uint, t *T
 	manifest := cont.Manifest
 	manifest.Instances = instances
 	return deploy(auth, manifest, cont.Sha, cont.Env, t)
+}
+
+func ResolveDepValues(zkEnv *datamodel.ZkEnv, names []string, encrypt bool) (map[string]string, error) {
+	deps := map[string]string{}
+	leftoverNames := []string{}
+	// if we're using DNS and the app is registered, try to get the app alias (if deployed)
+	if dns.Provider != nil {
+		for _, name := range names {
+			if datamodel.InternalAppExistsInEnv(name, zkEnv.Name) {
+				// this is a registered, internal, deployed app, output the alias
+				deps[name] = helper.GetRegionAppAlias(name, zkEnv.Name, dns.Provider.Suffix())
+			} else {
+				leftoverNames = append(leftoverNames, name)
+			}
+		}
+	} else {
+		leftoverNames = names
+	}
+	envDeps, err := zkEnv.ResolveDepValues(leftoverNames)
+	if err != nil {
+		return nil, err
+	}
+	var retDeps map[string]string
+	if encrypt {
+		for name, value := range deps {
+			envDeps[name] = string(crypto.Encrypt([]byte(value)))
+		}
+		retDeps = envDeps
+	} else {
+		for name, value := range envDeps {
+			deps[name] = string(crypto.Decrypt([]byte(value)))
+		}
+		retDeps = deps
+	}
+	for _, name := range names {
+		if _, ok := retDeps[name]; !ok {
+			return retDeps, errors.New("Could not resolve dep " + name)
+		}
+	}
+	return retDeps, nil
 }
 
 func validateDeploy(auth *ManagerAuthArg, manifest *Manifest, sha, env string, t *Task) (err error) {
@@ -51,7 +93,7 @@ func validateDeploy(auth *ManagerAuthArg, manifest *Manifest, sha, env string, t
 		return errors.New(fmt.Sprintf("Memory Limit should be a multiple of %d", MemoryLimitIncrement))
 	}
 	t.LogStatus("Resolving Dependencies")
-	manifest.Deps, err = zkEnv.ResolveDepValues(manifest.DepNames())
+	manifest.Deps, err = ResolveDepValues(zkEnv, manifest.DepNames(), true)
 	if err != nil {
 		return errors.New("Dependency Error: " + err.Error())
 	}

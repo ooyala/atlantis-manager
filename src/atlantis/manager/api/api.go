@@ -141,6 +141,7 @@ func Init(listenAddr string) error {
 	gmux.HandleFunc("/teams/{Team}/members/{Member}", RemoveTeamMember).Methods("DELETE")
 
 	// Environment Management
+	gmux.HandleFunc("/envs/{Env}/resolve/{DepNames}", ResolveDeps).Methods("GET")
 	gmux.HandleFunc("/envs/{Env}/deps/{DepName}", GetDep).Methods("GET")
 	gmux.HandleFunc("/envs/{Env}/deps/{DepName}", UpdateDep).Methods("PUT")
 	gmux.HandleFunc("/envs/{Env}/deps/{DepName}", DeleteDep).Methods("DELETE")
