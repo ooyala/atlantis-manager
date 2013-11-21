@@ -20,24 +20,24 @@ type DNSProvider interface {
 }
 
 type Alias struct {
-	Primary  bool
 	Alias    string
 	Original string
+	Failover string
 }
 
 func (a *Alias) Id() string {
-	return fmt.Sprintf("%t-%s-%s", a.Primary, a.Alias, a.Original)
+	return fmt.Sprintf("%s-%s-%s", a.Alias, a.Original, a.Failover)
 }
 
 type CName struct {
-	Primary       bool
 	CName         string
 	IP            string
 	HealthCheckId string
+	Failover      string
 }
 
 func (c *CName) Id() string {
-	return fmt.Sprintf("%t-%s-%s", c.Primary, c.CName, c.IP)
+	return fmt.Sprintf("%s-%s-%s", c.CName, c.IP, c.Failover)
 }
 
 func CreateAppAliases(app, sha, env string) error {
@@ -57,7 +57,6 @@ func CreateAppAliases(app, sha, env string) error {
 	aliases := make([]Alias, len(AvailableZones)+1)
 	for i, zone := range AvailableZones {
 		aliases[i] = Alias{
-			Primary:  true,
 			Alias:    helper.GetZoneAppAlias(app, env, zone, Provider.Suffix()),
 			Original: helper.GetZoneRouterCName(zone, Provider.Suffix()),
 		}
@@ -65,7 +64,6 @@ func CreateAppAliases(app, sha, env string) error {
 	}
 	// region-wide entry (for referencing outside of atlantis)
 	aliases[len(aliases)-1] = Alias{
-		Primary:  true,
 		Alias:    helper.GetRegionAppAlias(app, env, Provider.Suffix()),
 		Original: helper.GetRegionRouterCName(Provider.Suffix()),
 	}

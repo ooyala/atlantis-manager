@@ -27,25 +27,28 @@ func (r *Route53Provider) createRecords(comment string, rrsets ...route53.RRSet)
 	return nil, info.PollForSync(time.Second, 60*time.Second)
 }
 
+func (r *Route53Provider) baseRRSet(id, name, failover string) route53.RRSet {
+	rrset := route53.RRSet{
+			Name:                 name,
+			Type:                 "A",
+			TTL:                  r.TTL,
+			SetIdentifier:        id,
+			Weight:               0,
+	}
+	if failover == "PRIMARY" || failover == "SECONDARY" {
+		rrset.Failover = failover
+	}
+	return rrset
+}
+
 func (r *Route53Provider) CreateAliases(comment string, aliases []Alias) (error, chan error) {
 	rrsets := make([]route53.RRSet, len(aliases))
 	count := 0
 	for _, alias := range aliases {
-		failover := "SECONDARY"
-		if alias.Primary {
-			failover = "PRIMARY"
-		}
-		rrsets[count] = route53.RRSet{
-			Failover:             failover,
-			Name:                 alias.Alias,
-			Type:                 "A",
-			TTL:                  r.TTL,
-			SetIdentifier:        alias.Id(),
-			Weight:               0,
-			HostedZoneId:         r.Zone.Id,
-			DNSName:              alias.Original,
-			EvaluateTargetHealth: true,
-		}
+		rrsets[count] = r.baseRRSet(alias.Id(), alias.Alias, alias.Failover)
+		rrsets[count].HostedZoneId = r.Zone.Id
+		rrsets[count].DNSName = alias.Original
+		rrsets[count].EvaluateTargetHealth = true
 		count++
 	}
 	return r.createRecords(comment, rrsets...)
@@ -55,20 +58,9 @@ func (r *Route53Provider) CreateCNames(comment string, cnames []CName) (error, c
 	rrsets := make([]route53.RRSet, len(cnames))
 	count := 0
 	for _, cname := range cnames {
-		failover := "SECONDARY"
-		if cname.Primary {
-			failover = "PRIMARY"
-		}
-		rrsets[count] = route53.RRSet{
-			Failover:      failover,
-			Name:          cname.CName,
-			Type:          "A",
-			TTL:           r.TTL,
-			Values:        []string{cname.IP},
-			HealthCheckId: cname.HealthCheckId,
-			SetIdentifier: cname.Id(),
-			Weight:        0,
-		}
+		rrsets[count] = r.baseRRSet(cname.Id(), cname.CName, cname.Failover)
+		rrsets[count].Values = []string{cname.IP}
+		rrsets[count].HealthCheckId = cname.HealthCheckId
 		count++
 	}
 	return r.createRecords(comment, rrsets...)

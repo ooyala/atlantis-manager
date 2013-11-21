@@ -58,23 +58,21 @@ func Register(zone, ip string) (*datamodel.ZkRouter, error) {
 	cnames := make([]dns.CName, 3)
 	// PRIMARY router.<region>.<suffix>
 	cnames[0] = dns.CName{
-		Primary: true,
 		CName:   helper.GetRegionRouterCName(dns.Provider.Suffix()),
 		IP:      zkRouter.IP,
 	}
 	zkRouter.RecordIds[0] = cnames[0].Id()
 	// PRIMARY routerX.<region+zone>.<suffix>
 	cnames[1] = dns.CName{
-		Primary: true,
 		CName:   zkRouter.CName,
 		IP:      zkRouter.IP,
 	}
 	zkRouter.RecordIds[1] = cnames[1].Id()
 	// PRIMARY router.<region+zone>.<suffix>
 	cnames[2] = dns.CName{
-		Primary: true,
-		CName:   helper.GetZoneRouterCName(zkRouter.Zone, dns.Provider.Suffix()),
-		IP:      zkRouter.IP,
+		Failover: "PRIMARY",
+		CName:    helper.GetZoneRouterCName(zkRouter.Zone, dns.Provider.Suffix()),
+		IP:       zkRouter.IP,
 	}
 	zkRouter.RecordIds[2] = cnames[2].Id()
 	// SECONDARY router.<region+zone>.<suffix>
@@ -83,9 +81,9 @@ func Register(zone, ip string) (*datamodel.ZkRouter, error) {
 			continue
 		}
 		cname := dns.CName{
-			Primary: false,
-			CName:   helper.GetZoneRouterCName(azone, dns.Provider.Suffix()),
-			IP:      zkRouter.IP,
+			Failover: "SECONDARY",
+			CName:    helper.GetZoneRouterCName(azone, dns.Provider.Suffix()),
+			IP:       zkRouter.IP,
 		}
 		zkRouter.RecordIds = append(zkRouter.RecordIds, cname.Id())
 		cnames = append(cnames, cname)
