@@ -29,11 +29,11 @@ func (r *Route53Provider) createRecords(comment string, rrsets ...route53.RRSet)
 
 func (r *Route53Provider) baseRRSet(id, name, failover string) route53.RRSet {
 	rrset := route53.RRSet{
-			Name:                 name,
-			Type:                 "A",
-			TTL:                  r.TTL,
-			SetIdentifier:        id,
-			Weight:               0,
+		Name:          name,
+		Type:          "A",
+		TTL:           r.TTL,
+		SetIdentifier: id,
+		Weight:        0,
 	}
 	if failover == "PRIMARY" || failover == "SECONDARY" {
 		rrset.Failover = failover
