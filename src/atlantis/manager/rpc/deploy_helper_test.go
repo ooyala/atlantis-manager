@@ -40,6 +40,10 @@ func (f FakeDNSProvider) DeleteRecords(comment string, ids ...string) (error, ch
 	return nil, errChan
 }
 
+func (f FakeDNSProvider) GetRecordsForIP(ip string) ([]string, error) {
+	return []string{}, nil
+}
+
 func (f FakeDNSProvider) CreateHealthCheck(ip string) (string, error) {
 	return "", nil
 }

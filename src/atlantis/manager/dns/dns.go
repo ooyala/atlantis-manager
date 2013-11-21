@@ -12,6 +12,7 @@ var Provider DNSProvider
 type DNSProvider interface {
 	CreateAliases(string, []Alias) (error, chan error)
 	CreateCNames(string, []CName) (error, chan error)
+	GetRecordsForIP(string) ([]string, error)
 	DeleteRecords(string, ...string) (error, chan error)
 	CreateHealthCheck(string) (string, error)
 	DeleteHealthCheck(string) error
@@ -97,6 +98,9 @@ func DeleteAppAliases(app, sha, env string) error {
 	if len(zkDNS.Shas) > 0 {
 		return nil
 	}
+	if Provider == nil {
+		return zkDNS.Delete()
+	}
 	// delete all the record ids
 	err, errChan := Provider.DeleteRecords("DELETE_APP "+app+" in "+env, zkDNS.RecordIds...)
 	if err != nil {
@@ -108,4 +112,19 @@ func DeleteAppAliases(app, sha, env string) error {
 	}
 	// remove dns datamodel
 	return zkDNS.Delete()
+}
+
+func DeleteRecordsForIP(ip string) error {
+	if Provider == nil {
+		return nil
+	}
+	ids, err := Provider.GetRecordsForIP(ip)
+	if err != nil {
+		return err
+	}
+	err, errChan := Provider.DeleteRecords("DELETE_ALL_IP "+ip, ids...)
+	if err != nil {
+		return err
+	}
+	return <-errChan
 }

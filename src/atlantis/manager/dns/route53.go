@@ -75,6 +75,13 @@ func (r *Route53Provider) CreateCNames(comment string, cnames []CName) (error, c
 }
 
 func (r *Route53Provider) DeleteRecords(comment string, ids ...string) (error, chan error) {
+	if len(ids) == 0 {
+		errChan := make(chan error)
+		go func(ch chan error) { // fake channel with nil error
+			ch <- nil
+		}(errChan)
+		return nil, errChan
+	}
 	// fetch all records
 	rrsets, err := r.r53.ListRRSets(r.Zone.Id)
 	if err != nil {
@@ -119,6 +126,22 @@ func (r *Route53Provider) CreateHealthCheck(ip string) (string, error) {
 
 func (r *Route53Provider) DeleteHealthCheck(id string) error {
 	return r.r53.DeleteHealthCheck(id)
+}
+
+func (r *Route53Provider) GetRecordsForIP(ip string) ([]string, error) {
+	rrsets, err := r.r53.ListRRSets(r.Zone.Id)
+	if err != nil {
+		return nil, err
+	}
+	ids := []string{}
+	for _, rrset := range rrsets {
+		for _, value := range rrset.Values {
+			if value == ip {
+				ids = append(ids, rrset.SetIdentifier)
+			}
+		}
+	}
+	return ids, nil
 }
 
 func (r *Route53Provider) Suffix() string {

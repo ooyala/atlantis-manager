@@ -14,6 +14,11 @@ func Register(zone, ip string) (*datamodel.ZkRouter, error) {
 		// if we have no dns provider then just save here
 		return zkRouter, zkRouter.Save()
 	}
+	// first delete all entries we may already have for this IP in DNS
+	err := dns.DeleteRecordsForIP(ip)
+	if err != nil {
+		return nil, err
+	}
 	// choose cname
 	routers, err := datamodel.ListRoutersInZone(zone)
 	if err != nil {
