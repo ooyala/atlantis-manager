@@ -24,7 +24,7 @@ func (r *Route53Provider) createRecords(comment string, rrsets ...route53.RRSet)
 	if err != nil {
 		return err, nil
 	}
-	return nil, r.r53.PollForSync(info.Id, time.Second, 60*time.Second)
+	return nil, info.PollForSync(time.Second, 60*time.Second)
 }
 
 func (r *Route53Provider) CreateAliases(comment string, aliases []Alias) (error, chan error) {
@@ -110,7 +110,7 @@ func (r *Route53Provider) DeleteRecords(comment string, ids ...string) (error, c
 	if err != nil {
 		return err, nil
 	}
-	return nil, r.r53.PollForSync(info.Id, time.Second, 60*time.Second)
+	return nil, info.PollForSync(time.Second, 60*time.Second)
 }
 
 func (r *Route53Provider) CreateHealthCheck(ip string) (string, error) {
