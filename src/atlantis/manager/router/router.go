@@ -7,6 +7,18 @@ import (
 	"atlantis/manager/helper"
 )
 
+// Registering the 4th router in us-east-1a, with IP (say) 10.0.0.4 needs to create the following
+// entries in DNS (route53 in our case), assuming that atlantis.com is the DNS zone delegated to
+// the deployment. Also assume that the deployment spans zones a, b and c in region us-east-1.
+//
+// - An A record for value router4.us-east-1a.atlantis.com pointing at 10.0.0.4
+// - A primary failover A record for value router.us-east-1a.atlantis.com pointing at 10.0.0.4
+// - A secondary failover A record for value router.us-east-1b.atlantis.com pointing to 10.0.0.4
+// - A secondary failover A record for value router.us-east-1c.atlantis.com pointing to 10.0.0.4
+// - A round robin A record for value router.us-east-1.atlantis.com pointing at 10.0.0.4
+//
+// Deleting the router, simply deletes all the records created when adding it.
+
 func Register(zone, ip string) (*datamodel.ZkRouter, error) {
 	// create ZkRouter
 	zkRouter := datamodel.Router(zone, ip)
@@ -42,14 +54,6 @@ func Register(zone, ip string) (*datamodel.ZkRouter, error) {
 	if err != nil {
 		return zkRouter, err
 	}
-	// create the basic entries for the new router
-	// e.g. region is us-east-1 && zone is us-east-1a && there are zones a, b, c, and d && this is the 2nd in a
-	//   create router.us-east-1.<suffix>   primary
-	//   create router2.us-east-1a.<suffix> primary
-	//   create router.us-east-1a.<suffix>  primary
-	//   create router.us-east-1b.<suffix>  secondary
-	//   create router.us-east-1c.<suffix>  secondary
-	//   create router.us-east-1d.<suffix>  secondary
 	zkRouter.RecordIds = make([]string, 3)
 	cnames := make([]dns.CName, 3)
 	// PRIMARY router.<region>.<suffix>
@@ -106,13 +110,6 @@ func Unregister(zone, ip string) error {
 		// if we have no dns provider then just save here
 		return zkRouter.Delete()
 	}
-	// delete the basic entries for the new router
-	// e.g. region is us-east-1 && zone is us-east-1a && there are zones a, b, c, and d && this is the 2nd in a
-	//   delete router2.us-east-1a.<suffix> primary
-	//   delete router.us-east-1a.<suffix>  primary
-	//   delete router.us-east-1b.<suffix>  secondary
-	//   delete router.us-east-1c.<suffix>  secondary
-	//   delete router.us-east-1d.<suffix>  secondary
 	err, errChan := dns.Provider.DeleteRecords("DELETE_ROUTER "+ip+" in "+zone, zkRouter.RecordIds...)
 	if err != nil {
 		return err
