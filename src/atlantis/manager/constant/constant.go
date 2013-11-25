@@ -10,7 +10,7 @@ const (
 	ManagerRPCVersion               = "0.2.0"
 	ManagerAPIVersion               = "0.2.0"
 	DefaultManagerRPCPort           = uint16(1338)
-	DefaultManagerAPIPort           = uint16(8443)
+	DefaultManagerAPIPort           = uint16(443)
 	DefaultManagerKeyPath           = "~/.manager"
 	DefaultResultDuration           = "30m"
 	DefaultMaintenanceFile          = "/etc/atlantis/manager/maint"
