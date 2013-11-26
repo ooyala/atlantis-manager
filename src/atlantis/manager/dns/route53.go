@@ -137,7 +137,7 @@ func (r *Route53Provider) GetRecordsForIP(ip string) ([]string, error) {
 }
 
 func (r *Route53Provider) Suffix() string {
-	return r.Zone.Name
+	return strings.TrimRight(r.Zone.Name, ".")
 }
 
 func NewRoute53Provider(zoneId string, ttl uint) (*Route53Provider, error) {
