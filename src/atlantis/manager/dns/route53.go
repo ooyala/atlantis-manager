@@ -3,6 +3,7 @@ package dns
 import (
 	"github.com/alekar/route53/src/route53"
 	"github.com/crowdmob/goamz/aws"
+	"strings"
 	"time"
 )
 
