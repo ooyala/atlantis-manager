@@ -10,6 +10,7 @@ import (
 type Route53Provider struct {
 	r53  *route53.Route53
 	Zone route53.HostedZone
+	ZoneId string
 	TTL  uint
 }
 
@@ -21,7 +22,7 @@ func (r *Route53Provider) createRecords(comment string, rrsets ...route53.RRSet)
 			RRSet:  rrset,
 		}
 	}
-	info, err := r.r53.ChangeRRSet(r.Zone.Id, changes, comment)
+	info, err := r.r53.ChangeRRSet(r.ZoneId, changes, comment)
 	if err != nil {
 		return err, nil
 	}
@@ -47,7 +48,7 @@ func (r *Route53Provider) CreateAliases(comment string, aliases []Alias) (error,
 	count := 0
 	for _, alias := range aliases {
 		rrsets[count] = r.baseRRSet(alias.Id(), alias.Alias, alias.Failover)
-		rrsets[count].HostedZoneId = r.Zone.Id
+		rrsets[count].HostedZoneId = r.ZoneId
 		rrsets[count].DNSName = alias.Original
 		rrsets[count].EvaluateTargetHealth = true
 		count++
@@ -76,7 +77,7 @@ func (r *Route53Provider) DeleteRecords(comment string, ids ...string) (error, c
 		return nil, errChan
 	}
 	// fetch all records
-	rrsets, err := r.r53.ListRRSets(r.Zone.Id)
+	rrsets, err := r.r53.ListRRSets(r.ZoneId)
 	if err != nil {
 		return err, nil
 	}
@@ -99,7 +100,7 @@ func (r *Route53Provider) DeleteRecords(comment string, ids ...string) (error, c
 			RRSet:  rrset,
 		}
 	}
-	info, err := r.r53.ChangeRRSet(r.Zone.Id, changes, comment)
+	info, err := r.r53.ChangeRRSet(r.ZoneId, changes, comment)
 	if err != nil {
 		return err, nil
 	}
@@ -122,7 +123,7 @@ func (r *Route53Provider) DeleteHealthCheck(id string) error {
 }
 
 func (r *Route53Provider) GetRecordsForIP(ip string) ([]string, error) {
-	rrsets, err := r.r53.ListRRSets(r.Zone.Id)
+	rrsets, err := r.r53.ListRRSets(r.ZoneId)
 	if err != nil {
 		return nil, err
 	}
@@ -152,5 +153,5 @@ func NewRoute53Provider(zoneId string, ttl uint) (*Route53Provider, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Route53Provider{r53: r53, Zone: zone, TTL: ttl}, nil
+	return &Route53Provider{r53: r53, Zone: zone, ZoneId: zoneId, TTL: ttl}, nil
 }
