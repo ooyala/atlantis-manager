@@ -1,7 +1,6 @@
 package manager
 
 import (
-	. "atlantis/common"
 	"atlantis/manager/datamodel"
 	"atlantis/manager/dns"
 	"atlantis/manager/helper"
@@ -21,18 +20,11 @@ func Register(region, ip, managerCName, registryCName string) (*datamodel.ZkMana
 		return tmpManager, errors.New("Already registered.")
 	}
 
-	// check health of to be registered manager
-	health, err := HealthCheck(ip)
-	if err != nil {
-		return nil, err
-	} else if health.Status != StatusOk {
-		return nil, errors.New("Status is " + health.Status)
-	}
-	if region == "" {
-		region = health.Region
-	}
+	// NOTE[jigish]: health check removed because we can't actually do it security-group wise.
+
+	// set up datamodel
 	zkManager := datamodel.Manager(region, ip)
-	err = zkManager.Save()
+	err := zkManager.Save()
 	if err != nil {
 		return zkManager, err
 	}

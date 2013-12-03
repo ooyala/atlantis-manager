@@ -442,6 +442,9 @@ func (e *RegisterManagerExecutor) Execute(t *Task) error {
 	if e.arg.IP == "" {
 		return errors.New("Please specify an IP to register")
 	}
+	if e.arg.Region == "" {
+		return errors.New("Please specify a Region to register")
+	}
 	mgr, err := manager.Register(e.arg.Region, e.arg.IP, e.arg.ManagerCName, e.arg.RegistryCName)
 	castedManager := Manager(*mgr)
 	e.reply.Manager = &castedManager
