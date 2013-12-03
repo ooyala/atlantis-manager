@@ -123,8 +123,8 @@ func RegisterManager(w http.ResponseWriter, r *http.Request) {
 		ManagerAuthArg: auth,
 		IP:             vars["IP"],
 		Region:         vars["Region"],
-		ManagerCName:   vars["ManagerCName"],
-		RegistryCName:  vars["RegistryCName"],
+		ManagerCName:   r.FormValue("ManagerCName"),
+		RegistryCName:  r.FormValue("RegistryCName"),
 	}
 	var reply ManagerRegisterManagerReply
 	err := manager.RegisterManager(arg, &reply)

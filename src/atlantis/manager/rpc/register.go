@@ -39,7 +39,7 @@ func (e *RegisterRouterExecutor) Authorize() error {
 
 func (e *RegisterRouterExecutor) Execute(t *Task) error {
 	if e.arg.IP == "" {
-		return errors.New("Please specify an IP register")
+		return errors.New("Please specify an IP to register")
 	}
 	if e.arg.Zone == "" {
 		return errors.New("Please specify a zone")
@@ -77,7 +77,7 @@ func (e *UnregisterRouterExecutor) Authorize() error {
 
 func (e *UnregisterRouterExecutor) Execute(t *Task) error {
 	if e.arg.IP == "" {
-		return errors.New("Please specify an IP register")
+		return errors.New("Please specify an IP to uregister")
 	}
 	if e.arg.Zone == "" {
 		return errors.New("Please specify a zone")
