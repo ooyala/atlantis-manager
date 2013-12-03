@@ -3,13 +3,12 @@ package supervisor
 import (
 	. "atlantis/supervisor/rpc/client"
 	. "atlantis/supervisor/rpc/types"
-	"fmt"
 )
 
 var Port string
 
-func Init(port uint16) {
-	Port = fmt.Sprintf("%d", port)
+func Init(port string) {
+	Port = port
 }
 
 func Deploy(host, app, sha, env, container string, man *Manifest) (*SupervisorDeployReply, error) {

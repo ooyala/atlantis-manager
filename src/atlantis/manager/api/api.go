@@ -24,7 +24,7 @@ var (
 	serverErrorHTML = "500 internal server error"
 	server          *http.Server
 	lAddr           = ""
-	manager         = new(rpc.Manager)
+	manager         = new(rpc.ManagerRPC)
 	HandlerFunc     = func(h http.Handler) http.Handler {
 		return h
 	}

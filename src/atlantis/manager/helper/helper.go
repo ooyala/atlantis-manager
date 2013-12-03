@@ -77,6 +77,14 @@ func GetBaseManagerPath(args ...string) string {
 	return JoinWithBase(base, args...)
 }
 
+func GetManagerCName(num int, zone, suffix string) string {
+	return fmt.Sprintf("manager%d.%s.%s", num, RegionAndZone(zone), suffix)
+}
+
+func GetRegistryCName(num int, zone, suffix string) string {
+	return fmt.Sprintf("registry%d.%s.%s", num, RegionAndZone(zone), suffix)
+}
+
 func GetBaseDepPath(args ...string) string {
 	switch len(args) {
 	case 0:

@@ -42,6 +42,6 @@ func (e *LoginExecutor) Authorize() error {
 	return nil
 }
 
-func (o *Manager) Login(arg ManagerLoginArg, reply *ManagerLoginReply) error {
+func (m *ManagerRPC) Login(arg ManagerLoginArg, reply *ManagerLoginReply) error {
 	return NewTask("Login", &LoginExecutor{arg, reply}).Run()
 }

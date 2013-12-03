@@ -50,7 +50,7 @@ func Register(zone, ip string) (*datamodel.ZkRouter, error) {
 		zkRouter.CName = helper.GetRouterCName(routerNum, zone, dns.Provider.Suffix())
 	}
 	// create basic health check for router
-	zkRouter.HealthCheckId, err = dns.Provider.CreateHealthCheck(zkRouter.IP)
+	zkRouter.HealthCheckId, err = dns.Provider.CreateHealthCheck(zkRouter.IP, uint16(80))
 	if err != nil {
 		return zkRouter, err
 	}
@@ -58,21 +58,24 @@ func Register(zone, ip string) (*datamodel.ZkRouter, error) {
 	cnames := make([]dns.CName, 3)
 	// PRIMARY router.<region>.<suffix>
 	cnames[0] = dns.CName{
-		CName: helper.GetRegionRouterCName(dns.Provider.Suffix()),
-		IP:    zkRouter.IP,
+		CName:         helper.GetRegionRouterCName(dns.Provider.Suffix()),
+		IP:            zkRouter.IP,
+		HealthCheckId: zkRouter.HealthCheckId,
 	}
 	zkRouter.RecordIds[0] = cnames[0].Id()
 	// PRIMARY routerX.<region+zone>.<suffix>
 	cnames[1] = dns.CName{
-		CName: zkRouter.CName,
-		IP:    zkRouter.IP,
+		CName:         zkRouter.CName,
+		IP:            zkRouter.IP,
+		HealthCheckId: zkRouter.HealthCheckId,
 	}
 	zkRouter.RecordIds[1] = cnames[1].Id()
 	// PRIMARY router.<region+zone>.<suffix>
 	cnames[2] = dns.CName{
-		Failover: "PRIMARY",
-		CName:    helper.GetZoneRouterCName(zkRouter.Zone, dns.Provider.Suffix()),
-		IP:       zkRouter.IP,
+		Failover:      "PRIMARY",
+		CName:         helper.GetZoneRouterCName(zkRouter.Zone, dns.Provider.Suffix()),
+		IP:            zkRouter.IP,
+		HealthCheckId: zkRouter.HealthCheckId,
 	}
 	zkRouter.RecordIds[2] = cnames[2].Id()
 	// SECONDARY router.<region+zone>.<suffix>
@@ -81,9 +84,10 @@ func Register(zone, ip string) (*datamodel.ZkRouter, error) {
 			continue
 		}
 		cname := dns.CName{
-			Failover: "SECONDARY",
-			CName:    helper.GetZoneRouterCName(azone, dns.Provider.Suffix()),
-			IP:       zkRouter.IP,
+			Failover:      "SECONDARY",
+			CName:         helper.GetZoneRouterCName(azone, dns.Provider.Suffix()),
+			IP:            zkRouter.IP,
+			HealthCheckId: zkRouter.HealthCheckId,
 		}
 		zkRouter.RecordIds = append(zkRouter.RecordIds, cname.Id())
 		cnames = append(cnames, cname)

@@ -44,7 +44,7 @@ func (f FakeDNSProvider) GetRecordsForIP(ip string) ([]string, error) {
 	return []string{}, nil
 }
 
-func (f FakeDNSProvider) CreateHealthCheck(ip string) (string, error) {
+func (f FakeDNSProvider) CreateHealthCheck(ip string, port uint16) (string, error) {
 	return "", nil
 }
 

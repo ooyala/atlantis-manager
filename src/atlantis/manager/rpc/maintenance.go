@@ -50,7 +50,7 @@ func (e *ContainerMaintenanceExecutor) Authorize() error {
 	return AuthorizeApp(&e.arg.ManagerAuthArg, instance.App)
 }
 
-func (o *Manager) ContainerMaintenance(arg ManagerContainerMaintenanceArg,
+func (m *ManagerRPC) ContainerMaintenance(arg ManagerContainerMaintenanceArg,
 	reply *ManagerContainerMaintenanceReply) error {
 	return NewTask("ContainerMaintenance", &ContainerMaintenanceExecutor{arg, reply}).Run()
 }
@@ -88,6 +88,6 @@ func (e *IdleExecutor) AllowDuringMaintenance() bool {
 	return true // allow running thus during maintenance
 }
 
-func (o *Manager) Idle(arg ManagerIdleArg, reply *ManagerIdleReply) error {
+func (m *ManagerRPC) Idle(arg ManagerIdleArg, reply *ManagerIdleReply) error {
 	return NewTask("Idle", &IdleExecutor{arg, reply}).Run()
 }

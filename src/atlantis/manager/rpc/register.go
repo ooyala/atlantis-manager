@@ -4,6 +4,7 @@ import (
 	. "atlantis/common"
 	. "atlantis/manager/constant"
 	"atlantis/manager/datamodel"
+	"atlantis/manager/manager"
 	"atlantis/manager/router"
 	. "atlantis/manager/rpc/types"
 	"atlantis/manager/supervisor"
@@ -324,9 +325,6 @@ func (e *RegisterSupervisorExecutor) Execute(t *Task) error {
 	if e.arg.Host == "" {
 		return errors.New("Please specify a host to register")
 	}
-	if _, present := supervisorDie[e.arg.Host]; present {
-		return errors.New("Already registered.")
-	}
 	// check health of to be registered supervisor
 	health, err := supervisor.HealthCheck(e.arg.Host)
 	if err != nil {
@@ -346,7 +344,6 @@ func (e *RegisterSupervisorExecutor) Execute(t *Task) error {
 		return err
 	}
 	e.reply.Status = StatusOk
-	go watchSupervisor(e.arg.Host) // monitor supervisor health
 	return nil
 }
 
@@ -380,10 +377,6 @@ func (e *UnregisterSupervisorExecutor) Execute(t *Task) error {
 	err := datamodel.Host(e.arg.Host).Delete()
 	if err != nil {
 		return err
-	}
-	dieChan, present := supervisorDie[e.arg.Host]
-	if present {
-		dieChan <- true
 	}
 	e.reply.Status = StatusOk
 	return nil
@@ -442,36 +435,22 @@ func (e *RegisterManagerExecutor) Result() interface{} {
 }
 
 func (e *RegisterManagerExecutor) Description() string {
-	return fmt.Sprintf("%s%s in %s", e.arg.Host, lAddr, e.arg.Region)
+	return fmt.Sprintf("%s:%s in %s", e.arg.IP, lPort, e.arg.Region)
 }
 
 func (e *RegisterManagerExecutor) Execute(t *Task) error {
-	if e.arg.Host == "" {
-		return errors.New("Please specify a host to register")
+	if e.arg.IP == "" {
+		return errors.New("Please specify an IP to register")
 	}
-	if _, present := managerDie[e.arg.Host]; present {
-		return errors.New("Already registered.")
-	}
-	// check health of to be registered manager
-	health, err := managerHealthCheck(e.arg.Host)
+	mgr, err := manager.Register(e.arg.Region, e.arg.IP, e.arg.ManagerCName, e.arg.RegistryCName)
+	castedManager := Manager(*mgr)
+	e.reply.Manager = &castedManager
 	if err != nil {
 		e.reply.Status = StatusError
-		return err
-	} else if health.Status != StatusOk {
-		e.reply.Status = health.Status
-		return errors.New("Status is " + health.Status)
+	} else {
+		e.reply.Status = StatusOk
 	}
-	if e.arg.Region == "" {
-		t.Log("[RPC][RegisterManager] -> using health region %s", health.Region)
-		e.arg.Region = health.Region
-	}
-	err = datamodel.Manager(e.arg.Region, e.arg.Host).Touch()
-	if err != nil {
-		return err
-	}
-	e.reply.Status = StatusOk
-	go watchManager(e.arg.Host) // monitor manager health
-	return nil
+	return err
 }
 
 func (e *RegisterManagerExecutor) Authorize() error {
@@ -492,26 +471,23 @@ func (e *UnregisterManagerExecutor) Result() interface{} {
 }
 
 func (e *UnregisterManagerExecutor) Description() string {
-	return fmt.Sprintf("%s%s in %s", e.arg.Host, lAddr, e.arg.Region)
+	return fmt.Sprintf("%s:%s in %s", e.arg.IP, lPort, e.arg.Region)
 }
 
 func (e *UnregisterManagerExecutor) Execute(t *Task) error {
-	if e.arg.Host == "" {
-		return errors.New("Please specify a host to unregister")
+	if e.arg.IP == "" {
+		return errors.New("Please specify an IP to unregister")
 	}
 	if e.arg.Region == "" {
 		return errors.New("Please specify a region to unregister")
 	}
-	err := datamodel.Manager(e.arg.Region, e.arg.Host).Delete()
+	err := manager.Unregister(e.arg.Region, e.arg.IP)
 	if err != nil {
-		return err
+		e.reply.Status = StatusError
+	} else {
+		e.reply.Status = StatusOk
 	}
-	dieChan, present := managerDie[e.arg.Host]
-	if present {
-		dieChan <- true
-	}
-	e.reply.Status = StatusOk
-	return nil
+	return err
 }
 
 func (e *UnregisterManagerExecutor) Authorize() error {
@@ -549,58 +525,58 @@ func (e *ListManagersExecutor) Authorize() error {
 	return SimpleAuthorize(&e.arg.ManagerAuthArg)
 }
 
-func (o *Manager) RegisterRouter(arg ManagerRegisterRouterArg, reply *ManagerRegisterRouterReply) error {
+func (m *ManagerRPC) RegisterRouter(arg ManagerRegisterRouterArg, reply *ManagerRegisterRouterReply) error {
 	return NewTask("RegisterRouter", &RegisterRouterExecutor{arg, reply}).Run()
 }
 
-func (o *Manager) UnregisterRouter(arg ManagerRegisterRouterArg, reply *ManagerRegisterRouterReply) error {
+func (m *ManagerRPC) UnregisterRouter(arg ManagerRegisterRouterArg, reply *ManagerRegisterRouterReply) error {
 	return NewTask("UnregisterRouter", &UnregisterRouterExecutor{arg, reply}).Run()
 }
 
-func (o *Manager) GetRouter(arg ManagerGetRouterArg, reply *ManagerGetRouterReply) error {
+func (m *ManagerRPC) GetRouter(arg ManagerGetRouterArg, reply *ManagerGetRouterReply) error {
 	return NewTask("GetRouter", &GetRouterExecutor{arg, reply}).Run()
 }
 
-func (o *Manager) ListRouters(arg ManagerListRoutersArg, reply *ManagerListRoutersReply) error {
+func (m *ManagerRPC) ListRouters(arg ManagerListRoutersArg, reply *ManagerListRoutersReply) error {
 	return NewTask("ListRouters", &ListRoutersExecutor{arg, reply}).Run()
 }
 
-func (o *Manager) RegisterApp(arg ManagerRegisterAppArg, reply *ManagerRegisterAppReply) error {
+func (m *ManagerRPC) RegisterApp(arg ManagerRegisterAppArg, reply *ManagerRegisterAppReply) error {
 	return NewTask("RegisterApp", &RegisterAppExecutor{arg, reply}).Run()
 }
 
-func (o *Manager) UnregisterApp(arg ManagerRegisterAppArg, reply *ManagerRegisterAppReply) error {
+func (m *ManagerRPC) UnregisterApp(arg ManagerRegisterAppArg, reply *ManagerRegisterAppReply) error {
 	return NewTask("UnregisterApp", &UnregisterAppExecutor{arg, reply}).Run()
 }
 
-func (o *Manager) GetApp(arg ManagerGetAppArg, reply *ManagerGetAppReply) error {
+func (m *ManagerRPC) GetApp(arg ManagerGetAppArg, reply *ManagerGetAppReply) error {
 	return NewTask("GetApp", &GetAppExecutor{arg, reply}).Run()
 }
 
-func (o *Manager) ListRegisteredApps(arg ManagerListRegisteredAppsArg, reply *ManagerListRegisteredAppsReply) error {
+func (m *ManagerRPC) ListRegisteredApps(arg ManagerListRegisteredAppsArg, reply *ManagerListRegisteredAppsReply) error {
 	return NewTask("ListRegisteredApps", &ListRegisteredAppsExecutor{arg, reply}).Run()
 }
 
-func (o *Manager) RegisterSupervisor(arg ManagerRegisterSupervisorArg, reply *ManagerRegisterSupervisorReply) error {
+func (m *ManagerRPC) RegisterSupervisor(arg ManagerRegisterSupervisorArg, reply *ManagerRegisterSupervisorReply) error {
 	return NewTask("RegisterSupervisor", &RegisterSupervisorExecutor{arg, reply}).Run()
 }
 
-func (o *Manager) UnregisterSupervisor(arg ManagerRegisterSupervisorArg, reply *ManagerRegisterSupervisorReply) error {
+func (m *ManagerRPC) UnregisterSupervisor(arg ManagerRegisterSupervisorArg, reply *ManagerRegisterSupervisorReply) error {
 	return NewTask("UnregisterSupervisor", &UnregisterSupervisorExecutor{arg, reply}).Run()
 }
 
-func (o *Manager) ListSupervisors(arg ManagerListSupervisorsArg, reply *ManagerListSupervisorsReply) error {
+func (m *ManagerRPC) ListSupervisors(arg ManagerListSupervisorsArg, reply *ManagerListSupervisorsReply) error {
 	return NewTask("ListSupervisors", &ListSupervisorsExecutor{arg, reply}).Run()
 }
 
-func (o *Manager) RegisterManager(arg ManagerRegisterManagerArg, reply *ManagerRegisterManagerReply) error {
+func (m *ManagerRPC) RegisterManager(arg ManagerRegisterManagerArg, reply *ManagerRegisterManagerReply) error {
 	return NewTask("RegisterManager", &RegisterManagerExecutor{arg, reply}).Run()
 }
 
-func (o *Manager) UnregisterManager(arg ManagerRegisterManagerArg, reply *ManagerRegisterManagerReply) error {
+func (m *ManagerRPC) UnregisterManager(arg ManagerRegisterManagerArg, reply *ManagerRegisterManagerReply) error {
 	return NewTask("UnregisterManager", &UnregisterManagerExecutor{arg, reply}).Run()
 }
 
-func (o *Manager) ListManagers(arg ManagerListManagersArg, reply *ManagerListManagersReply) error {
+func (m *ManagerRPC) ListManagers(arg ManagerListManagersArg, reply *ManagerListManagersReply) error {
 	return NewTask("ListManagers", &ListManagersExecutor{arg, reply}).Run()
 }

@@ -5,7 +5,7 @@ import (
 	"errors"
 )
 
-func (o *Manager) Status(id string, status *TaskStatus) error {
+func (m *ManagerRPC) Status(id string, status *TaskStatus) error {
 	if id == "" {
 		return errors.New("Id empty")
 	}

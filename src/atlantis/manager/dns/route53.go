@@ -106,11 +106,11 @@ func (r *Route53Provider) DeleteRecords(comment string, ids ...string) (error, c
 	return nil, info.PollForSync(time.Second, 60*time.Second)
 }
 
-func (r *Route53Provider) CreateHealthCheck(ip string) (string, error) {
+func (r *Route53Provider) CreateHealthCheck(ip string, port uint16) (string, error) {
 	// health check to make sure TCP 80 is reachable
 	config := route53.HealthCheckConfig{
 		IPAddress: ip,
-		Port:      80,
+		Port:      port,
 		Type:      "TCP",
 	}
 	// add health check for ip, return health check id

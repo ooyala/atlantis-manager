@@ -91,7 +91,7 @@ func (e *DeployExecutor) Execute(t *Task) error {
 	return err
 }
 
-func (o *Manager) Deploy(arg ManagerDeployArg, reply *AsyncReply) error {
+func (m *ManagerRPC) Deploy(arg ManagerDeployArg, reply *AsyncReply) error {
 	return NewTask("Deploy", &DeployExecutor{arg, &ManagerDeployReply{}}).RunAsync(reply)
 }
 
@@ -136,7 +136,7 @@ func (e *CopyContainerExecutor) Execute(t *Task) error {
 	return err
 }
 
-func (o *Manager) CopyContainer(arg ManagerCopyContainerArg, reply *AsyncReply) error {
+func (m *ManagerRPC) CopyContainer(arg ManagerCopyContainerArg, reply *AsyncReply) error {
 	return NewTask("CopyContainer", &CopyContainerExecutor{arg, &ManagerDeployReply{}}).RunAsync(reply)
 }
 
@@ -179,7 +179,7 @@ func (e *MoveContainerExecutor) Execute(t *Task) error {
 	return err
 }
 
-func (o *Manager) MoveContainer(arg ManagerMoveContainerArg, reply *AsyncReply) error {
+func (m *ManagerRPC) MoveContainer(arg ManagerMoveContainerArg, reply *AsyncReply) error {
 	return NewTask("MoveContainer", &MoveContainerExecutor{arg, &ManagerDeployReply{}}).RunAsync(reply)
 }
 
@@ -217,7 +217,7 @@ func (e *ResolveDepsExecutor) Execute(t *Task) error {
 	return nil
 }
 
-func (o *Manager) ResolveDeps(arg ManagerResolveDepsArg, reply *ManagerResolveDepsReply) error {
+func (m *ManagerRPC) ResolveDeps(arg ManagerResolveDepsArg, reply *ManagerResolveDepsReply) error {
 	return NewTask("ResolveDeps", &ResolveDepsExecutor{arg, reply}).Run()
 }
 
@@ -316,11 +316,11 @@ func (e *TeardownExecutor) Execute(t *Task) error {
 	return nil
 }
 
-func (o *Manager) Teardown(arg ManagerTeardownArg, reply *AsyncReply) error {
+func (m *ManagerRPC) Teardown(arg ManagerTeardownArg, reply *AsyncReply) error {
 	return NewTask("Teardown", &TeardownExecutor{arg, &ManagerTeardownReply{}}).RunAsync(reply)
 }
 
-func (o *Manager) DeployResult(id string, result *ManagerDeployReply) error {
+func (m *ManagerRPC) DeployResult(id string, result *ManagerDeployReply) error {
 	if id == "" {
 		return errors.New("ID empty")
 	}
@@ -348,7 +348,7 @@ func (o *Manager) DeployResult(id string, result *ManagerDeployReply) error {
 	return nil
 }
 
-func (o *Manager) TeardownResult(id string, result *ManagerTeardownReply) error {
+func (m *ManagerRPC) TeardownResult(id string, result *ManagerTeardownReply) error {
 	if id == "" {
 		return errors.New("ID empty")
 	}

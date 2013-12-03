@@ -312,15 +312,15 @@ func (e *GetEnvExecutor) Authorize() error {
 	return SimpleAuthorize(&e.arg.ManagerAuthArg)
 }
 
-func (o *Manager) UpdateEnv(arg ManagerEnvArg, reply *ManagerEnvReply) error {
+func (m *ManagerRPC) UpdateEnv(arg ManagerEnvArg, reply *ManagerEnvReply) error {
 	return NewTask("UpdateEnv", &UpdateEnvExecutor{arg, reply}).Run()
 }
 
-func (o *Manager) DeleteEnv(arg ManagerEnvArg, reply *ManagerEnvReply) error {
+func (m *ManagerRPC) DeleteEnv(arg ManagerEnvArg, reply *ManagerEnvReply) error {
 	return NewTask("DeleteEnv", &DeleteEnvExecutor{arg, reply}).Run()
 }
 
-func (o *Manager) GetEnv(arg ManagerEnvArg, reply *ManagerEnvReply) error {
+func (m *ManagerRPC) GetEnv(arg ManagerEnvArg, reply *ManagerEnvReply) error {
 	return NewTask("GetEnv", &GetEnvExecutor{arg, reply}).Run()
 }
 
@@ -476,14 +476,14 @@ func (e *GetDepExecutor) Authorize() error {
 	return SimpleAuthorize(&e.arg.ManagerAuthArg)
 }
 
-func (o *Manager) UpdateDep(arg ManagerDepArg, reply *ManagerDepReply) error {
+func (m *ManagerRPC) UpdateDep(arg ManagerDepArg, reply *ManagerDepReply) error {
 	return NewTask("UpdateDep", &UpdateDepExecutor{arg, reply}).Run()
 }
 
-func (o *Manager) DeleteDep(arg ManagerDepArg, reply *ManagerDepReply) error {
+func (m *ManagerRPC) DeleteDep(arg ManagerDepArg, reply *ManagerDepReply) error {
 	return NewTask("DeleteDep", &DeleteDepExecutor{arg, reply}).Run()
 }
 
-func (o *Manager) GetDep(arg ManagerDepArg, reply *ManagerDepReply) error {
+func (m *ManagerRPC) GetDep(arg ManagerDepArg, reply *ManagerDepReply) error {
 	return NewTask("GetDep", &GetDepExecutor{arg, reply}).Run()
 }

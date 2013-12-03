@@ -19,6 +19,17 @@ type Router struct {
 	RecordIds     []string
 }
 
+type Manager struct {
+	Region                string
+	IP                    string
+	ManagerCName          string
+	ManagerHealthCheckId  string
+	ManagerRecordId       string
+	RegistryCName         string
+	RegistryHealthCheckId string
+	RegistryRecordId      string
+}
+
 // Manager RPC Types
 
 // ------------ Health Check ------------
@@ -47,12 +58,15 @@ type ManagerRegisterSupervisorReply struct {
 // Used to register an Manager
 type ManagerRegisterManagerArg struct {
 	ManagerAuthArg
-	Host   string
-	Region string
+	IP            string
+	Region        string
+	ManagerCName  string
+	RegistryCName string
 }
 
 type ManagerRegisterManagerReply struct {
-	Status string
+	Status  string
+	Manager *Manager
 }
 
 // ------------ Register App ------------

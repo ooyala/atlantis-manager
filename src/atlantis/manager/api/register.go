@@ -119,7 +119,13 @@ func ListManagers(w http.ResponseWriter, r *http.Request) {
 func RegisterManager(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
-	arg := ManagerRegisterManagerArg{auth, vars["Host"], vars["Region"]}
+	arg := ManagerRegisterManagerArg{
+		ManagerAuthArg: auth,
+		IP:             vars["IP"],
+		Region:         vars["Region"],
+		ManagerCName:   vars["ManagerCName"],
+		RegistryCName:  vars["RegistryCName"],
+	}
 	var reply ManagerRegisterManagerReply
 	err := manager.RegisterManager(arg, &reply)
 	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Status": reply.Status}, err))
@@ -128,7 +134,7 @@ func RegisterManager(w http.ResponseWriter, r *http.Request) {
 func UnregisterManager(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
-	arg := ManagerRegisterManagerArg{auth, vars["Host"], vars["Region"]}
+	arg := ManagerRegisterManagerArg{ManagerAuthArg: auth, IP: vars["IP"], Region: vars["Region"]}
 	var reply ManagerRegisterManagerReply
 	err := manager.UnregisterManager(arg, &reply)
 	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Status": reply.Status}, err))

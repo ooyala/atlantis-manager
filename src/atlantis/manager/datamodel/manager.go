@@ -2,36 +2,43 @@ package datamodel
 
 import (
 	"atlantis/manager/helper"
+	"atlantis/manager/rpc/types"
 	"log"
 )
 
-type ZkManager struct {
-	region string
-	host   string
+type ZkManager types.Manager
+
+func Manager(region, ip string) *ZkManager {
+	return &ZkManager{Region: region, IP: ip}
 }
 
-func Manager(region, host string) *ZkManager {
-	return &ZkManager{region, host}
-}
-
-func (o *ZkManager) Touch() error {
-	_, err := Zk.Touch(o.path())
-	return err
+func (m *ZkManager) Save() error {
+	return setJson(m.path(), m)
 }
 
 // Delete the manager node and all children (don't realy need DelDir here but there isn't much overhead)
-func (o *ZkManager) Delete() error {
-	if err := Zk.RecursiveDelete(o.path()); err != nil {
+func (m *ZkManager) Delete() error {
+	if err := Zk.RecursiveDelete(m.path()); err != nil {
 		return err
 	}
-	managers, err := ListManagersInRegion(o.region)
+	managers, err := ListManagersInRegion(m.Region)
 	if err == nil && managers != nil && len(managers) == 0 {
-		Zk.RecursiveDelete(helper.GetBaseManagerPath(o.region))
+		Zk.RecursiveDelete(helper.GetBaseManagerPath(m.Region))
 	} else if err != nil {
 		log.Printf("Warning: clean up fail during managers delete: %s", err)
 		// this is extra, no need to return the error if we couldn't get them
 	}
 	return nil
+}
+
+func GetManager(region, ip string) (zm *ZkManager, err error) {
+	zm = &ZkManager{}
+	err = getJson(helper.GetBaseManagerPath(region, ip), zm)
+	return
+}
+
+func (m *ZkManager) path() string {
+	return helper.GetBaseManagerPath(m.Region, m.IP)
 }
 
 func ListRegions() (regions []string, err error) {
@@ -73,8 +80,4 @@ func ListManagers() (managers map[string][]string, err error) {
 		}
 	}
 	return
-}
-
-func (o *ZkManager) path() string {
-	return helper.GetBaseManagerPath(o.region, o.host)
 }

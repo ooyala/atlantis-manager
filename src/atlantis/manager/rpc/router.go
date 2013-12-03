@@ -157,19 +157,19 @@ func (e *ListPoolsExecutor) Authorize() error {
 	return SimpleAuthorize(&e.arg.ManagerAuthArg)
 }
 
-func (o *Manager) UpdatePool(arg ManagerUpdatePoolArg, reply *ManagerUpdatePoolReply) error {
+func (m *ManagerRPC) UpdatePool(arg ManagerUpdatePoolArg, reply *ManagerUpdatePoolReply) error {
 	return NewTask("UpdatePool", &UpdatePoolExecutor{arg, reply}).Run()
 }
 
-func (o *Manager) DeletePool(arg ManagerDeletePoolArg, reply *ManagerDeletePoolReply) error {
+func (m *ManagerRPC) DeletePool(arg ManagerDeletePoolArg, reply *ManagerDeletePoolReply) error {
 	return NewTask("DeletePool", &DeletePoolExecutor{arg, reply}).Run()
 }
 
-func (o *Manager) GetPool(arg ManagerGetPoolArg, reply *ManagerGetPoolReply) error {
+func (m *ManagerRPC) GetPool(arg ManagerGetPoolArg, reply *ManagerGetPoolReply) error {
 	return NewTask("GetPool", &GetPoolExecutor{arg, reply}).Run()
 }
 
-func (o *Manager) ListPools(arg ManagerListPoolsArg, reply *ManagerListPoolsReply) error {
+func (m *ManagerRPC) ListPools(arg ManagerListPoolsArg, reply *ManagerListPoolsReply) error {
 	return NewTask("ListPools", &ListPoolsExecutor{arg, reply}).Run()
 }
 
@@ -320,19 +320,19 @@ func (e *ListRulesExecutor) Authorize() error {
 	return SimpleAuthorize(&e.arg.ManagerAuthArg)
 }
 
-func (o *Manager) UpdateRule(arg ManagerUpdateRuleArg, reply *ManagerUpdateRuleReply) error {
+func (m *ManagerRPC) UpdateRule(arg ManagerUpdateRuleArg, reply *ManagerUpdateRuleReply) error {
 	return NewTask("UpdateRule", &UpdateRuleExecutor{arg, reply}).Run()
 }
 
-func (o *Manager) DeleteRule(arg ManagerDeleteRuleArg, reply *ManagerDeleteRuleReply) error {
+func (m *ManagerRPC) DeleteRule(arg ManagerDeleteRuleArg, reply *ManagerDeleteRuleReply) error {
 	return NewTask("DeleteRule", &DeleteRuleExecutor{arg, reply}).Run()
 }
 
-func (o *Manager) GetRule(arg ManagerGetRuleArg, reply *ManagerGetRuleReply) error {
+func (m *ManagerRPC) GetRule(arg ManagerGetRuleArg, reply *ManagerGetRuleReply) error {
 	return NewTask("GetRule", &GetRuleExecutor{arg, reply}).Run()
 }
 
-func (o *Manager) ListRules(arg ManagerListRulesArg, reply *ManagerListRulesReply) error {
+func (m *ManagerRPC) ListRules(arg ManagerListRulesArg, reply *ManagerListRulesReply) error {
 	return NewTask("ListRules", &ListRulesExecutor{arg, reply}).Run()
 }
 
@@ -477,18 +477,18 @@ func (e *ListTriesExecutor) Authorize() error {
 	return SimpleAuthorize(&e.arg.ManagerAuthArg)
 }
 
-func (o *Manager) UpdateTrie(arg ManagerUpdateTrieArg, reply *ManagerUpdateTrieReply) error {
+func (m *ManagerRPC) UpdateTrie(arg ManagerUpdateTrieArg, reply *ManagerUpdateTrieReply) error {
 	return NewTask("UpdateTrie", &UpdateTrieExecutor{arg, reply}).Run()
 }
 
-func (o *Manager) DeleteTrie(arg ManagerDeleteTrieArg, reply *ManagerDeleteTrieReply) error {
+func (m *ManagerRPC) DeleteTrie(arg ManagerDeleteTrieArg, reply *ManagerDeleteTrieReply) error {
 	return NewTask("DeleteTrie", &DeleteTrieExecutor{arg, reply}).Run()
 }
 
-func (o *Manager) GetTrie(arg ManagerGetTrieArg, reply *ManagerGetTrieReply) error {
+func (m *ManagerRPC) GetTrie(arg ManagerGetTrieArg, reply *ManagerGetTrieReply) error {
 	return NewTask("GetTrie", &GetTrieExecutor{arg, reply}).Run()
 }
 
-func (o *Manager) ListTries(arg ManagerListTriesArg, reply *ManagerListTriesReply) error {
+func (m *ManagerRPC) ListTries(arg ManagerListTriesArg, reply *ManagerListTriesReply) error {
 	return NewTask("ListTries", &ListTriesExecutor{arg, reply}).Run()
 }

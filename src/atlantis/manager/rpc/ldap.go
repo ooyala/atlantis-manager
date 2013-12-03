@@ -113,11 +113,11 @@ func (e *DeleteTeamExecutor) Authorize() error {
 	return AuthorizeTeamAdmin(&e.arg.ManagerAuthArg, e.arg.Team)
 }
 
-func (o *Manager) CreateTeam(arg ManagerTeamArg, reply *ManagerTeamReply) error {
+func (m *ManagerRPC) CreateTeam(arg ManagerTeamArg, reply *ManagerTeamReply) error {
 	return NewTask("CreateTeam", &CreateTeamExecutor{arg, reply}).Run()
 }
 
-func (o *Manager) DeleteTeam(arg ManagerTeamArg, reply *ManagerTeamReply) error {
+func (m *ManagerRPC) DeleteTeam(arg ManagerTeamArg, reply *ManagerTeamReply) error {
 	return NewTask("DeleteTeam", &DeleteTeamExecutor{arg, reply}).Run()
 }
 
@@ -200,11 +200,11 @@ func ModifyTeamEmail(action int, arg ManagerEmailArg, reply *ManagerEmailReply) 
 	return nil
 }
 
-func (o *Manager) AddTeamEmail(arg ManagerEmailArg, reply *ManagerEmailReply) error {
+func (m *ManagerRPC) AddTeamEmail(arg ManagerEmailArg, reply *ManagerEmailReply) error {
 	return NewTask("AddTeamEmail", &AddTeamEmailExecutor{arg, reply}).Run()
 }
 
-func (o *Manager) RemoveTeamEmail(arg ManagerEmailArg, reply *ManagerEmailReply) error {
+func (m *ManagerRPC) RemoveTeamEmail(arg ManagerEmailArg, reply *ManagerEmailReply) error {
 	return NewTask("RemoveTeamEmail", &RemoveTeamEmailExecutor{arg, reply}).Run()
 }
 
@@ -297,11 +297,11 @@ func ModifyTeamAdmin(action int, arg ManagerModifyTeamAdminArg, reply *ManagerMo
 	return nil
 }
 
-func (o *Manager) AddTeamAdmin(arg ManagerModifyTeamAdminArg, reply *ManagerModifyTeamAdminReply) error {
+func (m *ManagerRPC) AddTeamAdmin(arg ManagerModifyTeamAdminArg, reply *ManagerModifyTeamAdminReply) error {
 	return NewTask("AddTeamAdmin", &AddTeamAdminExecutor{arg, reply}).Run()
 }
 
-func (o *Manager) RemoveTeamAdmin(arg ManagerModifyTeamAdminArg, reply *ManagerModifyTeamAdminReply) error {
+func (m *ManagerRPC) RemoveTeamAdmin(arg ManagerModifyTeamAdminArg, reply *ManagerModifyTeamAdminReply) error {
 	return NewTask("RemoveTeamAdmin", &RemoveTeamAdminExecutor{arg, reply}).Run()
 }
 
@@ -380,11 +380,11 @@ func ModifyTeamMember(action int, arg ManagerTeamMemberArg, reply *ManagerTeamMe
 	return nil
 }
 
-func (o *Manager) AddTeamMember(arg ManagerTeamMemberArg, reply *ManagerTeamMemberReply) error {
+func (m *ManagerRPC) AddTeamMember(arg ManagerTeamMemberArg, reply *ManagerTeamMemberReply) error {
 	return NewTask("AddTeamMember", &AddTeamMemberExecutor{arg, reply}).Run()
 }
 
-func (o *Manager) RemoveTeamMember(arg ManagerTeamMemberArg, reply *ManagerTeamMemberReply) error {
+func (m *ManagerRPC) RemoveTeamMember(arg ManagerTeamMemberArg, reply *ManagerTeamMemberReply) error {
 	return NewTask("RemoveTeamMember", &RemoveTeamMemberExecutor{arg, reply}).Run()
 }
 
@@ -418,7 +418,7 @@ func (e *ListTeamsExecutor) Authorize() error {
 	return SimpleAuthorize(&e.arg.ManagerAuthArg)
 }
 
-func (o *Manager) ListTeams(arg ManagerListTeamsArg, reply *ManagerListTeamsReply) error {
+func (m *ManagerRPC) ListTeams(arg ManagerListTeamsArg, reply *ManagerListTeamsReply) error {
 	return NewTask("ListTeams", &ListTeamsExecutor{arg, reply}).Run()
 }
 
@@ -448,7 +448,7 @@ func (e *ListTeamEmailsExecutor) Authorize() error {
 	return SimpleAuthorize(&e.arg.ManagerAuthArg)
 }
 
-func (o *Manager) ListTeamEmails(arg ManagerListTeamEmailsArg, reply *ManagerListTeamEmailsReply) error {
+func (m *ManagerRPC) ListTeamEmails(arg ManagerListTeamEmailsArg, reply *ManagerListTeamEmailsReply) error {
 	return NewTask("ListTeamEmails", &ListTeamEmailsExecutor{arg, reply}).Run()
 }
 
@@ -478,7 +478,7 @@ func (e *ListTeamAdminsExecutor) Authorize() error {
 	return SimpleAuthorize(&e.arg.ManagerAuthArg)
 }
 
-func (o *Manager) ListTeamAdmins(arg ManagerListTeamAdminsArg, reply *ManagerListTeamAdminsReply) error {
+func (m *ManagerRPC) ListTeamAdmins(arg ManagerListTeamAdminsArg, reply *ManagerListTeamAdminsReply) error {
 	return NewTask("ListTeamAdmins", &ListTeamAdminsExecutor{arg, reply}).Run()
 }
 
@@ -508,7 +508,7 @@ func (e *ListTeamMembersExecutor) Authorize() error {
 	return SimpleAuthorize(&e.arg.ManagerAuthArg)
 }
 
-func (o *Manager) ListTeamMembers(arg ManagerListTeamMembersArg, reply *ManagerListTeamMembersReply) error {
+func (m *ManagerRPC) ListTeamMembers(arg ManagerListTeamMembersArg, reply *ManagerListTeamMembersReply) error {
 	return NewTask("ListTeamMembers", &ListTeamMembersExecutor{arg, reply}).Run()
 }
 
@@ -538,7 +538,7 @@ func (e *ListTeamAppsExecutor) Authorize() error {
 	return SimpleAuthorize(&e.arg.ManagerAuthArg)
 }
 
-func (o *Manager) ListTeamApps(arg ManagerListTeamAppsArg, reply *ManagerListTeamAppsReply) error {
+func (m *ManagerRPC) ListTeamApps(arg ManagerListTeamAppsArg, reply *ManagerListTeamAppsReply) error {
 	return NewTask("ListTeamApps", &ListTeamAppsExecutor{arg, reply}).Run()
 }
 
@@ -636,11 +636,11 @@ func (e *DisallowAppExecutor) Authorize() error {
 	return AuthorizeTeamAdmin(&e.arg.ManagerAuthArg, e.arg.Team)
 }
 
-func (o *Manager) AllowApp(arg ManagerAppArg, reply *ManagerAppReply) error {
+func (m *ManagerRPC) AllowApp(arg ManagerAppArg, reply *ManagerAppReply) error {
 	return NewTask("AllowApp", &AllowAppExecutor{arg, reply}).Run()
 }
 
-func (o *Manager) DisallowApp(arg ManagerAppArg, reply *ManagerAppReply) error {
+func (m *ManagerRPC) DisallowApp(arg ManagerAppArg, reply *ManagerAppReply) error {
 	return NewTask("DisallowApp", &DisallowAppExecutor{arg, reply}).Run()
 }
 
@@ -831,15 +831,15 @@ func (e *IsSuperUserExecutor) Authorize() error {
 	return nil
 }
 
-func (o *Manager) HasAppPermissions(arg ManagerAppPermissionsArg, reply *ManagerAppPermissionsReply) error {
+func (m *ManagerRPC) HasAppPermissions(arg ManagerAppPermissionsArg, reply *ManagerAppPermissionsReply) error {
 	return NewTask("HasAppPermissions", &HasAppPermissionsExecutor{arg, reply}).Run()
 }
 
-func (o *Manager) IsTeamAdmin(arg ManagerTeamAdminArg, reply *ManagerTeamAdminReply) error {
+func (m *ManagerRPC) IsTeamAdmin(arg ManagerTeamAdminArg, reply *ManagerTeamAdminReply) error {
 	return NewTask("IsTeamAdmin", &IsTeamAdminExecutor{arg, reply}).Run()
 }
 
-func (o *Manager) IsSuperUser(arg ManagerSuperUserArg, reply *ManagerSuperUserReply) error {
+func (m *ManagerRPC) IsSuperUser(arg ManagerSuperUserArg, reply *ManagerSuperUserReply) error {
 	return NewTask("IsSuperUser", &IsSuperUserExecutor{arg, reply}).Run()
 }
 

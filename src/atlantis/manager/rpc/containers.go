@@ -52,7 +52,7 @@ func (e *GetContainerExecutor) Authorize() error {
 	return SimpleAuthorize(&e.arg.ManagerAuthArg)
 }
 
-func (o *Manager) GetContainer(arg ManagerGetContainerArg, reply *ManagerGetContainerReply) error {
+func (m *ManagerRPC) GetContainer(arg ManagerGetContainerArg, reply *ManagerGetContainerReply) error {
 	return NewTask("GetContainer", &GetContainerExecutor{arg, reply}).Run()
 }
 
@@ -111,7 +111,7 @@ func (e *ListContainersExecutor) Authorize() error {
 	return AuthorizeApp(&e.arg.ManagerAuthArg, e.arg.App)
 }
 
-func (o *Manager) ListContainers(arg ManagerListContainersArg, reply *ManagerListContainersReply) error {
+func (m *ManagerRPC) ListContainers(arg ManagerListContainersArg, reply *ManagerListContainersReply) error {
 	return NewTask("ListContainers", &ListContainersExecutor{arg, reply}).Run()
 }
 
@@ -157,7 +157,7 @@ func (e *ListEnvsExecutor) Authorize() error {
 	return AuthorizeApp(&e.arg.ManagerAuthArg, e.arg.App)
 }
 
-func (o *Manager) ListEnvs(arg ManagerListEnvsArg, reply *ManagerListEnvsReply) error {
+func (m *ManagerRPC) ListEnvs(arg ManagerListEnvsArg, reply *ManagerListEnvsReply) error {
 	return NewTask("ListEnvs", &ListEnvsExecutor{arg, reply}).Run()
 }
 
@@ -195,7 +195,7 @@ func (e *ListShasExecutor) Authorize() error {
 	return AuthorizeApp(&e.arg.ManagerAuthArg, e.arg.App)
 }
 
-func (o *Manager) ListShas(arg ManagerListShasArg, reply *ManagerListShasReply) error {
+func (m *ManagerRPC) ListShas(arg ManagerListShasArg, reply *ManagerListShasReply) error {
 	return NewTask("ListShas", &ListShasExecutor{arg, reply}).Run()
 }
 
@@ -246,6 +246,6 @@ func (e *ListAppsExecutor) Authorize() error {
 	return SimpleAuthorize(&e.arg.ManagerAuthArg)
 }
 
-func (o *Manager) ListApps(arg ManagerListAppsArg, reply *ManagerListAppsReply) error {
+func (m *ManagerRPC) ListApps(arg ManagerListAppsArg, reply *ManagerListAppsReply) error {
 	return NewTask("ListApps", &ListAppsExecutor{arg, reply}).Run()
 }

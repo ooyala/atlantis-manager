@@ -94,10 +94,10 @@ func (e *DeauthorizeSSHExecutor) Authorize() error {
 	return nil
 }
 
-func (o *Manager) AuthorizeSSH(arg ManagerAuthorizeSSHArg, reply *ManagerAuthorizeSSHReply) error {
+func (m *ManagerRPC) AuthorizeSSH(arg ManagerAuthorizeSSHArg, reply *ManagerAuthorizeSSHReply) error {
 	return NewTask("AuthorizeSSH", &AuthorizeSSHExecutor{arg, reply}).Run()
 }
 
-func (o *Manager) DeauthorizeSSH(arg ManagerAuthorizeSSHArg, reply *ManagerAuthorizeSSHReply) error {
+func (m *ManagerRPC) DeauthorizeSSH(arg ManagerAuthorizeSSHArg, reply *ManagerAuthorizeSSHReply) error {
 	return NewTask("DeauthorizeSSH", &DeauthorizeSSHExecutor{arg, reply}).Run()
 }

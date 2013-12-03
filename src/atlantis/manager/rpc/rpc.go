@@ -3,18 +3,22 @@ package rpc
 import (
 	atlantis "atlantis/common"
 	"atlantis/manager/crypto"
+	"atlantis/manager/manager"
 	"atlantis/manager/supervisor"
 	"crypto/tls"
+	"fmt"
 	"log"
 	"net"
 	"net/rpc"
+	"strings"
 	"time"
 )
 
-type Manager bool
+type ManagerRPC bool
 
 var (
 	lAddr                string
+	lPort                string
 	l                    net.Listener
 	server               *rpc.Server
 	config               *tls.Config
@@ -33,8 +37,10 @@ func Init(listenAddr string, supervisorPort uint16, cpuIncr, memIncr uint, resDu
 	atlantis.Tracker.ResultDuration = resDuration
 	// init rpc stuff here
 	lAddr = listenAddr
-	supervisor.Init(supervisorPort)
-	manager := new(Manager)
+	lPort = strings.Split(lAddr, ":")[1]
+	supervisor.Init(fmt.Sprintf("%d", supervisorPort))
+	manager.Init(lPort)
+	manager := new(ManagerRPC)
 	server = rpc.NewServer()
 	server.Register(manager)
 	config := &tls.Config{}

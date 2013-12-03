@@ -14,7 +14,7 @@ type DNSProvider interface {
 	CreateCNames(string, []CName) (error, chan error)
 	GetRecordsForIP(string) ([]string, error)
 	DeleteRecords(string, ...string) (error, chan error)
-	CreateHealthCheck(string) (string, error)
+	CreateHealthCheck(string, uint16) (string, error)
 	DeleteHealthCheck(string) error
 	Suffix() string
 }

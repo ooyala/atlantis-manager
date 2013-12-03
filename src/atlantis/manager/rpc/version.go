@@ -38,6 +38,6 @@ func (e *VersionExecutor) AllowDuringMaintenance() bool {
 	return true
 }
 
-func (o *Manager) Version(arg VersionArg, reply *VersionReply) error {
+func (m *ManagerRPC) Version(arg VersionArg, reply *VersionReply) error {
 	return NewTask("Version", &VersionExecutor{arg, reply}).Run()
 }
