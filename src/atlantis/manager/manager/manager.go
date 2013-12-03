@@ -132,24 +132,37 @@ func Unregister(region, ip string) error {
 		// if we have no dns provider then just save here
 		return zkManager.Delete()
 	}
-	err, errChan := dns.Provider.DeleteRecords("DELETE_MANAGER "+ip+" in "+region, zkManager.ManagerRecordId,
-		zkManager.RegistryRecordId)
-	if err != nil {
-		return err
+	records := []string{}
+	if zkManager.ManagerRecordId != "" {
+		records = append(records, zkManager.ManagerRecordId)
 	}
-	err = <-errChan // wait for it to propagate
-	if err != nil {
-		return err
+	if zkManager.RegistryRecordId != "" {
+		records = append(records, zkManager.RegistryRecordId)
+	}
+	if len(records) > 0 {
+		err, errChan := dns.Provider.DeleteRecords("DELETE_MANAGER "+ip+" in "+region, zkManager.ManagerRecordId,
+			zkManager.RegistryRecordId)
+		if err != nil {
+			return err
+		}
+		err = <-errChan // wait for it to propagate
+		if err != nil {
+			return err
+		}
 	}
 	// delete basic health check for manager
-	err = dns.Provider.DeleteHealthCheck(zkManager.ManagerHealthCheckId)
-	if err != nil {
-		return err
+	if zkManager.ManagerHealthCheckId != "" {
+		err = dns.Provider.DeleteHealthCheck(zkManager.ManagerHealthCheckId)
+		if err != nil {
+			return err
+		}
 	}
 	// delete basic health check for registry
-	err = dns.Provider.DeleteHealthCheck(zkManager.RegistryHealthCheckId)
-	if err != nil {
-		return err
+	if zkManager.RegistryHealthCheckId != "" {
+		err = dns.Provider.DeleteHealthCheck(zkManager.RegistryHealthCheckId)
+		if err != nil {
+			return err
+		}
 	}
 	return zkManager.Delete()
 }
