@@ -13,8 +13,8 @@ import (
 
 type ZkRouter types.Router
 
-func Router(zone, ip string) *ZkRouter {
-	return &ZkRouter{Zone: zone, IP: ip}
+func Router(internal bool, zone, ip string) *ZkRouter {
+	return &ZkRouter{Internal: internal, Zone: zone, IP: ip}
 }
 
 func (r *ZkRouter) Save() error {
@@ -25,8 +25,8 @@ func (r *ZkRouter) Delete() error {
 	return Zk.RecursiveDelete(r.path())
 }
 
-func ListRouterZones() (zones []string, err error) {
-	basePath := helper.GetBaseRouterPath()
+func ListRouterZones(internal bool) (zones []string, err error) {
+	basePath := helper.GetBaseRouterPath(internal)
 	zones, _, err = Zk.Children(basePath)
 	if err != nil {
 		log.Printf("Error getting list of zones. Error: %s.", err.Error())
@@ -38,8 +38,8 @@ func ListRouterZones() (zones []string, err error) {
 	return
 }
 
-func ListRoutersInZone(zone string) (routers []string, err error) {
-	basePath := helper.GetBaseRouterPath(zone)
+func ListRoutersInZone(internal bool, zone string) (routers []string, err error) {
+	basePath := helper.GetBaseRouterPath(internal, zone)
 	routers, _, err = Zk.Children(basePath)
 	if err != nil {
 		log.Printf("Error getting list of routers for zone %s. Error: %s.", zone, err.Error())
@@ -51,14 +51,14 @@ func ListRoutersInZone(zone string) (routers []string, err error) {
 	return
 }
 
-func ListRouters() (routers map[string][]string, err error) {
+func ListRouters(internal bool) (routers map[string][]string, err error) {
 	routers = map[string][]string{}
-	zones, err := ListRouterZones()
+	zones, err := ListRouterZones(internal)
 	if err != nil {
 		return
 	}
 	for _, zone := range zones {
-		routers[zone], err = ListRoutersInZone(zone)
+		routers[zone], err = ListRoutersInZone(internal, zone)
 		if err != nil {
 			return
 		}
@@ -66,14 +66,14 @@ func ListRouters() (routers map[string][]string, err error) {
 	return
 }
 
-func GetRouter(zone, ip string) (zr *ZkRouter, err error) {
+func GetRouter(internal bool, zone, ip string) (zr *ZkRouter, err error) {
 	zr = &ZkRouter{}
-	err = getJson(helper.GetBaseRouterPath(zone, ip), zr)
+	err = getJson(helper.GetBaseRouterPath(internal, zone, ip), zr)
 	return
 }
 
 func (r *ZkRouter) path() string {
-	return helper.GetBaseRouterPath(r.Zone, r.IP)
+	return helper.GetBaseRouterPath(r.Internal, r.Zone, r.IP)
 }
 
 // Routing Datamodel

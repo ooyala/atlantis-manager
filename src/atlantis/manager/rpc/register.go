@@ -44,7 +44,7 @@ func (e *RegisterRouterExecutor) Execute(t *Task) error {
 	if e.arg.Zone == "" {
 		return errors.New("Please specify a zone")
 	}
-	routerObj, err := router.Register(e.arg.Zone, e.arg.IP)
+	routerObj, err := router.Register(e.arg.Internal, e.arg.Zone, e.arg.IP)
 	if err != nil {
 		e.reply.Status = StatusError
 	}
@@ -82,7 +82,7 @@ func (e *UnregisterRouterExecutor) Execute(t *Task) error {
 	if e.arg.Zone == "" {
 		return errors.New("Please specify a zone")
 	}
-	err := router.Unregister(e.arg.Zone, e.arg.IP)
+	err := router.Unregister(e.arg.Internal, e.arg.Zone, e.arg.IP)
 	if err != nil {
 		e.reply.Status = StatusError
 	}
@@ -112,7 +112,7 @@ func (e *ListRoutersExecutor) Authorize() error {
 }
 
 func (e *ListRoutersExecutor) Execute(t *Task) (err error) {
-	e.reply.Routers, err = datamodel.ListRouters()
+	e.reply.Routers, err = datamodel.ListRouters(e.arg.Internal)
 	if err != nil {
 		e.reply.Status = StatusError
 	}
@@ -142,7 +142,7 @@ func (e *GetRouterExecutor) Authorize() error {
 }
 
 func (e *GetRouterExecutor) Execute(t *Task) error {
-	zkRouter, err := datamodel.GetRouter(e.arg.Zone, e.arg.IP)
+	zkRouter, err := datamodel.GetRouter(e.arg.Internal, e.arg.Zone, e.arg.IP)
 	castedRouter := Router(*zkRouter)
 	e.reply.Router = &castedRouter
 	if err != nil {

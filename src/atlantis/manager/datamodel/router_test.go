@@ -10,31 +10,32 @@ import (
 )
 
 func (s *DatamodelSuite) TestRouterModel(c *C) {
-	Zk.RecursiveDelete(helper.GetBaseRouterPath())
+	Zk.RecursiveDelete(helper.GetBaseRouterPath(true))
+	Zk.RecursiveDelete(helper.GetBaseRouterPath(false))
 	CreateRouterPaths()
-	routers, err := ListRouters()
+	routers, err := ListRouters(true)
 	c.Assert(err, IsNil)
 	for _, routersInZone := range routers {
 		c.Assert(len(routersInZone), Equals, 0)
 	}
-	zkRouter := Router(Region, "1.1.1.1")
+	zkRouter := Router(true, Region, "1.1.1.1")
 	err = zkRouter.Save()
 	c.Assert(err, IsNil)
-	fetchedRouter, err := GetRouter(Region, "1.1.1.1")
+	fetchedRouter, err := GetRouter(true, Region, "1.1.1.1")
 	c.Assert(err, IsNil)
 	c.Assert(zkRouter, DeepEquals, fetchedRouter)
 	zkRouter.CName = "mycname"
 	zkRouter.HealthCheckId = "healthcheckid"
 	zkRouter.RecordIds = []string{"rid1", "rid2"}
 	zkRouter.Save()
-	fetchedRouter, err = GetRouter(Region, "1.1.1.1")
+	fetchedRouter, err = GetRouter(true, Region, "1.1.1.1")
 	c.Assert(err, IsNil)
 	c.Assert(zkRouter, DeepEquals, fetchedRouter)
-	routers, err = ListRouters()
+	routers, err = ListRouters(true)
 	c.Assert(len(routers[Region]), Equals, 1)
 	err = zkRouter.Delete()
 	c.Assert(err, IsNil)
-	routers, err = ListRouters()
+	routers, err = ListRouters(true)
 	c.Assert(len(routers[Region]), Equals, 0)
 }
 

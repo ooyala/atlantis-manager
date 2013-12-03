@@ -76,9 +76,12 @@ func (s *HelperSuite) TestHelperRouterRoot(c *C) {
 }
 
 func (s *HelperSuite) TestHelperRouterPath(c *C) {
-	c.Assert(GetBaseRouterPath(), Equals, "/atlantis/routers/"+Region)
-	c.Assert(GetBaseRouterPath(zone), Equals, "/atlantis/routers/"+Region+"/"+zone)
-	c.Assert(GetBaseRouterPath(zone, host), Equals, "/atlantis/routers/"+Region+"/"+zone+"/"+host)
+	c.Assert(GetBaseRouterPath(true), Equals, "/atlantis/routers/"+Region+"/internal")
+	c.Assert(GetBaseRouterPath(true, zone), Equals, "/atlantis/routers/"+Region+"/internal/"+zone)
+	c.Assert(GetBaseRouterPath(true, zone, host), Equals, "/atlantis/routers/"+Region+"/internal/"+zone+"/"+host)
+	c.Assert(GetBaseRouterPath(false), Equals, "/atlantis/routers/"+Region+"/external")
+	c.Assert(GetBaseRouterPath(false, zone), Equals, "/atlantis/routers/"+Region+"/external/"+zone)
+	c.Assert(GetBaseRouterPath(false, zone, host), Equals, "/atlantis/routers/"+Region+"/external/"+zone+"/"+host)
 }
 
 func (s *HelperSuite) TestHelperDNSPath(c *C) {
@@ -108,15 +111,18 @@ func (s *HelperSuite) TestHelperLockPath(c *C) {
 }
 
 func (s *HelperSuite) TestGetRegionRouterCName(c *C) {
-	c.Assert(GetRegionRouterCName("atlantis.com"), Equals, "router."+Region+".atlantis.com")
+	c.Assert(GetRegionRouterCName(true, "atlantis.com"), Equals, "internal-router."+Region+".atlantis.com")
+	c.Assert(GetRegionRouterCName(false, "atlantis.com"), Equals, "router."+Region+".atlantis.com")
 }
 
 func (s *HelperSuite) TestGetZoneRouterCName(c *C) {
-	c.Assert(GetZoneRouterCName(Region+"1", "atlantis.com"), Equals, "router."+Region+"1.atlantis.com")
+	c.Assert(GetZoneRouterCName(true, Region+"1", "atlantis.com"), Equals, "internal-router."+Region+"1.atlantis.com")
+	c.Assert(GetZoneRouterCName(false, Region+"1", "atlantis.com"), Equals, "router."+Region+"1.atlantis.com")
 }
 
 func (s *HelperSuite) TestGetRouterCName(c *C) {
-	c.Assert(GetRouterCName(1, Region+"1", "atlantis.com"), Equals, "router1."+Region+"1.atlantis.com")
+	c.Assert(GetRouterCName(true, 1, Region+"1", "atlantis.com"), Equals, "internal-router1."+Region+"1.atlantis.com")
+	c.Assert(GetRouterCName(false, 1, Region+"1", "atlantis.com"), Equals, "router1."+Region+"1.atlantis.com")
 }
 
 func (s *HelperSuite) TestGetRegionAppAlias(c *C) {

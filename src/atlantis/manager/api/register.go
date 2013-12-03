@@ -5,11 +5,17 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"net/http"
+	"strconv"
 )
 
 func ListRouters(w http.ResponseWriter, r *http.Request) {
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
-	arg := ManagerListRoutersArg{auth}
+	internal := false
+	internalStr := r.FormValue("Internal")
+	if internalStr != "" {
+		internal, _ = strconv.ParseBool(internalStr)
+	}
+	arg := ManagerListRoutersArg{ManagerAuthArg: auth, Internal: internal}
 	var reply ManagerListRoutersReply
 	err := manager.ListRouters(arg, &reply)
 	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Routers": reply.Routers, "Status": reply.Status}, err))
@@ -18,7 +24,12 @@ func ListRouters(w http.ResponseWriter, r *http.Request) {
 func RegisterRouter(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
-	arg := ManagerRegisterRouterArg{ManagerAuthArg: auth, Zone: vars["Zone"], IP: vars["IP"]}
+	internal := false
+	internalStr := r.FormValue("Internal")
+	if internalStr != "" {
+		internal, _ = strconv.ParseBool(internalStr)
+	}
+	arg := ManagerRegisterRouterArg{ManagerAuthArg: auth, Internal: internal, Zone: vars["Zone"], IP: vars["IP"]}
 	var reply ManagerRegisterRouterReply
 	err := manager.RegisterRouter(arg, &reply)
 	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Status": reply.Status, "Router": reply.Router}, err))
@@ -27,7 +38,12 @@ func RegisterRouter(w http.ResponseWriter, r *http.Request) {
 func UnregisterRouter(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
-	arg := ManagerRegisterRouterArg{ManagerAuthArg: auth, Zone: vars["Zone"], IP: vars["IP"]}
+	internal := false
+	internalStr := r.FormValue("Internal")
+	if internalStr != "" {
+		internal, _ = strconv.ParseBool(internalStr)
+	}
+	arg := ManagerRegisterRouterArg{ManagerAuthArg: auth, Internal: internal, Zone: vars["Zone"], IP: vars["IP"]}
 	var reply ManagerRegisterRouterReply
 	err := manager.UnregisterRouter(arg, &reply)
 	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Status": reply.Status}, err))
@@ -36,7 +52,12 @@ func UnregisterRouter(w http.ResponseWriter, r *http.Request) {
 func GetRouter(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
-	arg := ManagerGetRouterArg{ManagerAuthArg: auth, Zone: vars["Zone"], IP: vars["IP"]}
+	internal := false
+	internalStr := r.FormValue("Internal")
+	if internalStr != "" {
+		internal, _ = strconv.ParseBool(internalStr)
+	}
+	arg := ManagerGetRouterArg{ManagerAuthArg: auth, Internal: internal, Zone: vars["Zone"], IP: vars["IP"]}
 	var reply ManagerGetRouterReply
 	err := manager.GetRouter(arg, &reply)
 	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Status": reply.Status, "Router": reply.Router}, err))

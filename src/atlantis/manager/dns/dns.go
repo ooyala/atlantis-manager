@@ -40,7 +40,7 @@ func (c *CName) Id() string {
 	return fmt.Sprintf("%s-%s-%s", c.CName, c.IP, c.Failover)
 }
 
-func CreateAppAliases(app, sha, env string) error {
+func CreateAppAliases(internal bool, app, sha, env string) error {
 	// check if records were created already, if so add sha to list
 	zkDNS, err := datamodel.GetDNS(app, env)
 	if zkDNS != nil && err == nil {
@@ -58,14 +58,14 @@ func CreateAppAliases(app, sha, env string) error {
 	for i, zone := range AvailableZones {
 		aliases[i] = Alias{
 			Alias:    helper.GetZoneAppAlias(app, env, zone, Provider.Suffix()),
-			Original: helper.GetZoneRouterCName(zone, Provider.Suffix()),
+			Original: helper.GetZoneRouterCName(internal, zone, Provider.Suffix()),
 		}
 		zkDNS.RecordIds[i] = aliases[i].Id()
 	}
 	// region-wide entry (for referencing outside of atlantis)
 	aliases[len(aliases)-1] = Alias{
 		Alias:    helper.GetRegionAppAlias(app, env, Provider.Suffix()),
-		Original: helper.GetRegionRouterCName(Provider.Suffix()),
+		Original: helper.GetRegionRouterCName(internal, Provider.Suffix()),
 	}
 	zkDNS.RecordIds[len(aliases)-1] = aliases[len(aliases)-1].Id()
 	err, errChan := Provider.CreateAliases("CREATE_APP "+app+" in "+env, aliases)

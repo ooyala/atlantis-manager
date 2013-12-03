@@ -5,8 +5,9 @@ import (
 )
 
 type RegisterRouterCommand struct {
-	Zone string `short:"z" long:"zone" description:"the zone to register in"`
-	IP   string `short:"i" long:"ip" description:"the IP to register"`
+	Internal bool   `long:"internal" description:"true to list internal routers"`
+	Zone     string `short:"z" long:"zone" description:"the zone to register in"`
+	IP       string `short:"i" long:"ip" description:"the IP to register"`
 }
 
 func (c *RegisterRouterCommand) Execute(args []string) error {
@@ -21,7 +22,7 @@ func (c *RegisterRouterCommand) Execute(args []string) error {
 		return err
 	}
 	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerRegisterRouterArg{ManagerAuthArg: authArg, Zone: c.Zone, IP: c.IP}
+	arg := ManagerRegisterRouterArg{ManagerAuthArg: authArg, Internal: c.Internal, Zone: c.Zone, IP: c.IP}
 	var reply ManagerRegisterRouterReply
 	err = rpcClient.Call("RegisterRouter", arg, &reply)
 	if err != nil {
@@ -36,8 +37,9 @@ func (c *RegisterRouterCommand) Execute(args []string) error {
 }
 
 type UnregisterRouterCommand struct {
-	Zone string `short:"z" long:"zone" description:"the zone to register in"`
-	IP   string `short:"i" long:"ip" description:"the IP to register"`
+	Internal bool   `long:"internal" description:"true to list internal routers"`
+	Zone     string `short:"z" long:"zone" description:"the zone to register in"`
+	IP       string `short:"i" long:"ip" description:"the IP to register"`
 }
 
 func (c *UnregisterRouterCommand) Execute(args []string) error {
@@ -52,7 +54,7 @@ func (c *UnregisterRouterCommand) Execute(args []string) error {
 		return err
 	}
 	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerRegisterRouterArg{ManagerAuthArg: authArg, Zone: c.Zone, IP: c.IP}
+	arg := ManagerRegisterRouterArg{ManagerAuthArg: authArg, Internal: c.Internal, Zone: c.Zone, IP: c.IP}
 	var reply ManagerRegisterRouterReply
 	err = rpcClient.Call("UnregisterRouter", arg, &reply)
 	if err != nil {
@@ -63,8 +65,9 @@ func (c *UnregisterRouterCommand) Execute(args []string) error {
 }
 
 type GetRouterCommand struct {
-	Zone string `short:"z" long:"zone" description:"the zone to register in"`
-	IP   string `short:"i" long:"ip" description:"the IP to register"`
+	Internal bool   `long:"internal" description:"true to list internal routers"`
+	Zone     string `short:"z" long:"zone" description:"the zone to register in"`
+	IP       string `short:"i" long:"ip" description:"the IP to register"`
 }
 
 func (c *GetRouterCommand) Execute(args []string) error {
@@ -79,7 +82,7 @@ func (c *GetRouterCommand) Execute(args []string) error {
 		return err
 	}
 	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerGetRouterArg{ManagerAuthArg: authArg, Zone: c.Zone, IP: c.IP}
+	arg := ManagerGetRouterArg{ManagerAuthArg: authArg, Internal: c.Internal, Zone: c.Zone, IP: c.IP}
 	var reply ManagerGetRouterReply
 	err = rpcClient.Call("GetRouter", arg, &reply)
 	if err != nil {
@@ -94,6 +97,7 @@ func (c *GetRouterCommand) Execute(args []string) error {
 }
 
 type ListRoutersCommand struct {
+	Internal bool `long:"internal" description:"true to list internal routers"`
 }
 
 func (c *ListRoutersCommand) Execute(args []string) error {
@@ -107,7 +111,7 @@ func (c *ListRoutersCommand) Execute(args []string) error {
 		return err
 	}
 	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerListRoutersArg{authArg}
+	arg := ManagerListRoutersArg{ManagerAuthArg: authArg, Internal: c.Internal}
 	var reply ManagerListRoutersReply
 	err = rpcClient.Call("ListRouters", arg, &reply)
 	if err != nil {

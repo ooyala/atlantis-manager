@@ -19,7 +19,8 @@ func CreateRouterPaths() {
 		Zk.Touch(path)
 	}
 	for _, zone := range AvailableZones {
-		Zk.Touch(helper.GetBaseRouterPath(zone))
+		Zk.Touch(helper.GetBaseRouterPath(true, zone))
+		Zk.Touch(helper.GetBaseRouterPath(false, zone))
 	}
 }
 

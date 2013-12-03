@@ -67,8 +67,12 @@ func GetBaseDNSPath(args ...string) string {
 	return JoinWithBase(base, args...)
 }
 
-func GetBaseRouterPath(args ...string) string {
-	base := fmt.Sprintf("/atlantis/routers/%s", Region)
+func GetBaseRouterPath(internal bool, args ...string) string {
+	internalStr := "external"
+	if internal {
+		internalStr = "internal"
+	}
+	base := fmt.Sprintf("/atlantis/routers/%s/%s", Region, internalStr)
 	return JoinWithBase(base, args...)
 }
 
@@ -106,16 +110,28 @@ func GetBaseLockPath(args ...string) string {
 	return JoinWithBase(base, args...)
 }
 
-func GetRegionRouterCName(suffix string) string {
-	return fmt.Sprintf("router.%s.%s", Region, suffix)
+func GetRegionRouterCName(internal bool, suffix string) string {
+	internalStr := ""
+	if internal {
+		internalStr = "internal-"
+	}
+	return fmt.Sprintf("%srouter.%s.%s", internalStr, Region, suffix)
 }
 
-func GetZoneRouterCName(zone, suffix string) string {
-	return fmt.Sprintf("router.%s.%s", RegionAndZone(zone), suffix)
+func GetZoneRouterCName(internal bool, zone, suffix string) string {
+	internalStr := ""
+	if internal {
+		internalStr = "internal-"
+	}
+	return fmt.Sprintf("%srouter.%s.%s", internalStr, RegionAndZone(zone), suffix)
 }
 
-func GetRouterCName(num int, zone, suffix string) string {
-	return fmt.Sprintf("router%d.%s.%s", num, RegionAndZone(zone), suffix)
+func GetRouterCName(internal bool, num int, zone, suffix string) string {
+	internalStr := ""
+	if internal {
+		internalStr = "internal-"
+	}
+	return fmt.Sprintf("%srouter%d.%s.%s", internalStr, num, RegionAndZone(zone), suffix)
 }
 
 func GetRegionAppAlias(app, env, suffix string) string {

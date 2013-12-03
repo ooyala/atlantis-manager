@@ -8,10 +8,10 @@ import (
 )
 
 type Route53Provider struct {
-	r53  *route53.Route53
-	Zone route53.HostedZone
+	r53    *route53.Route53
+	Zone   route53.HostedZone
 	ZoneId string
-	TTL  uint
+	TTL    uint
 }
 
 func (r *Route53Provider) createRecords(comment string, rrsets ...route53.RRSet) (error, chan error) {

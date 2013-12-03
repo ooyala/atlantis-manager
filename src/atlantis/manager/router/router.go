@@ -19,9 +19,9 @@ import (
 //
 // Deleting the router, simply deletes all the records created when adding it.
 
-func Register(zone, ip string) (*datamodel.ZkRouter, error) {
+func Register(internal bool, zone, ip string) (*datamodel.ZkRouter, error) {
 	// create ZkRouter
-	zkRouter := datamodel.Router(zone, ip)
+	zkRouter := datamodel.Router(internal, zone, ip)
 	if dns.Provider == nil {
 		// if we have no dns provider then just save here
 		return zkRouter, zkRouter.Save()
@@ -32,22 +32,22 @@ func Register(zone, ip string) (*datamodel.ZkRouter, error) {
 		return nil, err
 	}
 	// choose cname
-	routers, err := datamodel.ListRoutersInZone(zone)
+	routers, err := datamodel.ListRoutersInZone(internal, zone)
 	if err != nil {
 		return zkRouter, err
 	}
 	routerMap := map[string]bool{}
 	for _, router := range routers {
-		tmpRouter, err := datamodel.GetRouter(zone, router)
+		tmpRouter, err := datamodel.GetRouter(internal, zone, router)
 		if err != nil {
 			return zkRouter, err
 		}
 		routerMap[tmpRouter.CName] = true
 	}
 	routerNum := 1
-	zkRouter.CName = helper.GetRouterCName(routerNum, zone, dns.Provider.Suffix())
+	zkRouter.CName = helper.GetRouterCName(internal, routerNum, zone, dns.Provider.Suffix())
 	for ; routerMap[zkRouter.CName]; routerNum++ {
-		zkRouter.CName = helper.GetRouterCName(routerNum, zone, dns.Provider.Suffix())
+		zkRouter.CName = helper.GetRouterCName(internal, routerNum, zone, dns.Provider.Suffix())
 	}
 	// create basic health check for router
 	zkRouter.HealthCheckId, err = dns.Provider.CreateHealthCheck(zkRouter.IP, uint16(80))
@@ -58,7 +58,7 @@ func Register(zone, ip string) (*datamodel.ZkRouter, error) {
 	cnames := make([]dns.CName, 3)
 	// PRIMARY router.<region>.<suffix>
 	cnames[0] = dns.CName{
-		CName:         helper.GetRegionRouterCName(dns.Provider.Suffix()),
+		CName:         helper.GetRegionRouterCName(internal, dns.Provider.Suffix()),
 		IP:            zkRouter.IP,
 		HealthCheckId: zkRouter.HealthCheckId,
 	}
@@ -73,7 +73,7 @@ func Register(zone, ip string) (*datamodel.ZkRouter, error) {
 	// PRIMARY router.<region+zone>.<suffix>
 	cnames[2] = dns.CName{
 		Failover:      "PRIMARY",
-		CName:         helper.GetZoneRouterCName(zkRouter.Zone, dns.Provider.Suffix()),
+		CName:         helper.GetZoneRouterCName(internal, zkRouter.Zone, dns.Provider.Suffix()),
 		IP:            zkRouter.IP,
 		HealthCheckId: zkRouter.HealthCheckId,
 	}
@@ -85,7 +85,7 @@ func Register(zone, ip string) (*datamodel.ZkRouter, error) {
 		}
 		cname := dns.CName{
 			Failover:      "SECONDARY",
-			CName:         helper.GetZoneRouterCName(azone, dns.Provider.Suffix()),
+			CName:         helper.GetZoneRouterCName(internal, azone, dns.Provider.Suffix()),
 			IP:            zkRouter.IP,
 			HealthCheckId: zkRouter.HealthCheckId,
 		}
@@ -103,8 +103,8 @@ func Register(zone, ip string) (*datamodel.ZkRouter, error) {
 	return zkRouter, zkRouter.Save()
 }
 
-func Unregister(zone, ip string) error {
-	zkRouter, err := datamodel.GetRouter(zone, ip)
+func Unregister(internal bool, zone, ip string) error {
+	zkRouter, err := datamodel.GetRouter(internal, zone, ip)
 	if err != nil {
 		return err
 	}

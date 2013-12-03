@@ -159,7 +159,7 @@ func deployToHostsInZones(manifest *Manifest, sha, env string, hosts map[string]
 	if manifest.Internal {
 		t.LogStatus("Updating DNS")
 		// if we're internal, handle the DNS stuff
-		err := dns.CreateAppAliases(manifest.Name, sha, env)
+		err := dns.CreateAppAliases(manifest.Internal, manifest.Name, sha, env)
 		if err != nil { // if DNS fails, clean up and fail
 			cleanup(deployedContainers, t)
 			return nil, errors.New("Update DNS Error: " + err.Error())
@@ -206,7 +206,7 @@ func devDeployToHosts(manifest *Manifest, sha, env string, hosts []string, t *Ta
 	if manifest.Internal {
 		t.LogStatus("Updating DNS")
 		// if we're internal, handle the DNS stuff
-		err := dns.CreateAppAliases(manifest.Name, sha, env)
+		err := dns.CreateAppAliases(manifest.Internal, manifest.Name, sha, env)
 		if err != nil { // if DNS fails, clean up and fail
 			cleanup(deployedContainers, t)
 			return nil, errors.New("Update DNS Error: " + err.Error())
