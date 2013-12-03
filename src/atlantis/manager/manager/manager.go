@@ -140,8 +140,7 @@ func Unregister(region, ip string) error {
 		records = append(records, zkManager.RegistryRecordId)
 	}
 	if len(records) > 0 {
-		err, errChan := dns.Provider.DeleteRecords("DELETE_MANAGER "+ip+" in "+region, zkManager.ManagerRecordId,
-			zkManager.RegistryRecordId)
+		err, errChan := dns.Provider.DeleteRecords("DELETE_MANAGER "+ip+" in "+region, records...)
 		if err != nil {
 			return err
 		}
