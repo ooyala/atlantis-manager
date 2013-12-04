@@ -1,8 +1,8 @@
 package dns
 
 import (
-	"github.com/alekar/route53/src/route53"
 	"github.com/crowdmob/goamz/aws"
+	"github.com/jigish/route53/src/route53"
 	"strings"
 	"time"
 )
@@ -150,6 +150,7 @@ func NewRoute53Provider(zoneId string, ttl uint) (*Route53Provider, error) {
 		return nil, err
 	}
 	r53 := route53.New(auth)
+	r53.IncludeWeight = true
 	zone, err := r53.GetHostedZone(zoneId)
 	if err != nil {
 		return nil, err
