@@ -47,6 +47,14 @@ func (c *ResultCommand) Execute(args []string) error {
 		return (&DeployResultCommand{c.Id}).Execute(args)
 	case "Teardown":
 		return (&TeardownResultCommand{c.Id}).Execute(args)
+	case "RegisterManager":
+		return (&RegisterManagerResultCommand{c.Id}).Execute(args)
+	case "UnregisterManager":
+		return (&UnregisterManagerResultCommand{c.Id}).Execute(args)
+	case "RegisterRouter":
+		return (&RegisterRouterResultCommand{c.Id}).Execute(args)
+	case "UnregisterRouter":
+		return (&UnregisterRouterResultCommand{c.Id}).Execute(args)
 	default:
 		return OutputError(errors.New("Invalid Task Name: " + reply.Name))
 	}

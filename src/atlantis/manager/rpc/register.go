@@ -54,6 +54,34 @@ func (e *RegisterRouterExecutor) Execute(t *Task) error {
 	return err
 }
 
+func (m *ManagerRPC) RegisterRouterResult(id string, result *ManagerRegisterRouterReply) error {
+	if id == "" {
+		return errors.New("ID empty")
+	}
+	status, err := Tracker.Status(id)
+	if status.Status == StatusUnknown {
+		return errors.New("Unknown ID.")
+	}
+	if status.Name != "RegisterRouter" {
+		return errors.New("ID is not a RegisterRouter.")
+	}
+	if !status.Done {
+		return errors.New("RegisterRouter isn't done.")
+	}
+	if status.Status == StatusError || err != nil {
+		return err
+	}
+	getResult := Tracker.Result(id)
+	switch r := getResult.(type) {
+	case *ManagerRegisterRouterReply:
+		*result = *r
+	default:
+		// this should never happen
+		return errors.New("Invalid Result Type.")
+	}
+	return nil
+}
+
 type UnregisterRouterExecutor struct {
 	arg   ManagerRegisterRouterArg
 	reply *ManagerRegisterRouterReply
@@ -88,6 +116,34 @@ func (e *UnregisterRouterExecutor) Execute(t *Task) error {
 	}
 	e.reply.Status = StatusOk
 	return err
+}
+
+func (m *ManagerRPC) UnregisterRouterResult(id string, result *ManagerRegisterRouterReply) error {
+	if id == "" {
+		return errors.New("ID empty")
+	}
+	status, err := Tracker.Status(id)
+	if status.Status == StatusUnknown {
+		return errors.New("Unknown ID.")
+	}
+	if status.Name != "UnregisterRouter" {
+		return errors.New("ID is not a UnregisterRouter.")
+	}
+	if !status.Done {
+		return errors.New("UnregisterRouter isn't done.")
+	}
+	if status.Status == StatusError || err != nil {
+		return err
+	}
+	getResult := Tracker.Result(id)
+	switch r := getResult.(type) {
+	case *ManagerRegisterRouterReply:
+		*result = *r
+	default:
+		// this should never happen
+		return errors.New("Invalid Result Type.")
+	}
+	return nil
 }
 
 type ListRoutersExecutor struct {
@@ -463,6 +519,34 @@ func (e *RegisterManagerExecutor) Authorize() error {
 	return AuthorizeSuperUser(&e.arg.ManagerAuthArg)
 }
 
+func (m *ManagerRPC) RegisterManagerResult(id string, result *ManagerRegisterManagerReply) error {
+	if id == "" {
+		return errors.New("ID empty")
+	}
+	status, err := Tracker.Status(id)
+	if status.Status == StatusUnknown {
+		return errors.New("Unknown ID.")
+	}
+	if status.Name != "RegisterManager" {
+		return errors.New("ID is not a RegisterManager.")
+	}
+	if !status.Done {
+		return errors.New("RegisterManager isn't done.")
+	}
+	if status.Status == StatusError || err != nil {
+		return err
+	}
+	getResult := Tracker.Result(id)
+	switch r := getResult.(type) {
+	case *ManagerRegisterManagerReply:
+		*result = *r
+	default:
+		// this should never happen
+		return errors.New("Invalid Result Type.")
+	}
+	return nil
+}
+
 type UnregisterManagerExecutor struct {
 	arg   ManagerRegisterManagerArg
 	reply *ManagerRegisterManagerReply
@@ -500,6 +584,34 @@ func (e *UnregisterManagerExecutor) Authorize() error {
 	return AuthorizeSuperUser(&e.arg.ManagerAuthArg)
 }
 
+func (m *ManagerRPC) UnregisterManagerResult(id string, result *ManagerRegisterManagerReply) error {
+	if id == "" {
+		return errors.New("ID empty")
+	}
+	status, err := Tracker.Status(id)
+	if status.Status == StatusUnknown {
+		return errors.New("Unknown ID.")
+	}
+	if status.Name != "UnregisterManager" {
+		return errors.New("ID is not a UnregisterManager.")
+	}
+	if !status.Done {
+		return errors.New("UnregisterManager isn't done.")
+	}
+	if status.Status == StatusError || err != nil {
+		return err
+	}
+	getResult := Tracker.Result(id)
+	switch r := getResult.(type) {
+	case *ManagerRegisterManagerReply:
+		*result = *r
+	default:
+		// this should never happen
+		return errors.New("Invalid Result Type.")
+	}
+	return nil
+}
+
 type ListManagersExecutor struct {
 	arg   ManagerListManagersArg
 	reply *ManagerListManagersReply
@@ -531,12 +643,12 @@ func (e *ListManagersExecutor) Authorize() error {
 	return SimpleAuthorize(&e.arg.ManagerAuthArg)
 }
 
-func (m *ManagerRPC) RegisterRouter(arg ManagerRegisterRouterArg, reply *ManagerRegisterRouterReply) error {
-	return NewTask("RegisterRouter", &RegisterRouterExecutor{arg, reply}).Run()
+func (m *ManagerRPC) RegisterRouter(arg ManagerRegisterRouterArg, reply *AsyncReply) error {
+	return NewTask("RegisterRouter", &RegisterRouterExecutor{arg, &ManagerRegisterRouterReply{}}).RunAsync(reply)
 }
 
-func (m *ManagerRPC) UnregisterRouter(arg ManagerRegisterRouterArg, reply *ManagerRegisterRouterReply) error {
-	return NewTask("UnregisterRouter", &UnregisterRouterExecutor{arg, reply}).Run()
+func (m *ManagerRPC) UnregisterRouter(arg ManagerRegisterRouterArg, reply *AsyncReply) error {
+	return NewTask("UnregisterRouter", &UnregisterRouterExecutor{arg, &ManagerRegisterRouterReply{}}).RunAsync(reply)
 }
 
 func (m *ManagerRPC) GetRouter(arg ManagerGetRouterArg, reply *ManagerGetRouterReply) error {
@@ -575,12 +687,12 @@ func (m *ManagerRPC) ListSupervisors(arg ManagerListSupervisorsArg, reply *Manag
 	return NewTask("ListSupervisors", &ListSupervisorsExecutor{arg, reply}).Run()
 }
 
-func (m *ManagerRPC) RegisterManager(arg ManagerRegisterManagerArg, reply *ManagerRegisterManagerReply) error {
-	return NewTask("RegisterManager", &RegisterManagerExecutor{arg, reply}).Run()
+func (m *ManagerRPC) RegisterManager(arg ManagerRegisterManagerArg, reply *AsyncReply) error {
+	return NewTask("RegisterManager", &RegisterManagerExecutor{arg, &ManagerRegisterManagerReply{}}).RunAsync(reply)
 }
 
-func (m *ManagerRPC) UnregisterManager(arg ManagerRegisterManagerArg, reply *ManagerRegisterManagerReply) error {
-	return NewTask("UnregisterManager", &UnregisterManagerExecutor{arg, reply}).Run()
+func (m *ManagerRPC) UnregisterManager(arg ManagerRegisterManagerArg, reply *AsyncReply) error {
+	return NewTask("UnregisterManager", &UnregisterManagerExecutor{arg, &ManagerRegisterManagerReply{}}).RunAsync(reply)
 }
 
 func (m *ManagerRPC) ListManagers(arg ManagerListManagersArg, reply *ManagerListManagersReply) error {

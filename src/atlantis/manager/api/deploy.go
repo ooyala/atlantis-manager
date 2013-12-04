@@ -101,23 +101,3 @@ func TeardownContainers(w http.ResponseWriter, r *http.Request) {
 	err = manager.Teardown(tArg, &reply)
 	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Id": reply.Id}, err))
 }
-
-func Wait(w http.ResponseWriter, r *http.Request) {
-	var statusReply TaskStatus
-	err := manager.Status(r.FormValue("Id"), &statusReply)
-	var deployReply ManagerDeployReply
-	var teardownReply ManagerTeardownReply
-	output := map[string]interface{}{"Name": statusReply.Name,
-		"Status":      statusReply.Status,
-		"Description": statusReply.Description,
-		"Done":        statusReply.Done}
-	if statusReply.Name == "Deploy" && statusReply.Done {
-		err = manager.DeployResult(r.FormValue("Id"), &deployReply)
-		output["Containers"] = deployReply.Containers
-	} else if statusReply.Name == "Teardown" && statusReply.Done {
-		err = manager.TeardownResult(r.FormValue("Id"), &teardownReply)
-		output["Containers"] = teardownReply.ContainerIds
-	}
-
-	fmt.Fprintf(w, "%s", Output(output, err))
-}

@@ -1,6 +1,7 @@
 package api
 
 import (
+	. "atlantis/common"
 	. "atlantis/manager/rpc/types"
 	"fmt"
 	"github.com/gorilla/mux"
@@ -30,9 +31,9 @@ func RegisterRouter(w http.ResponseWriter, r *http.Request) {
 		internal, _ = strconv.ParseBool(internalStr)
 	}
 	arg := ManagerRegisterRouterArg{ManagerAuthArg: auth, Internal: internal, Zone: vars["Zone"], IP: vars["IP"]}
-	var reply ManagerRegisterRouterReply
+	var reply AsyncReply
 	err := manager.RegisterRouter(arg, &reply)
-	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Status": reply.Status, "Router": reply.Router}, err))
+	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Id": reply.Id}, err))
 }
 
 func UnregisterRouter(w http.ResponseWriter, r *http.Request) {
@@ -44,9 +45,9 @@ func UnregisterRouter(w http.ResponseWriter, r *http.Request) {
 		internal, _ = strconv.ParseBool(internalStr)
 	}
 	arg := ManagerRegisterRouterArg{ManagerAuthArg: auth, Internal: internal, Zone: vars["Zone"], IP: vars["IP"]}
-	var reply ManagerRegisterRouterReply
+	var reply AsyncReply
 	err := manager.UnregisterRouter(arg, &reply)
-	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Status": reply.Status}, err))
+	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Id": reply.Id}, err))
 }
 
 func GetRouter(w http.ResponseWriter, r *http.Request) {
@@ -147,16 +148,16 @@ func RegisterManager(w http.ResponseWriter, r *http.Request) {
 		ManagerCName:   r.FormValue("ManagerCName"),
 		RegistryCName:  r.FormValue("RegistryCName"),
 	}
-	var reply ManagerRegisterManagerReply
+	var reply AsyncReply
 	err := manager.RegisterManager(arg, &reply)
-	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Status": reply.Status}, err))
+	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Id": reply.Id}, err))
 }
 
 func UnregisterManager(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
 	arg := ManagerRegisterManagerArg{ManagerAuthArg: auth, IP: vars["IP"], Region: vars["Region"]}
-	var reply ManagerRegisterManagerReply
+	var reply AsyncReply
 	err := manager.UnregisterManager(arg, &reply)
-	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Status": reply.Status}, err))
+	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Id": reply.Id}, err))
 }

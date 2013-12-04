@@ -1,10 +1,12 @@
 package client
 
 import (
+	atlantis "atlantis/common"
 	. "atlantis/manager/rpc/types"
 )
 
 type RegisterRouterCommand struct {
+	Wait     bool   `long:"wait" description:"wait until done before exiting"`
 	Internal bool   `long:"internal" description:"true to list internal routers"`
 	Zone     string `short:"z" long:"zone" description:"the zone to register in"`
 	IP       string `short:"i" long:"ip" description:"the IP to register"`
@@ -23,19 +25,20 @@ func (c *RegisterRouterCommand) Execute(args []string) error {
 	}
 	authArg := ManagerAuthArg{user, "", secret}
 	arg := ManagerRegisterRouterArg{ManagerAuthArg: authArg, Internal: c.Internal, Zone: c.Zone, IP: c.IP}
-	var reply ManagerRegisterRouterReply
+	var reply atlantis.AsyncReply
 	err = rpcClient.Call("RegisterRouter", arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}
-	Log("-> status: %s", reply.Status)
-	Log("-> zone            : %s", reply.Router.Zone)
-	Log("-> ip              : %s", reply.Router.IP)
-	Log("-> cname           : %s", reply.Router.CName)
-	return Output(map[string]interface{}{"status": reply.Status}, nil, nil)
+	Log("-> ID: %s", reply.Id)
+	if !c.Wait {
+		return Output(map[string]interface{}{"id": reply.Id}, reply.Id, nil)
+	}
+	return (&WaitCommand{reply.Id}).Execute(args)
 }
 
 type UnregisterRouterCommand struct {
+	Wait     bool   `long:"wait" description:"wait until done before exiting"`
 	Internal bool   `long:"internal" description:"true to list internal routers"`
 	Zone     string `short:"z" long:"zone" description:"the zone to register in"`
 	IP       string `short:"i" long:"ip" description:"the IP to register"`
@@ -54,13 +57,65 @@ func (c *UnregisterRouterCommand) Execute(args []string) error {
 	}
 	authArg := ManagerAuthArg{user, "", secret}
 	arg := ManagerRegisterRouterArg{ManagerAuthArg: authArg, Internal: c.Internal, Zone: c.Zone, IP: c.IP}
-	var reply ManagerRegisterRouterReply
+	var reply atlantis.AsyncReply
 	err = rpcClient.Call("UnregisterRouter", arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}
-	Log("-> status: %s", reply.Status)
-	return Output(map[string]interface{}{"status": reply.Status}, nil, nil)
+	Log("-> ID: %s", reply.Id)
+	if !c.Wait {
+		return Output(map[string]interface{}{"id": reply.Id}, reply.Id, nil)
+	}
+	return (&WaitCommand{reply.Id}).Execute(args)
+}
+
+func OutputRegisterRouterReply(reply *ManagerRegisterRouterReply) error {
+	Log("-> Status: %s", reply.Status)
+	if reply.Router != nil {
+		Log("-> Router:")
+		Log("->   Internal: %t", reply.Router.Internal)
+		Log("->   Zone    : %s", reply.Router.Zone)
+		Log("->   IP      : %s", reply.Router.IP)
+		Log("->   CName   : %s", reply.Router.CName)
+	}
+	return Output(map[string]interface{}{"status": reply.Status, "router": reply.Router},
+		nil, nil)
+}
+
+type RegisterRouterResultCommand struct {
+	Id string `short:"i" long:"id" description:"the task ID to fetch the result for"`
+}
+
+func (c *RegisterRouterResultCommand) Execute(args []string) error {
+	if err := Init(); err != nil {
+		return OutputError(err)
+	}
+	args = ExtractArgs([]*string{&c.Id}, args)
+	Log("RegisterRouter Result...")
+	arg := c.Id
+	var reply ManagerRegisterRouterReply
+	if err := rpcClient.Call("RegisterRouterResult", arg, &reply); err != nil {
+		return OutputError(err)
+	}
+	return OutputRegisterRouterReply(&reply)
+}
+
+type UnregisterRouterResultCommand struct {
+	Id string `short:"i" long:"id" description:"the task ID to fetch the result for"`
+}
+
+func (c *UnregisterRouterResultCommand) Execute(args []string) error {
+	if err := Init(); err != nil {
+		return OutputError(err)
+	}
+	args = ExtractArgs([]*string{&c.Id}, args)
+	Log("UnregisterRouter Result...")
+	arg := c.Id
+	var reply ManagerRegisterRouterReply
+	if err := rpcClient.Call("UnregisterRouterResult", arg, &reply); err != nil {
+		return OutputError(err)
+	}
+	return OutputRegisterRouterReply(&reply)
 }
 
 type GetRouterCommand struct {
@@ -253,6 +308,7 @@ func (c *HealthCommand) Execute(args []string) error {
 }
 
 type RegisterManagerCommand struct {
+	Wait          bool   `long:"wait" description:"wait until done before exiting"`
 	IP            string `short:"i" long:"ip" description:"the ip to register"`
 	Region        string `short:"r" long:"region" description:"the region to unregister"`
 	ManagerCName  string `long:"manager-cname" description:"the manager's cname if it already has one"`
@@ -278,20 +334,20 @@ func (c *RegisterManagerCommand) Execute(args []string) error {
 		ManagerCName:   c.ManagerCName,
 		RegistryCName:  c.RegistryCName,
 	}
-	var reply ManagerRegisterManagerReply
+	var reply atlantis.AsyncReply
 	err = rpcClient.Call("RegisterManager", arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}
-	Log("-> status: %s", reply.Status)
-	Log("-> region:         %s", reply.Manager.Region)
-	Log("-> ip:             %s", reply.Manager.IP)
-	Log("-> manager cname:  %s", reply.Manager.ManagerCName)
-	Log("-> registry cname: %s", reply.Manager.RegistryCName)
-	return Output(map[string]interface{}{"status": reply.Status, "manager": reply.Manager}, nil, nil)
+	Log("-> ID: %s", reply.Id)
+	if !c.Wait {
+		return Output(map[string]interface{}{"id": reply.Id}, reply.Id, nil)
+	}
+	return (&WaitCommand{reply.Id}).Execute(args)
 }
 
 type UnregisterManagerCommand struct {
+	Wait   bool   `long:"wait" description:"wait until done before exiting"`
 	IP     string `short:"i" long:"ip" description:"the ip to unregister"`
 	Region string `short:"r" long:"region" description:"the region to ununregister"`
 }
@@ -309,13 +365,65 @@ func (c *UnregisterManagerCommand) Execute(args []string) error {
 	}
 	authArg := ManagerAuthArg{user, "", secret}
 	arg := ManagerRegisterManagerArg{ManagerAuthArg: authArg, IP: c.IP, Region: c.Region}
-	var reply ManagerRegisterManagerReply
+	var reply atlantis.AsyncReply
 	err = rpcClient.Call("UnregisterManager", arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}
-	Log("-> status: %s", reply.Status)
-	return Output(map[string]interface{}{"status": reply.Status}, nil, nil)
+	Log("-> ID: %s", reply.Id)
+	if !c.Wait {
+		return Output(map[string]interface{}{"id": reply.Id}, reply.Id, nil)
+	}
+	return (&WaitCommand{reply.Id}).Execute(args)
+}
+
+func OutputRegisterManagerReply(reply *ManagerRegisterManagerReply) error {
+	Log("-> Status: %s", reply.Status)
+	if reply.Manager == nil {
+		Log("-> Manager:")
+		Log("->   Region:         %s", reply.Manager.Region)
+		Log("->   IP:             %s", reply.Manager.IP)
+		Log("->   Manager CName:  %s", reply.Manager.ManagerCName)
+		Log("->   Registry CName: %s", reply.Manager.RegistryCName)
+	}
+	return Output(map[string]interface{}{"status": reply.Status, "manager": reply.Manager},
+		nil, nil)
+}
+
+type RegisterManagerResultCommand struct {
+	Id string `short:"i" long:"id" description:"the task ID to fetch the result for"`
+}
+
+func (c *RegisterManagerResultCommand) Execute(args []string) error {
+	if err := Init(); err != nil {
+		return OutputError(err)
+	}
+	args = ExtractArgs([]*string{&c.Id}, args)
+	Log("RegisterManager Result...")
+	arg := c.Id
+	var reply ManagerRegisterManagerReply
+	if err := rpcClient.Call("RegisterManagerResult", arg, &reply); err != nil {
+		return OutputError(err)
+	}
+	return OutputRegisterManagerReply(&reply)
+}
+
+type UnregisterManagerResultCommand struct {
+	Id string `short:"i" long:"id" description:"the task ID to fetch the result for"`
+}
+
+func (c *UnregisterManagerResultCommand) Execute(args []string) error {
+	if err := Init(); err != nil {
+		return OutputError(err)
+	}
+	args = ExtractArgs([]*string{&c.Id}, args)
+	Log("UnregisterManager Result...")
+	arg := c.Id
+	var reply ManagerRegisterManagerReply
+	if err := rpcClient.Call("UnregisterManagerResult", arg, &reply); err != nil {
+		return OutputError(err)
+	}
+	return OutputRegisterManagerReply(&reply)
 }
 
 type ListManagersCommand struct {
