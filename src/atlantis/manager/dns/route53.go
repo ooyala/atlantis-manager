@@ -26,7 +26,7 @@ func (r *Route53Provider) createRecords(comment string, rrsets ...route53.RRSet)
 	if err != nil {
 		return err, nil
 	}
-	return nil, info.PollForSync(5*time.Second, 60*time.Second)
+	return nil, info.PollForSync(5*time.Second, 5*time.Minute)
 }
 
 func (r *Route53Provider) baseRRSet(id, name, failover string) route53.RRSet {
@@ -105,7 +105,7 @@ func (r *Route53Provider) DeleteRecords(comment string, ids ...string) (error, c
 	if err != nil {
 		return err, nil
 	}
-	return nil, info.PollForSync(5*time.Second, 60*time.Second)
+	return nil, info.PollForSync(5*time.Second, 5*time.Minute)
 }
 
 func (r *Route53Provider) CreateHealthCheck(ip string, port uint16) (string, error) {
