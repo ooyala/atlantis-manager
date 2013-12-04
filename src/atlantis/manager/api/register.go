@@ -30,7 +30,13 @@ func RegisterRouter(w http.ResponseWriter, r *http.Request) {
 	if internalStr != "" {
 		internal, _ = strconv.ParseBool(internalStr)
 	}
-	arg := ManagerRegisterRouterArg{ManagerAuthArg: auth, Internal: internal, Zone: vars["Zone"], IP: vars["IP"]}
+	arg := ManagerRegisterRouterArg{
+		ManagerAuthArg: auth,
+		Internal:       internal,
+		Zone:           vars["Zone"],
+		PublicIP:       vars["PublicIP"],
+		PrivateIP:      r.FormValue("PrivateIP"),
+	}
 	var reply AsyncReply
 	err := manager.RegisterRouter(arg, &reply)
 	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Id": reply.Id}, err))
@@ -44,7 +50,12 @@ func UnregisterRouter(w http.ResponseWriter, r *http.Request) {
 	if internalStr != "" {
 		internal, _ = strconv.ParseBool(internalStr)
 	}
-	arg := ManagerRegisterRouterArg{ManagerAuthArg: auth, Internal: internal, Zone: vars["Zone"], IP: vars["IP"]}
+	arg := ManagerRegisterRouterArg{
+		ManagerAuthArg: auth,
+		Internal:       internal,
+		Zone:           vars["Zone"],
+		PublicIP:       vars["PublicIP"],
+	}
 	var reply AsyncReply
 	err := manager.UnregisterRouter(arg, &reply)
 	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Id": reply.Id}, err))
@@ -58,7 +69,12 @@ func GetRouter(w http.ResponseWriter, r *http.Request) {
 	if internalStr != "" {
 		internal, _ = strconv.ParseBool(internalStr)
 	}
-	arg := ManagerGetRouterArg{ManagerAuthArg: auth, Internal: internal, Zone: vars["Zone"], IP: vars["IP"]}
+	arg := ManagerGetRouterArg{
+		ManagerAuthArg: auth,
+		Internal:       internal,
+		Zone:           vars["Zone"],
+		PublicIP:       vars["PublicIP"],
+	}
 	var reply ManagerGetRouterReply
 	err := manager.GetRouter(arg, &reply)
 	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Status": reply.Status, "Router": reply.Router}, err))

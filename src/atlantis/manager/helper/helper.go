@@ -110,36 +110,56 @@ func GetBaseLockPath(args ...string) string {
 	return JoinWithBase(base, args...)
 }
 
-func GetRegionRouterCName(internal bool, suffix string) string {
+func GetRegionRouterCName(private, internal bool, suffix string) string {
 	internalStr := ""
 	if internal {
 		internalStr = "internal-"
 	}
-	return fmt.Sprintf("%srouter.%s.%s", internalStr, Region, suffix)
+	privateStr := ""
+	if private {
+		privateStr = ".private"
+	}
+	return fmt.Sprintf("%srouter%s.%s.%s", internalStr, privateStr, Region, suffix)
 }
 
-func GetZoneRouterCName(internal bool, zone, suffix string) string {
+func GetZoneRouterCName(private, internal bool, zone, suffix string) string {
 	internalStr := ""
 	if internal {
 		internalStr = "internal-"
 	}
-	return fmt.Sprintf("%srouter.%s.%s", internalStr, RegionAndZone(zone), suffix)
+	privateStr := ""
+	if private {
+		privateStr = ".private"
+	}
+	return fmt.Sprintf("%srouter%s.%s.%s", internalStr, privateStr, RegionAndZone(zone), suffix)
 }
 
-func GetRouterCName(internal bool, num int, zone, suffix string) string {
+func GetRouterCName(private, internal bool, num int, zone, suffix string) string {
 	internalStr := ""
 	if internal {
 		internalStr = "internal-"
 	}
-	return fmt.Sprintf("%srouter%d.%s.%s", internalStr, num, RegionAndZone(zone), suffix)
+	privateStr := ""
+	if private {
+		privateStr = ".private"
+	}
+	return fmt.Sprintf("%srouter%d%s.%s.%s", internalStr, num, privateStr, RegionAndZone(zone), suffix)
 }
 
-func GetRegionAppAlias(app, env, suffix string) string {
-	return fmt.Sprintf("%s%s.%s.%s", app, EmptyIfProdPrefix(env), Region, suffix)
+func GetRegionAppAlias(private bool, app, env, suffix string) string {
+	privateStr := ""
+	if private {
+		privateStr = ".private"
+	}
+	return fmt.Sprintf("%s%s%s.%s.%s", app, privateStr, EmptyIfProdPrefix(env), Region, suffix)
 }
 
-func GetZoneAppAlias(app, env, zone, suffix string) string {
-	return fmt.Sprintf("%s%s.%s.%s", app, EmptyIfProdPrefix(env), RegionAndZone(zone), suffix)
+func GetZoneAppAlias(private bool, app, env, zone, suffix string) string {
+	privateStr := ""
+	if private {
+		privateStr = ".private"
+	}
+	return fmt.Sprintf("%s%s%s.%s.%s", app, privateStr, EmptyIfProdPrefix(env), RegionAndZone(zone), suffix)
 }
 
 func RegionAndZone(zone string) string {

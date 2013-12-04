@@ -12,11 +12,13 @@ type App struct {
 }
 
 type Router struct {
-	Internal  bool
-	Zone      string
-	IP        string
-	CName     string
-	RecordIds []string
+	Internal     bool
+	Zone         string
+	PrivateIP    string
+	PublicIP     string
+	PrivateCName string
+	PublicCName  string
+	RecordIds    []string
 }
 
 type Manager struct {
@@ -107,9 +109,10 @@ type ManagerListRegisteredAppsReply struct {
 // Used to register an Router
 type ManagerRegisterRouterArg struct {
 	ManagerAuthArg
-	Internal bool
-	Zone     string
-	IP       string
+	Internal  bool
+	Zone      string
+	PrivateIP string
+	PublicIP  string
 }
 
 type ManagerRegisterRouterReply struct {
@@ -123,7 +126,7 @@ type ManagerGetRouterArg struct {
 	ManagerAuthArg
 	Internal bool
 	Zone     string
-	IP       string
+	PublicIP string
 }
 
 type ManagerGetRouterReply struct {

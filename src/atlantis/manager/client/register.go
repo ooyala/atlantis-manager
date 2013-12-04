@@ -6,10 +6,11 @@ import (
 )
 
 type RegisterRouterCommand struct {
-	Wait     bool   `long:"wait" description:"wait until done before exiting"`
-	Internal bool   `long:"internal" description:"true to list internal routers"`
-	Zone     string `short:"z" long:"zone" description:"the zone to register in"`
-	IP       string `short:"i" long:"ip" description:"the IP to register"`
+	Wait      bool   `long:"wait" description:"wait until done before exiting"`
+	Internal  bool   `long:"internal" description:"true to list internal routers"`
+	Zone      string `short:"z" long:"zone" description:"the zone to register in"`
+	PrivateIP string `short:"p" long:"private-ip" description:"the Private IP to register"`
+	PublicIP  string `short:"i" long:"public-ip" description:"the Public IP to register"`
 }
 
 func (c *RegisterRouterCommand) Execute(args []string) error {
@@ -18,13 +19,19 @@ func (c *RegisterRouterCommand) Execute(args []string) error {
 		return OutputError(err)
 	}
 	Log("Register Router...")
-	args = ExtractArgs([]*string{&c.Zone, &c.IP}, args)
+	args = ExtractArgs([]*string{&c.Zone, &c.PrivateIP, &c.PublicIP}, args)
 	user, secret, err := GetSecret()
 	if err != nil {
 		return err
 	}
 	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerRegisterRouterArg{ManagerAuthArg: authArg, Internal: c.Internal, Zone: c.Zone, IP: c.IP}
+	arg := ManagerRegisterRouterArg{
+		ManagerAuthArg: authArg,
+		Internal:       c.Internal,
+		Zone:           c.Zone,
+		PrivateIP:      c.PrivateIP,
+		PublicIP:       c.PublicIP,
+	}
 	var reply atlantis.AsyncReply
 	err = rpcClient.Call("RegisterRouter", arg, &reply)
 	if err != nil {
@@ -41,7 +48,7 @@ type UnregisterRouterCommand struct {
 	Wait     bool   `long:"wait" description:"wait until done before exiting"`
 	Internal bool   `long:"internal" description:"true to list internal routers"`
 	Zone     string `short:"z" long:"zone" description:"the zone to register in"`
-	IP       string `short:"i" long:"ip" description:"the IP to register"`
+	PublicIP string `short:"i" long:"public-ip" description:"the Public IP to register"`
 }
 
 func (c *UnregisterRouterCommand) Execute(args []string) error {
@@ -50,13 +57,18 @@ func (c *UnregisterRouterCommand) Execute(args []string) error {
 		return OutputError(err)
 	}
 	Log("Unregister Router...")
-	args = ExtractArgs([]*string{&c.Zone, &c.IP}, args)
+	args = ExtractArgs([]*string{&c.Zone, &c.PublicIP}, args)
 	user, secret, err := GetSecret()
 	if err != nil {
 		return err
 	}
 	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerRegisterRouterArg{ManagerAuthArg: authArg, Internal: c.Internal, Zone: c.Zone, IP: c.IP}
+	arg := ManagerRegisterRouterArg{
+		ManagerAuthArg: authArg,
+		Internal:       c.Internal,
+		Zone:           c.Zone,
+		PublicIP:       c.PublicIP,
+	}
 	var reply atlantis.AsyncReply
 	err = rpcClient.Call("UnregisterRouter", arg, &reply)
 	if err != nil {
@@ -73,10 +85,12 @@ func OutputRegisterRouterReply(reply *ManagerRegisterRouterReply) error {
 	Log("-> Status: %s", reply.Status)
 	if reply.Router != nil {
 		Log("-> Router:")
-		Log("->   Internal: %t", reply.Router.Internal)
-		Log("->   Zone    : %s", reply.Router.Zone)
-		Log("->   IP      : %s", reply.Router.IP)
-		Log("->   CName   : %s", reply.Router.CName)
+		Log("->   Internal     : %t", reply.Router.Internal)
+		Log("->   Zone         : %s", reply.Router.Zone)
+		Log("->   PrivateIP    : %s", reply.Router.PrivateIP)
+		Log("->   PrivateCName : %s", reply.Router.PrivateCName)
+		Log("->   PublicIP     : %s", reply.Router.PublicIP)
+		Log("->   PublicCName  : %s", reply.Router.PublicCName)
 	}
 	return Output(map[string]interface{}{"status": reply.Status, "router": reply.Router},
 		nil, nil)
@@ -121,7 +135,7 @@ func (c *UnregisterRouterResultCommand) Execute(args []string) error {
 type GetRouterCommand struct {
 	Internal bool   `long:"internal" description:"true to list internal routers"`
 	Zone     string `short:"z" long:"zone" description:"the zone to register in"`
-	IP       string `short:"i" long:"ip" description:"the IP to register"`
+	PublicIP string `short:"i" long:"public-ip" description:"the Public IP to register"`
 }
 
 func (c *GetRouterCommand) Execute(args []string) error {
@@ -130,22 +144,24 @@ func (c *GetRouterCommand) Execute(args []string) error {
 		return OutputError(err)
 	}
 	Log("Get Router...")
-	args = ExtractArgs([]*string{&c.Zone, &c.IP}, args)
+	args = ExtractArgs([]*string{&c.Zone, &c.PublicIP}, args)
 	user, secret, err := GetSecret()
 	if err != nil {
 		return err
 	}
 	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerGetRouterArg{ManagerAuthArg: authArg, Internal: c.Internal, Zone: c.Zone, IP: c.IP}
+	arg := ManagerGetRouterArg{ManagerAuthArg: authArg, Internal: c.Internal, Zone: c.Zone, PublicIP: c.PublicIP}
 	var reply ManagerGetRouterReply
 	err = rpcClient.Call("GetRouter", arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}
 	Log("-> status: %s", reply.Status)
-	Log("-> zone            : %s", reply.Router.Zone)
-	Log("-> ip              : %s", reply.Router.IP)
-	Log("-> cname           : %s", reply.Router.CName)
+	Log("-> zone          : %s", reply.Router.Zone)
+	Log("-> private ip    : %s", reply.Router.PrivateIP)
+	Log("-> private cname : %s", reply.Router.PrivateCName)
+	Log("-> public ip     : %s", reply.Router.PublicIP)
+	Log("-> public cname  : %s", reply.Router.PublicCName)
 	return Output(map[string]interface{}{"status": reply.Status, "router": reply.Router}, nil, nil)
 }
 

@@ -21,13 +21,7 @@ import (
 //
 // Deleting the router, simply deletes all the records created when adding it.
 
-func Register(internal bool, zone, ip string) (*datamodel.ZkRouter, error) {
-	// create ZkRouter
-	zkRouter := datamodel.Router(internal, zone, ip)
-	if dns.Provider == nil {
-		// if we have no dns provider then just save here
-		return zkRouter, zkRouter.Save()
-	}
+func createRecordSets(private, internal bool, zone, ip string, zkRouter *datamodel.ZkRouter) ([]dns.ARecord, error) {
 	// first delete all entries we may already have for this IP in DNS
 	err := dns.DeleteRecordsForIP(ip)
 	if err != nil {
@@ -36,20 +30,29 @@ func Register(internal bool, zone, ip string) (*datamodel.ZkRouter, error) {
 	// choose cname
 	routers, err := datamodel.ListRoutersInZone(internal, zone)
 	if err != nil {
-		return zkRouter, err
+		return nil, err
 	}
 	routerMap := map[string]bool{}
 	for _, router := range routers {
 		tmpRouter, err := datamodel.GetRouter(internal, zone, router)
 		if err != nil {
-			return zkRouter, err
+			return nil, err
 		}
-		routerMap[tmpRouter.CName] = true
+		if private {
+			routerMap[tmpRouter.PrivateCName] = true
+		} else {
+			routerMap[tmpRouter.PublicCName] = true
+		}
 	}
 	routerNum := 1
-	zkRouter.CName = helper.GetRouterCName(internal, routerNum, zone, dns.Provider.Suffix())
-	for ; routerMap[zkRouter.CName]; routerNum++ {
-		zkRouter.CName = helper.GetRouterCName(internal, routerNum, zone, dns.Provider.Suffix())
+	myCName := helper.GetRouterCName(private, internal, routerNum, zone, dns.Provider.Suffix())
+	for ; routerMap[myCName]; routerNum++ {
+		myCName = helper.GetRouterCName(private, internal, routerNum, zone, dns.Provider.Suffix())
+	}
+	if private {
+		zkRouter.PrivateCName = myCName
+	} else {
+		zkRouter.PublicCName = myCName
 	}
 
 	zkRouter.RecordIds = make([]string, 3)
@@ -57,24 +60,24 @@ func Register(internal bool, zone, ip string) (*datamodel.ZkRouter, error) {
 
 	// WEIGHT=1 router.<region>.<suffix>
 	cnames[0] = dns.ARecord{
-		Name:   helper.GetRegionRouterCName(internal, dns.Provider.Suffix()),
-		IP:     zkRouter.IP,
+		Name:   helper.GetRegionRouterCName(private, internal, dns.Provider.Suffix()),
+		IP:     ip,
 		Weight: 1,
 	}
 	zkRouter.RecordIds[0] = cnames[0].Id()
 
 	// WEIGHT=1 routerX.<region+zone>.<suffix>
 	cnames[1] = dns.ARecord{
-		Name:   zkRouter.CName,
-		IP:     zkRouter.IP,
+		Name:   myCName,
+		IP:     ip,
 		Weight: 1,
 	}
 	zkRouter.RecordIds[1] = cnames[1].Id()
 
 	// WEIGHT=1 router.<region+zone>.<suffix>
 	cnames[2] = dns.ARecord{
-		Name:   helper.GetZoneRouterCName(internal, zkRouter.Zone, dns.Provider.Suffix()),
-		IP:     zkRouter.IP,
+		Name:   helper.GetZoneRouterCName(private, internal, zkRouter.Zone, dns.Provider.Suffix()),
+		IP:     ip,
 		Weight: 1,
 	}
 	zkRouter.RecordIds[2] = cnames[2].Id()
@@ -85,15 +88,39 @@ func Register(internal bool, zone, ip string) (*datamodel.ZkRouter, error) {
 			continue
 		}
 		cname := dns.ARecord{
-			Name:   helper.GetZoneRouterCName(internal, azone, dns.Provider.Suffix()),
-			IP:     zkRouter.IP,
+			Name:   helper.GetZoneRouterCName(private, internal, azone, dns.Provider.Suffix()),
+			IP:     ip,
 			Weight: 0,
 		}
 		zkRouter.RecordIds = append(zkRouter.RecordIds, cname.Id())
 		cnames = append(cnames, cname)
 	}
+	return cnames, nil
+}
 
-	err, errChan := dns.Provider.CreateARecords("CREATE_ROUTER "+ip+" in "+zone, cnames)
+func Register(internal bool, zone, privateIP, publicIP string) (*datamodel.ZkRouter, error) {
+	// create ZkRouter
+	zkRouter := datamodel.Router(internal, zone, privateIP, publicIP)
+	if dns.Provider == nil {
+		// if we have no dns provider then just save here
+		return zkRouter, zkRouter.Save()
+	}
+
+	// get record sets
+	cnames, err := createRecordSets(false, internal, zone, publicIP, zkRouter)
+	if err != nil {
+		return zkRouter, err
+	}
+	// if publicIP and privateIP are different, create private ones as well
+	if publicIP != privateIP {
+		privateCNames, err := createRecordSets(true, internal, zone, privateIP, zkRouter)
+		if err != nil {
+			return zkRouter, err
+		}
+		cnames = append(cnames, privateCNames...)
+	}
+
+	err, errChan := dns.Provider.CreateARecords("CREATE_ROUTER "+privateIP+"/"+publicIP+" in "+zone, cnames)
 	if err != nil {
 		return zkRouter, err
 	}

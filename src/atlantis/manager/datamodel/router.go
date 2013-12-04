@@ -13,8 +13,8 @@ import (
 
 type ZkRouter types.Router
 
-func Router(internal bool, zone, ip string) *ZkRouter {
-	return &ZkRouter{Internal: internal, Zone: zone, IP: ip}
+func Router(internal bool, zone, privateIP, publicIP string) *ZkRouter {
+	return &ZkRouter{Internal: internal, Zone: zone, PrivateIP: privateIP, PublicIP: publicIP}
 }
 
 func (r *ZkRouter) Save() error {
@@ -73,7 +73,7 @@ func GetRouter(internal bool, zone, ip string) (zr *ZkRouter, err error) {
 }
 
 func (r *ZkRouter) path() string {
-	return helper.GetBaseRouterPath(r.Internal, r.Zone, r.IP)
+	return helper.GetBaseRouterPath(r.Internal, r.Zone, r.PublicIP)
 }
 
 // Routing Datamodel

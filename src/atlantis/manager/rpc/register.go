@@ -30,7 +30,7 @@ func (e *RegisterRouterExecutor) Result() interface{} {
 }
 
 func (e *RegisterRouterExecutor) Description() string {
-	return fmt.Sprintf("%s in %s", e.arg.IP, e.arg.Zone)
+	return fmt.Sprintf("%s/%s in %s", e.arg.PrivateIP, e.arg.PublicIP, e.arg.Zone)
 }
 
 func (e *RegisterRouterExecutor) Authorize() error {
@@ -38,13 +38,16 @@ func (e *RegisterRouterExecutor) Authorize() error {
 }
 
 func (e *RegisterRouterExecutor) Execute(t *Task) error {
-	if e.arg.IP == "" {
-		return errors.New("Please specify an IP to register")
+	if e.arg.PublicIP == "" {
+		return errors.New("Please specify a Public IP to register")
+	}
+	if e.arg.PrivateIP == "" {
+		return errors.New("Please specify a Private IP to register")
 	}
 	if e.arg.Zone == "" {
 		return errors.New("Please specify a zone")
 	}
-	routerObj, err := router.Register(e.arg.Internal, e.arg.Zone, e.arg.IP)
+	routerObj, err := router.Register(e.arg.Internal, e.arg.Zone, e.arg.PrivateIP, e.arg.PublicIP)
 	if err != nil {
 		e.reply.Status = StatusError
 	}
@@ -96,7 +99,7 @@ func (e *UnregisterRouterExecutor) Result() interface{} {
 }
 
 func (e *UnregisterRouterExecutor) Description() string {
-	return fmt.Sprintf("%s in %s", e.arg.IP, e.arg.Zone)
+	return fmt.Sprintf("%s in %s", e.arg.PublicIP, e.arg.Zone)
 }
 
 func (e *UnregisterRouterExecutor) Authorize() error {
@@ -104,13 +107,13 @@ func (e *UnregisterRouterExecutor) Authorize() error {
 }
 
 func (e *UnregisterRouterExecutor) Execute(t *Task) error {
-	if e.arg.IP == "" {
-		return errors.New("Please specify an IP to uregister")
+	if e.arg.PublicIP == "" {
+		return errors.New("Please specify a PublicIP to uregister")
 	}
 	if e.arg.Zone == "" {
 		return errors.New("Please specify a zone")
 	}
-	err := router.Unregister(e.arg.Internal, e.arg.Zone, e.arg.IP)
+	err := router.Unregister(e.arg.Internal, e.arg.Zone, e.arg.PublicIP)
 	if err != nil {
 		e.reply.Status = StatusError
 	}
@@ -190,7 +193,7 @@ func (e *GetRouterExecutor) Result() interface{} {
 }
 
 func (e *GetRouterExecutor) Description() string {
-	return fmt.Sprintf("%s in %s", e.arg.IP, e.arg.Zone)
+	return fmt.Sprintf("%s in %s", e.arg.PublicIP, e.arg.Zone)
 }
 
 func (e *GetRouterExecutor) Authorize() error {
@@ -198,7 +201,7 @@ func (e *GetRouterExecutor) Authorize() error {
 }
 
 func (e *GetRouterExecutor) Execute(t *Task) error {
-	zkRouter, err := datamodel.GetRouter(e.arg.Internal, e.arg.Zone, e.arg.IP)
+	zkRouter, err := datamodel.GetRouter(e.arg.Internal, e.arg.Zone, e.arg.PublicIP)
 	castedRouter := Router(*zkRouter)
 	e.reply.Router = &castedRouter
 	if err != nil {

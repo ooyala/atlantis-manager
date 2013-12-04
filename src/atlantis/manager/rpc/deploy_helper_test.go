@@ -92,5 +92,5 @@ func (s *DeployHelperSuite) TestResolveDepValues(c *C) {
 	deps, err = ResolveDepValues(zkEnv, []string{"somedep", "hello-go"}, false)
 	c.Assert(err, IsNil)
 	c.Assert(deps["somedep"], Equals, "somevalue")
-	c.Assert(deps["hello-go"], Equals, "hello-go.root."+Region+".suffix.com")
+	c.Assert(deps["hello-go"], Equals, "hello-go.private.root."+Region+".suffix.com")
 }

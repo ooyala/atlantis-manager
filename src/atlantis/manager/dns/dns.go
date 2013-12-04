@@ -57,19 +57,31 @@ func CreateAppAliases(internal bool, app, sha, env string) error {
 	if Provider == nil {
 		return zkDNS.Save()
 	}
-	zkDNS.RecordIds = make([]string, len(AvailableZones)+1)
-	aliases := make([]Alias, len(AvailableZones)+1)
+	zkDNS.RecordIds = make([]string, 2*(len(AvailableZones)+1))
+	aliases := make([]Alias, 2*(len(AvailableZones)+1))
 	for i, zone := range AvailableZones {
-		aliases[i] = Alias{
-			Alias:    helper.GetZoneAppAlias(app, env, zone, Provider.Suffix()),
-			Original: helper.GetZoneRouterCName(internal, zone, Provider.Suffix()),
+		idx := i * 2
+		aliases[idx] = Alias{
+			Alias:    helper.GetZoneAppAlias(true, app, env, zone, Provider.Suffix()),
+			Original: helper.GetZoneRouterCName(true, internal, zone, Provider.Suffix()),
 		}
-		zkDNS.RecordIds[i] = aliases[i].Id()
+		zkDNS.RecordIds[idx] = aliases[idx].Id()
+		idx++
+		aliases[idx] = Alias{
+			Alias:    helper.GetZoneAppAlias(false, app, env, zone, Provider.Suffix()),
+			Original: helper.GetZoneRouterCName(false, internal, zone, Provider.Suffix()),
+		}
+		zkDNS.RecordIds[idx] = aliases[idx].Id()
 	}
 	// region-wide entry (for referencing outside of atlantis)
+	aliases[len(aliases)-2] = Alias{
+		Alias:    helper.GetRegionAppAlias(true, app, env, Provider.Suffix()),
+		Original: helper.GetRegionRouterCName(true, internal, Provider.Suffix()),
+	}
+	zkDNS.RecordIds[len(aliases)-2] = aliases[len(aliases)-2].Id()
 	aliases[len(aliases)-1] = Alias{
-		Alias:    helper.GetRegionAppAlias(app, env, Provider.Suffix()),
-		Original: helper.GetRegionRouterCName(internal, Provider.Suffix()),
+		Alias:    helper.GetRegionAppAlias(false, app, env, Provider.Suffix()),
+		Original: helper.GetRegionRouterCName(false, internal, Provider.Suffix()),
 	}
 	zkDNS.RecordIds[len(aliases)-1] = aliases[len(aliases)-1].Id()
 	err, errChan := Provider.CreateAliases("CREATE_APP "+app+" in "+env, aliases)

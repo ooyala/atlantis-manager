@@ -32,7 +32,8 @@ func ResolveDepValues(zkEnv *datamodel.ZkEnv, names []string, encrypt bool) (map
 		for _, name := range names {
 			if datamodel.InternalAppExistsInEnv(name, zkEnv.Name) {
 				// this is a registered, internal, deployed app, output the alias
-				deps[name] = helper.GetRegionAppAlias(name, zkEnv.Name, dns.Provider.Suffix())
+				// NOTE[jigish]: resolve using the private alias. ask me why if you're curious
+				deps[name] = helper.GetRegionAppAlias(true, name, zkEnv.Name, dns.Provider.Suffix())
 			} else {
 				leftoverNames = append(leftoverNames, name)
 			}

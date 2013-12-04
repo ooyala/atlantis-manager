@@ -18,16 +18,17 @@ func (s *DatamodelSuite) TestRouterModel(c *C) {
 	for _, routersInZone := range routers {
 		c.Assert(len(routersInZone), Equals, 0)
 	}
-	zkRouter := Router(true, Region, "1.1.1.1")
+	zkRouter := Router(true, Region, "1.1.1.1", "2.2.2.2")
 	err = zkRouter.Save()
 	c.Assert(err, IsNil)
-	fetchedRouter, err := GetRouter(true, Region, "1.1.1.1")
+	fetchedRouter, err := GetRouter(true, Region, "2.2.2.2")
 	c.Assert(err, IsNil)
 	c.Assert(zkRouter, DeepEquals, fetchedRouter)
-	zkRouter.CName = "mycname"
+	zkRouter.PublicCName = "mypubliccname"
+	zkRouter.PrivateCName = "mypubliccname"
 	zkRouter.RecordIds = []string{"rid1", "rid2"}
 	zkRouter.Save()
-	fetchedRouter, err = GetRouter(true, Region, "1.1.1.1")
+	fetchedRouter, err = GetRouter(true, Region, "2.2.2.2")
 	c.Assert(err, IsNil)
 	c.Assert(zkRouter, DeepEquals, fetchedRouter)
 	routers, err = ListRouters(true)
