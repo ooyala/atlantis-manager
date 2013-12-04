@@ -24,7 +24,7 @@ func (f FakeDNSProvider) CreateAliases(comment string, aliases []dns.Alias) (err
 	return nil, errChan
 }
 
-func (f FakeDNSProvider) CreateCNames(comment string, cnames []dns.CName) (error, chan error) {
+func (f FakeDNSProvider) CreateARecords(comment string, arecords []dns.ARecord) (error, chan error) {
 	errChan := make(chan error)
 	go func(ch chan error) {
 		ch <- nil

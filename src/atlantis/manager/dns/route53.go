@@ -35,7 +35,6 @@ func (r *Route53Provider) baseRRSet(id, name, failover string) route53.RRSet {
 		Type:          "A",
 		TTL:           r.TTL,
 		SetIdentifier: id,
-		Weight:        0,
 	}
 	if failover == "PRIMARY" || failover == "SECONDARY" {
 		rrset.Failover = failover
@@ -50,20 +49,20 @@ func (r *Route53Provider) CreateAliases(comment string, aliases []Alias) (error,
 		rrsets[count] = r.baseRRSet(alias.Id(), alias.Alias, alias.Failover)
 		rrsets[count].HostedZoneId = r.ZoneId
 		rrsets[count].DNSName = alias.Original
-		rrsets[count].EvaluateTargetHealth = true
 		count++
 	}
 	return r.createRecords(comment, rrsets...)
 }
 
-func (r *Route53Provider) CreateCNames(comment string, cnames []CName) (error, chan error) {
-	rrsets := make([]route53.RRSet, len(cnames))
+func (r *Route53Provider) CreateARecords(comment string, arecords []ARecord) (error, chan error) {
+	rrsets := make([]route53.RRSet, len(arecords))
 	count := 0
-	for _, cname := range cnames {
-		rrsets[count] = r.baseRRSet(cname.Id(), cname.CName, cname.Failover)
-		rrsets[count].Values = []string{cname.IP}
-		if cname.HealthCheckId != "" {
-			rrsets[count].HealthCheckId = cname.HealthCheckId
+	for _, arecord := range arecords {
+		rrsets[count] = r.baseRRSet(arecord.Id(), arecord.Name, arecord.Failover)
+		rrsets[count].Values = []string{arecord.IP}
+		rrsets[count].Weight = arecord.Weight
+		if arecord.HealthCheckId != "" {
+			rrsets[count].HealthCheckId = arecord.HealthCheckId
 		}
 		count++
 	}

@@ -32,7 +32,6 @@ func (c *RegisterRouterCommand) Execute(args []string) error {
 	Log("-> zone            : %s", reply.Router.Zone)
 	Log("-> ip              : %s", reply.Router.IP)
 	Log("-> cname           : %s", reply.Router.CName)
-	Log("-> health check id : %s", reply.Router.HealthCheckId)
 	return Output(map[string]interface{}{"status": reply.Status}, nil, nil)
 }
 
@@ -92,7 +91,6 @@ func (c *GetRouterCommand) Execute(args []string) error {
 	Log("-> zone            : %s", reply.Router.Zone)
 	Log("-> ip              : %s", reply.Router.IP)
 	Log("-> cname           : %s", reply.Router.CName)
-	Log("-> health check id : %s", reply.Router.HealthCheckId)
 	return Output(map[string]interface{}{"status": reply.Status, "router": reply.Router}, nil, nil)
 }
 
@@ -286,7 +284,10 @@ func (c *RegisterManagerCommand) Execute(args []string) error {
 		return OutputError(err)
 	}
 	Log("-> status: %s", reply.Status)
-	Log("-> manager: %+v", reply.Manager)
+	Log("-> region:         %s", reply.Manager.Region)
+	Log("-> ip:             %s", reply.Manager.IP)
+	Log("-> manager cname:  %s", reply.Manager.ManagerCName)
+	Log("-> registry cname: %s", reply.Manager.RegistryCName)
 	return Output(map[string]interface{}{"status": reply.Status, "manager": reply.Manager}, nil, nil)
 }
 

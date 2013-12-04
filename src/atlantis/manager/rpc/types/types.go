@@ -12,23 +12,20 @@ type App struct {
 }
 
 type Router struct {
-	Internal      bool
-	Zone          string
-	IP            string
-	CName         string
-	HealthCheckId string
-	RecordIds     []string
+	Internal  bool
+	Zone      string
+	IP        string
+	CName     string
+	RecordIds []string
 }
 
 type Manager struct {
-	Region                string
-	IP                    string
-	ManagerCName          string
-	ManagerHealthCheckId  string
-	ManagerRecordId       string
-	RegistryCName         string
-	RegistryHealthCheckId string
-	RegistryRecordId      string
+	Region           string
+	IP               string
+	ManagerCName     string
+	ManagerRecordId  string
+	RegistryCName    string
+	RegistryRecordId string
 }
 
 // Manager RPC Types

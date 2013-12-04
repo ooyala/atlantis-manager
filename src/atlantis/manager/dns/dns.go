@@ -11,7 +11,7 @@ var Provider DNSProvider
 
 type DNSProvider interface {
 	CreateAliases(string, []Alias) (error, chan error)
-	CreateCNames(string, []CName) (error, chan error)
+	CreateARecords(string, []ARecord) (error, chan error)
 	GetRecordsForIP(string) ([]string, error)
 	DeleteRecords(string, ...string) (error, chan error)
 	CreateHealthCheck(string, uint16) (string, error)
@@ -29,15 +29,16 @@ func (a *Alias) Id() string {
 	return fmt.Sprintf("%s-%s-%s", a.Alias, a.Original, a.Failover)
 }
 
-type CName struct {
-	CName         string
+type ARecord struct {
+	Name          string
 	IP            string
 	HealthCheckId string
 	Failover      string
+	Weight        uint8
 }
 
-func (c *CName) Id() string {
-	return fmt.Sprintf("%s-%s-%s", c.CName, c.IP, c.Failover)
+func (a *ARecord) Id() string {
+	return fmt.Sprintf("%s-%s-%s", a.Name, a.IP, a.Failover)
 }
 
 func CreateAppAliases(internal bool, app, sha, env string) error {

@@ -25,7 +25,6 @@ func (s *DatamodelSuite) TestRouterModel(c *C) {
 	c.Assert(err, IsNil)
 	c.Assert(zkRouter, DeepEquals, fetchedRouter)
 	zkRouter.CName = "mycname"
-	zkRouter.HealthCheckId = "healthcheckid"
 	zkRouter.RecordIds = []string{"rid1", "rid2"}
 	zkRouter.Save()
 	fetchedRouter, err = GetRouter(true, Region, "1.1.1.1")

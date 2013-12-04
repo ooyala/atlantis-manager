@@ -67,23 +67,17 @@ func Register(region, ip, managerCName, registryCName string) (*datamodel.ZkMana
 		registryMap[tmpManager.RegistryCName] = true
 	}
 
-	cnames := []dns.CName{}
+	cnames := []dns.ARecord{}
 	if zkManager.ManagerCName == "" {
 		managerNum := 1
 		zkManager.ManagerCName = helper.GetManagerCName(managerNum, region, dns.Provider.Suffix())
 		for ; managerMap[zkManager.ManagerCName]; managerNum++ {
 			zkManager.ManagerCName = helper.GetManagerCName(managerNum, region, dns.Provider.Suffix())
 		}
-		// create basic health check for manager
-		zkManager.ManagerHealthCheckId, err = dns.Provider.CreateHealthCheck(zkManager.IP, uint16(443))
-		if err != nil {
-			return zkManager, err
-		}
 		// managerX.<region>.<suffix>
-		cname := dns.CName{
-			CName:         zkManager.ManagerCName,
-			IP:            zkManager.IP,
-			HealthCheckId: zkManager.ManagerHealthCheckId,
+		cname := dns.ARecord{
+			Name: zkManager.ManagerCName,
+			IP:   zkManager.IP,
 		}
 		zkManager.ManagerRecordId = cname.Id()
 		cnames = append(cnames, cname)
@@ -94,16 +88,10 @@ func Register(region, ip, managerCName, registryCName string) (*datamodel.ZkMana
 		for ; registryMap[zkManager.RegistryCName]; registryNum++ {
 			zkManager.RegistryCName = helper.GetRegistryCName(registryNum, region, dns.Provider.Suffix())
 		}
-		// create basic health check for registry
-		zkManager.RegistryHealthCheckId, err = dns.Provider.CreateHealthCheck(zkManager.IP, uint16(80))
-		if err != nil {
-			return zkManager, err
-		}
 		// registryX.<region>.<suffix>
-		cname := dns.CName{
-			CName:         zkManager.RegistryCName,
-			IP:            zkManager.IP,
-			HealthCheckId: zkManager.RegistryHealthCheckId,
+		cname := dns.ARecord{
+			Name: zkManager.RegistryCName,
+			IP:   zkManager.IP,
 		}
 		zkManager.RegistryRecordId = cname.Id()
 		cnames = append(cnames, cname)
@@ -112,7 +100,7 @@ func Register(region, ip, managerCName, registryCName string) (*datamodel.ZkMana
 	if len(cnames) == 0 {
 		return zkManager, nil
 	}
-	err, errChan := dns.Provider.CreateCNames("CREATE_MANAGER "+ip+" in "+region, cnames)
+	err, errChan := dns.Provider.CreateARecords("CREATE_MANAGER "+ip+" in "+region, cnames)
 	if err != nil {
 		return zkManager, err
 	}
@@ -145,20 +133,6 @@ func Unregister(region, ip string) error {
 			return err
 		}
 		err = <-errChan // wait for it to propagate
-		if err != nil {
-			return err
-		}
-	}
-	// delete basic health check for manager
-	if zkManager.ManagerHealthCheckId != "" {
-		err = dns.Provider.DeleteHealthCheck(zkManager.ManagerHealthCheckId)
-		if err != nil {
-			return err
-		}
-	}
-	// delete basic health check for registry
-	if zkManager.RegistryHealthCheckId != "" {
-		err = dns.Provider.DeleteHealthCheck(zkManager.RegistryHealthCheckId)
 		if err != nil {
 			return err
 		}
