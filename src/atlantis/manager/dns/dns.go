@@ -4,8 +4,8 @@ import (
 	. "atlantis/manager/constant"
 	"atlantis/manager/datamodel"
 	"atlantis/manager/helper"
+	"crypto/sha256"
 	"fmt"
-	"strings"
 )
 
 var Provider DNSProvider
@@ -27,7 +27,8 @@ type Alias struct {
 }
 
 func (a *Alias) Id() string {
-	return strings.Replace(fmt.Sprintf("%s %s", a.Original, a.Alias), "-", "", -1)
+	checksumArr := sha256.Sum256([]byte(fmt.Sprintf("%s %s", a.Original, a.Alias)))
+	return string(checksumArr[:sha256.Size])
 }
 
 type ARecord struct {
@@ -39,7 +40,8 @@ type ARecord struct {
 }
 
 func (a *ARecord) Id() string {
-	return strings.Replace(fmt.Sprintf("%s %s", a.IP, a.Name), "-", "", -1)
+	checksumArr := sha256.Sum256([]byte(fmt.Sprintf("%s %s", a.IP, a.Name)))
+	return string(checksumArr[:sha256.Size])
 }
 
 func CreateAppAliases(internal bool, app, sha, env string) error {
