@@ -24,8 +24,7 @@ import (
 func Register(internal bool, zone, ip string) (*datamodel.ZkRouter, error) {
 	// create ZkRouter
 	zkRouter := datamodel.Router(internal, zone, ip)
-	if !internal || dns.Provider == nil {
-		// only internal routers need DNS stuff
+	if dns.Provider == nil {
 		// if we have no dns provider then just save here
 		return zkRouter, zkRouter.Save()
 	}
