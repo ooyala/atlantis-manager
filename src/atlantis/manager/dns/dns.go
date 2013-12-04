@@ -27,7 +27,7 @@ type Alias struct {
 }
 
 func (a *Alias) Id() string {
-	return strings.Replace(fmt.Sprintf("%s.%s.%s", a.Alias, a.Original, a.Failover), "-", "", -1)
+	return strings.Replace(fmt.Sprintf("%s %s", a.Original, a.Alias), "-", "", -1)
 }
 
 type ARecord struct {
@@ -39,7 +39,7 @@ type ARecord struct {
 }
 
 func (a *ARecord) Id() string {
-	return strings.Replace(fmt.Sprintf("%s.%s.%s", a.Name, a.IP, a.Failover), "-", "", -1)
+	return strings.Replace(fmt.Sprintf("%s %s", a.IP, a.Name), "-", "", -1)
 }
 
 func CreateAppAliases(internal bool, app, sha, env string) error {
