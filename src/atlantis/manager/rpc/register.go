@@ -181,6 +181,9 @@ func (e *RegisterAppExecutor) Execute(t *Task) error {
 	if e.arg.Name == "" {
 		return errors.New("Please specify an app name to register")
 	}
+	if !AppRegexp.MatchString(e.arg.Name) {
+		return errors.New("App name must be [A-Za-z0-9-]+")
+	}
 	if e.arg.Repo == "" {
 		return errors.New("Please specify a repo")
 	}

@@ -1,9 +1,14 @@
 package constant
 
+import (
+	"regexp"
+)
+
 var (
 	Region         = "dev"
 	Zone           = "dev"
 	AvailableZones = []string{"dev"}
+	AppRegexp      = regexp.MustCompile("[A-Za-z0-9-]+") // apps can contain letters, numbers, and -
 )
 
 const (

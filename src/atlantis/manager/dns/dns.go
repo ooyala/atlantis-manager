@@ -5,6 +5,7 @@ import (
 	"atlantis/manager/datamodel"
 	"atlantis/manager/helper"
 	"fmt"
+	"strings"
 )
 
 var Provider DNSProvider
@@ -26,7 +27,7 @@ type Alias struct {
 }
 
 func (a *Alias) Id() string {
-	return fmt.Sprintf("%s-%s-%s", a.Alias, a.Original, a.Failover)
+	return strings.Replace(fmt.Sprintf("%s.%s.%s", a.Alias, a.Original, a.Failover), "-", "", -1)
 }
 
 type ARecord struct {
@@ -38,7 +39,7 @@ type ARecord struct {
 }
 
 func (a *ARecord) Id() string {
-	return fmt.Sprintf("%s-%s-%s", a.Name, a.IP, a.Failover)
+	return strings.Replace(fmt.Sprintf("%s.%s.%s", a.Name, a.IP, a.Failover), "-", "", -1)
 }
 
 func CreateAppAliases(internal bool, app, sha, env string) error {
