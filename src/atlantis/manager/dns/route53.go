@@ -62,7 +62,9 @@ func (r *Route53Provider) CreateCNames(comment string, cnames []CName) (error, c
 	for _, cname := range cnames {
 		rrsets[count] = r.baseRRSet(cname.Id(), cname.CName, cname.Failover)
 		rrsets[count].Values = []string{cname.IP}
-		rrsets[count].HealthCheckId = cname.HealthCheckId
+		if cname.HealthCheckId != "" {
+			rrsets[count].HealthCheckId = cname.HealthCheckId
+		}
 		count++
 	}
 	return r.createRecords(comment, rrsets...)
