@@ -33,7 +33,6 @@ func (r *Route53Provider) baseRRSet(id, name, failover string) route53.RRSet {
 	rrset := route53.RRSet{
 		Name:          name,
 		Type:          "A",
-		TTL:           r.TTL,
 		SetIdentifier: id,
 	}
 	if failover == "PRIMARY" || failover == "SECONDARY" {
@@ -62,6 +61,7 @@ func (r *Route53Provider) CreateARecords(comment string, arecords []ARecord) (er
 	count := 0
 	for _, arecord := range arecords {
 		rrsets[count] = r.baseRRSet(arecord.Id(), arecord.Name, arecord.Failover)
+		rrsets[count].TTL = r.TTL
 		rrsets[count].ResourceRecords = &route53.ResourceRecords{
 			ResourceRecord: []route53.ResourceRecord{route53.ResourceRecord{Value: arecord.IP}},
 		}
