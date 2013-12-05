@@ -1,5 +1,5 @@
 package client
-
+/*
 import (
 	"atlantis/manager/dns"
 )
@@ -169,3 +169,4 @@ func (c *DNSDeleteRecordsForIPCommand) Execute(args []string) error {
 	}
 	return Output(nil, nil, err)
 }
+*/

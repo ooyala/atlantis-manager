@@ -292,6 +292,7 @@ func New() *ManagerClient {
 	o.AddCommand("deploy-result", "get the result of an async deploy", "", &DeployResultCommand{})
 	o.AddCommand("teardown-result", "get the result of an async teardown", "", &TeardownResultCommand{})
 
+/*
 	// DNS Management
 	o.AddCommand("dns-create-arecord", "create an a record", "", &DNSCreateARecordCommand{})
 	o.AddCommand("dns-create-alias", "create an alias record", "", &DNSCreateAliasCommand{})
@@ -300,6 +301,7 @@ func New() *ManagerClient {
 	o.AddCommand("dns-delete-records", "delete records", "", &DNSDeleteRecordsCommand{})
 	o.AddCommand("dns-delete-records-ip", "delete records for ip", "", &DNSDeleteRecordsForIPCommand{})
 	o.AddCommand("dns-get-records-ip", "get records for ip", "", &DNSGetRecordsForIPCommand{})
+*/
 
 	return o
 }
