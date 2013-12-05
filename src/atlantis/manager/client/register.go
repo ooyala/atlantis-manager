@@ -367,7 +367,7 @@ func (c *RegisterManagerCommand) Execute(args []string) error {
 type UnregisterManagerCommand struct {
 	Wait     bool   `long:"wait" description:"wait until done before exiting"`
 	PublicIP string `short:"i" long:"ip" description:"the public ip to unregister"`
-	Region   string `short:"r" long:"region" description:"the region to ununregister"`
+	Region   string `short:"r" long:"region" description:"the region to unregister"`
 }
 
 func (c *UnregisterManagerCommand) Execute(args []string) error {
