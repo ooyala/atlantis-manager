@@ -30,7 +30,7 @@ func (e *RegisterRouterExecutor) Result() interface{} {
 }
 
 func (e *RegisterRouterExecutor) Description() string {
-	return fmt.Sprintf("%s/%s in %s", e.arg.PrivateIP, e.arg.PublicIP, e.arg.Zone)
+	return fmt.Sprintf("%s/%s in %s, internal: %t", e.arg.PrivateIP, e.arg.PublicIP, e.arg.Zone, e.arg.Internal)
 }
 
 func (e *RegisterRouterExecutor) Authorize() error {
@@ -99,7 +99,7 @@ func (e *UnregisterRouterExecutor) Result() interface{} {
 }
 
 func (e *UnregisterRouterExecutor) Description() string {
-	return fmt.Sprintf("%s in %s", e.arg.PublicIP, e.arg.Zone)
+	return fmt.Sprintf("%s in %s, internal: %t", e.arg.PublicIP, e.arg.Zone, e.arg.Internal)
 }
 
 func (e *UnregisterRouterExecutor) Authorize() error {
