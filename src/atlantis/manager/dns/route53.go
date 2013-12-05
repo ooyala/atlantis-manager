@@ -47,8 +47,11 @@ func (r *Route53Provider) CreateAliases(comment string, aliases []Alias) (error,
 	count := 0
 	for _, alias := range aliases {
 		rrsets[count] = r.baseRRSet(alias.Id(), alias.Alias, alias.Failover)
-		rrsets[count].HostedZoneId = r.ZoneId
-		rrsets[count].DNSName = alias.Original
+		rrsets[count].AliasTarget = &route53.AliasTarget{
+			HostedZoneId:         r.ZoneId,
+			DNSName:              alias.Original,
+			EvaluateTargetHealth: false,
+		}
 		count++
 	}
 	return r.createRecords(comment, rrsets...)
@@ -59,7 +62,9 @@ func (r *Route53Provider) CreateARecords(comment string, arecords []ARecord) (er
 	count := 0
 	for _, arecord := range arecords {
 		rrsets[count] = r.baseRRSet(arecord.Id(), arecord.Name, arecord.Failover)
-		rrsets[count].Values = []string{arecord.IP}
+		rrsets[count].ResourceRecords = &route53.ResourceRecords{
+			ResourceRecord: []route53.ResourceRecord{route53.ResourceRecord{Value: arecord.IP}},
+		}
 		rrsets[count].Weight = arecord.Weight
 		if arecord.HealthCheckId != "" {
 			rrsets[count].HealthCheckId = arecord.HealthCheckId
@@ -130,8 +135,11 @@ func (r *Route53Provider) GetRecordsForIP(ip string) ([]string, error) {
 	}
 	ids := []string{}
 	for _, rrset := range rrsets {
-		for _, value := range rrset.Values {
-			if value == ip {
+		if rrset.ResourceRecords == nil {
+			continue
+		}
+		for _, record := range rrset.ResourceRecords.ResourceRecord {
+			if record.Value == ip {
 				ids = append(ids, rrset.SetIdentifier)
 			}
 		}
