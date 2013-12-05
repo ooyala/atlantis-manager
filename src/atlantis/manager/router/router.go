@@ -55,7 +55,6 @@ func createRecordSets(private, internal bool, zone, ip string, zkRouter *datamod
 		zkRouter.PublicCName = myCName
 	}
 
-	zkRouter.RecordIds = make([]string, 3)
 	cnames := make([]dns.ARecord, 3)
 
 	// WEIGHT=1 router.<region>.<suffix>
@@ -64,7 +63,6 @@ func createRecordSets(private, internal bool, zone, ip string, zkRouter *datamod
 		IP:     ip,
 		Weight: 1,
 	}
-	zkRouter.RecordIds[0] = cnames[0].Id()
 
 	// WEIGHT=1 routerX.<region+zone>.<suffix>
 	cnames[1] = dns.ARecord{
@@ -72,7 +70,6 @@ func createRecordSets(private, internal bool, zone, ip string, zkRouter *datamod
 		IP:     ip,
 		Weight: 1,
 	}
-	zkRouter.RecordIds[1] = cnames[1].Id()
 
 	// WEIGHT=1 router.<region+zone>.<suffix>
 	cnames[2] = dns.ARecord{
@@ -80,7 +77,6 @@ func createRecordSets(private, internal bool, zone, ip string, zkRouter *datamod
 		IP:     ip,
 		Weight: 1,
 	}
-	zkRouter.RecordIds[2] = cnames[2].Id()
 
 	// WEIGHT=0 router.<region+zone>.<suffix> -> will be activated when needed
 	for _, azone := range AvailableZones {
@@ -92,7 +88,6 @@ func createRecordSets(private, internal bool, zone, ip string, zkRouter *datamod
 			IP:     ip,
 			Weight: 0,
 		}
-		zkRouter.RecordIds = append(zkRouter.RecordIds, cname.Id())
 		cnames = append(cnames, cname)
 	}
 	return cnames, nil
@@ -101,6 +96,7 @@ func createRecordSets(private, internal bool, zone, ip string, zkRouter *datamod
 func Register(internal bool, zone, privateIP, publicIP string) (*datamodel.ZkRouter, error) {
 	// create ZkRouter
 	zkRouter := datamodel.Router(internal, zone, privateIP, publicIP)
+	zkRouter.RecordIds = []string{}
 	if dns.Provider == nil {
 		// if we have no dns provider then just save here
 		return zkRouter, zkRouter.Save()
@@ -119,6 +115,9 @@ func Register(internal bool, zone, privateIP, publicIP string) (*datamodel.ZkRou
 		}
 		cnames = append(cnames, privateCNames...)
 	}
+	if len(cnames) == 0 { // no need to do anything, there are no cnames to save
+		return zkRouter, nil
+	}
 
 	err, errChan := dns.Provider.CreateARecords("CREATE_ROUTER "+privateIP+"/"+publicIP+" in "+zone, cnames)
 	if err != nil {
@@ -128,6 +127,12 @@ func Register(internal bool, zone, privateIP, publicIP string) (*datamodel.ZkRou
 	if err != nil {
 		return zkRouter, err
 	}
+
+	// add RecordIds
+	for _, cname := range cnames {
+		zkRouter.RecordIds = append(zkRouter.RecordIds, cname.Id())
+	}
+
 	return zkRouter, zkRouter.Save()
 }
 
@@ -136,8 +141,8 @@ func Unregister(internal bool, zone, ip string) error {
 	if err != nil {
 		return err
 	}
-	if dns.Provider == nil {
-		// if we have no dns provider then just save here
+	if dns.Provider == nil || len(zkRouter.RecordIds) == 0 {
+		// if we have no dns provider or there aren't any record IDs then just save here
 		return zkRouter.Delete()
 	}
 	err, errChan := dns.Provider.DeleteRecords("DELETE_ROUTER "+ip+" in "+zone, zkRouter.RecordIds...)
