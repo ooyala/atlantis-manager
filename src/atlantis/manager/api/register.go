@@ -11,24 +11,24 @@ import (
 
 func ListRouters(w http.ResponseWriter, r *http.Request) {
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
-	internal := false
-	internalStr := r.FormValue("Internal")
-	if internalStr != "" {
-		internal, _ = strconv.ParseBool(internalStr)
+	internal, err := strconv.ParseBool(r.FormValue("Internal"))
+	if err != nil {
+		fmt.Fprintf(w, "%s", Output(map[string]interface{}{}, err))
+		return
 	}
 	arg := ManagerListRoutersArg{ManagerAuthArg: auth, Internal: internal}
 	var reply ManagerListRoutersReply
-	err := manager.ListRouters(arg, &reply)
+	err = manager.ListRouters(arg, &reply)
 	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Routers": reply.Routers, "Status": reply.Status}, err))
 }
 
 func RegisterRouter(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
-	internal := false
-	internalStr := r.FormValue("Internal")
-	if internalStr != "" {
-		internal, _ = strconv.ParseBool(internalStr)
+	internal, err := strconv.ParseBool(r.FormValue("Internal"))
+	if err != nil {
+		fmt.Fprintf(w, "%s", Output(map[string]interface{}{}, err))
+		return
 	}
 	arg := ManagerRegisterRouterArg{
 		ManagerAuthArg: auth,
@@ -38,17 +38,17 @@ func RegisterRouter(w http.ResponseWriter, r *http.Request) {
 		PrivateIP:      r.FormValue("PrivateIP"),
 	}
 	var reply AsyncReply
-	err := manager.RegisterRouter(arg, &reply)
+	err = manager.RegisterRouter(arg, &reply)
 	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Id": reply.Id}, err))
 }
 
 func UnregisterRouter(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
-	internal := false
-	internalStr := r.FormValue("Internal")
-	if internalStr != "" {
-		internal, _ = strconv.ParseBool(internalStr)
+	internal, err := strconv.ParseBool(r.FormValue("Internal"))
+	if err != nil {
+		fmt.Fprintf(w, "%s", Output(map[string]interface{}{}, err))
+		return
 	}
 	arg := ManagerRegisterRouterArg{
 		ManagerAuthArg: auth,
@@ -57,17 +57,17 @@ func UnregisterRouter(w http.ResponseWriter, r *http.Request) {
 		PublicIP:       vars["PublicIP"],
 	}
 	var reply AsyncReply
-	err := manager.UnregisterRouter(arg, &reply)
+	err = manager.UnregisterRouter(arg, &reply)
 	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Id": reply.Id}, err))
 }
 
 func GetRouter(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
-	internal := false
-	internalStr := r.FormValue("Internal")
-	if internalStr != "" {
-		internal, _ = strconv.ParseBool(internalStr)
+	internal, err := strconv.ParseBool(r.FormValue("Internal"))
+	if err != nil {
+		fmt.Fprintf(w, "%s", Output(map[string]interface{}{}, err))
+		return
 	}
 	arg := ManagerGetRouterArg{
 		ManagerAuthArg: auth,
@@ -76,7 +76,7 @@ func GetRouter(w http.ResponseWriter, r *http.Request) {
 		PublicIP:       vars["PublicIP"],
 	}
 	var reply ManagerGetRouterReply
-	err := manager.GetRouter(arg, &reply)
+	err = manager.GetRouter(arg, &reply)
 	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Status": reply.Status, "Router": reply.Router}, err))
 }
 

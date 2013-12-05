@@ -13,9 +13,12 @@ import (
 
 func GetPool(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	r.ParseForm()
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
 	internal, err := strconv.ParseBool(r.FormValue("Internal"))
+	if err != nil {
+		fmt.Fprintf(w, "%s", Output(map[string]interface{}{}, err))
+		return
+	}
 	pArg := ManagerGetPoolArg{auth, vars["PoolName"], internal}
 	var reply ManagerGetPoolReply
 	err = manager.GetPool(pArg, &reply)
@@ -26,6 +29,10 @@ func UpdatePool(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
 	internal, err := strconv.ParseBool(r.FormValue("Internal"))
+	if err != nil {
+		fmt.Fprintf(w, "%s", Output(map[string]interface{}{}, err))
+		return
+	}
 	hosts := map[string]config.Host{}
 	for _, host := range strings.Split(r.FormValue("Hosts"), ", ") {
 		hosts[host] = config.Host{Address: host}
@@ -43,6 +50,10 @@ func DeletePool(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
 	internal, err := strconv.ParseBool(r.FormValue("Internal"))
+	if err != nil {
+		fmt.Fprintf(w, "%s", Output(map[string]interface{}{}, err))
+		return
+	}
 	pArg := ManagerDeletePoolArg{auth, vars["PoolName"], internal}
 	var reply ManagerDeletePoolReply
 	err = manager.DeletePool(pArg, &reply)
@@ -52,6 +63,10 @@ func DeletePool(w http.ResponseWriter, r *http.Request) {
 func ListPools(w http.ResponseWriter, r *http.Request) {
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
 	internal, err := strconv.ParseBool(r.FormValue("Internal"))
+	if err != nil {
+		fmt.Fprintf(w, "%s", Output(map[string]interface{}{}, err))
+		return
+	}
 	arg := ManagerListPoolsArg{auth, internal}
 	var reply ManagerListPoolsReply
 	err = manager.ListPools(arg, &reply)
@@ -60,9 +75,12 @@ func ListPools(w http.ResponseWriter, r *http.Request) {
 
 func GetRule(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	r.ParseForm()
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
 	internal, err := strconv.ParseBool(r.FormValue("Internal"))
+	if err != nil {
+		fmt.Fprintf(w, "%s", Output(map[string]interface{}{}, err))
+		return
+	}
 	rArg := ManagerGetRuleArg{auth, vars["RuleName"], internal}
 	var reply ManagerGetRuleReply
 	err = manager.GetRule(rArg, &reply)
@@ -73,6 +91,10 @@ func UpdateRule(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
 	internal, err := strconv.ParseBool(r.FormValue("Internal"))
+	if err != nil {
+		fmt.Fprintf(w, "%s", Output(map[string]interface{}{}, err))
+		return
+	}
 	rArg := ManagerUpdateRuleArg{auth, config.Rule{Name: vars["RuleName"], Type: r.FormValue("Type"),
 		Value: r.FormValue("Value"), Next: r.FormValue("Next"), Pool: r.FormValue("Pool"), Internal: internal}}
 	var reply ManagerUpdateRuleReply
@@ -84,6 +106,10 @@ func DeleteRule(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
 	internal, err := strconv.ParseBool(r.FormValue("Internal"))
+	if err != nil {
+		fmt.Fprintf(w, "%s", Output(map[string]interface{}{}, err))
+		return
+	}
 	rArg := ManagerDeleteRuleArg{auth, vars["RuleName"], internal}
 	var reply ManagerDeleteRuleReply
 	err = manager.DeleteRule(rArg, &reply)
@@ -93,6 +119,10 @@ func DeleteRule(w http.ResponseWriter, r *http.Request) {
 func ListRules(w http.ResponseWriter, r *http.Request) {
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
 	internal, err := strconv.ParseBool(r.FormValue("Internal"))
+	if err != nil {
+		fmt.Fprintf(w, "%s", Output(map[string]interface{}{}, err))
+		return
+	}
 	arg := ManagerListRulesArg{auth, internal}
 	var reply ManagerListRulesReply
 	err = manager.ListRules(arg, &reply)
@@ -103,6 +133,10 @@ func GetTrie(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
 	internal, err := strconv.ParseBool(r.FormValue("Internal"))
+	if err != nil {
+		fmt.Fprintf(w, "%s", Output(map[string]interface{}{}, err))
+		return
+	}
 	tArg := ManagerGetTrieArg{auth, vars["TrieName"], internal}
 	var reply ManagerGetTrieReply
 	err = manager.GetTrie(tArg, &reply)
@@ -113,6 +147,10 @@ func UpdateTrie(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
 	internal, err := strconv.ParseBool(r.FormValue("Internal"))
+	if err != nil {
+		fmt.Fprintf(w, "%s", Output(map[string]interface{}{}, err))
+		return
+	}
 	var temp []string
 	err = json.Unmarshal([]byte(r.Form["Rules"][0]), &temp)
 	tArg := ManagerUpdateTrieArg{auth, config.Trie{Name: vars["TrieName"], Rules: temp, Internal: internal}}
@@ -125,6 +163,10 @@ func DeleteTrie(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
 	internal, err := strconv.ParseBool(r.FormValue("Internal"))
+	if err != nil {
+		fmt.Fprintf(w, "%s", Output(map[string]interface{}{}, err))
+		return
+	}
 	tArg := ManagerDeleteTrieArg{auth, vars["TrieName"], internal}
 	var reply ManagerDeleteTrieReply
 	err = manager.DeleteTrie(tArg, &reply)
@@ -134,6 +176,10 @@ func DeleteTrie(w http.ResponseWriter, r *http.Request) {
 func ListTries(w http.ResponseWriter, r *http.Request) {
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
 	internal, err := strconv.ParseBool(r.FormValue("Internal"))
+	if err != nil {
+		fmt.Fprintf(w, "%s", Output(map[string]interface{}{}, err))
+		return
+	}
 	arg := ManagerListTriesArg{auth, internal}
 	var reply ManagerListTriesReply
 	err = manager.ListTries(arg, &reply)
