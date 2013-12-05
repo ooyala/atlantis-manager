@@ -54,10 +54,10 @@ func (s *HelperSuite) TestHelperInstanceDataPath(c *C) {
 	c.Assert(GetBaseInstanceDataPath(cont), Equals, "/atlantis/instance_data/"+Region+"/"+cont)
 }
 
-func (s *HelperSuite) TestHelperHostPath(c *C) {
-	c.Assert(GetBaseHostPath(), Equals, "/atlantis/hosts/"+Region)
-	c.Assert(GetBaseHostPath(host), Equals, "/atlantis/hosts/"+Region+"/"+host)
-	c.Assert(GetBaseHostPath(host, cont), Equals, "/atlantis/hosts/"+Region+"/"+host+"/"+cont)
+func (s *HelperSuite) TestHelperSupervisorPath(c *C) {
+	c.Assert(GetBaseSupervisorPath(), Equals, "/atlantis/supervisors/"+Region)
+	c.Assert(GetBaseSupervisorPath(host), Equals, "/atlantis/supervisors/"+Region+"/"+host)
+	c.Assert(GetBaseSupervisorPath(host, cont), Equals, "/atlantis/supervisors/"+Region+"/"+host+"/"+cont)
 }
 
 func (s *HelperSuite) TestHelperPoolName(c *C) {

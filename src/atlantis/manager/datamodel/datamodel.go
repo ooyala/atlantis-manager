@@ -38,7 +38,7 @@ func CreateInstancePaths() {
 }
 
 func CreateSupervisorPath() {
-	Zk.Touch(helper.GetBaseHostPath())
+	Zk.Touch(helper.GetBaseSupervisorPath())
 }
 
 func CreateManagerPath() {

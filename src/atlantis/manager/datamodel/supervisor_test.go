@@ -5,8 +5,8 @@ import (
 	"sort"
 )
 
-func (s *DatamodelSuite) TestHost(c *C) {
-	h := Host(host)
+func (s *DatamodelSuite) TestSupervisor(c *C) {
+	h := Supervisor(host)
 	// test delete of non-existant node
 	err := h.Delete()
 	c.Assert(err, Not(IsNil))
@@ -34,38 +34,38 @@ func (s *DatamodelSuite) TestHost(c *C) {
 	// remove the container
 	c.Assert(h.RemoveContainer(inst.Id), IsNil)
 	inst.Delete()
-	h2 := Host(host + "1")
+	h2 := Supervisor(host + "1")
 	// create a new host
 	c.Assert(h2.Touch(), IsNil)
 	// list the hosts to make sure they are all there
-	hosts, err := ListHosts()
+	hosts, err := ListSupervisors()
 	c.Assert(err, IsNil)
 	sort.Strings(hosts) // sort so DeepEquals works
 	c.Assert(hosts, DeepEquals, []string{host, host + "1"})
-	// test ListHostsForApp
-	hosts, err = ListHostsForApp(app)
+	// test ListSupervisorsForApp
+	hosts, err = ListSupervisorsForApp(app)
 	c.Assert(err, IsNil)
 	sort.Strings(hosts)
 	c.Assert(hosts, DeepEquals, []string{host, host + "1"})
 	// delete first host
 	err = h.Delete()
 	c.Assert(err, IsNil)
-	// test to make sure host was deleted in ListHosts
-	hosts, err = ListHosts()
+	// test to make sure host was deleted in ListSupervisors
+	hosts, err = ListSupervisors()
 	c.Assert(err, IsNil)
 	c.Assert(hosts, DeepEquals, []string{host + "1"})
-	// test to make sure host was deleted in ListHostsForApp
-	hosts, err = ListHostsForApp(app)
+	// test to make sure host was deleted in ListSupervisorsForApp
+	hosts, err = ListSupervisorsForApp(app)
 	c.Assert(err, IsNil)
 	c.Assert(hosts, DeepEquals, []string{host + "1"})
 	// delete second host
 	err = h2.Delete()
 	c.Assert(err, IsNil)
 	// Test to make sure there are no hosts left
-	hosts, err = ListHosts()
+	hosts, err = ListSupervisors()
 	c.Assert(err, IsNil)
 	c.Assert(hosts, DeepEquals, []string{})
-	hosts, err = ListHostsForApp(app)
+	hosts, err = ListSupervisorsForApp(app)
 	c.Assert(err, IsNil)
 	c.Assert(hosts, DeepEquals, []string{})
 }

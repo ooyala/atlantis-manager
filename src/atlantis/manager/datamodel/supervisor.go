@@ -11,13 +11,13 @@ import (
 	"sort"
 )
 
-type ZkHost string
+type ZkSupervisor string
 
-type HostData struct {
+type SupervisorData struct {
 	PortMap map[string]uint16
 }
 
-func (h *HostData) HasAppShaEnv(app, sha, env string) bool {
+func (h *SupervisorData) HasAppShaEnv(app, sha, env string) bool {
 	for container, _ := range h.PortMap {
 		zi, err := GetInstance(container)
 		if err != nil {
@@ -30,7 +30,7 @@ func (h *HostData) HasAppShaEnv(app, sha, env string) bool {
 	return false
 }
 
-func (h *HostData) CountAppShaEnv(app, sha, env string) int {
+func (h *SupervisorData) CountAppShaEnv(app, sha, env string) int {
 	count := 0
 	for container, _ := range h.PortMap {
 		zi, err := GetInstance(container)
@@ -48,23 +48,23 @@ type ContainerData struct {
 	port uint16
 }
 
-func Host(name string) ZkHost {
-	return ZkHost(name)
+func Supervisor(name string) ZkSupervisor {
+	return ZkSupervisor(name)
 }
 
-func (h ZkHost) Touch() error {
+func (h ZkSupervisor) Touch() error {
 	_, err := Zk.Touch(h.path())
 	return err
 }
 
 // Delete the host node and all child container nodes of that host
-func (h ZkHost) Delete() error {
+func (h ZkSupervisor) Delete() error {
 	return Zk.RecursiveDelete(h.path())
 }
 
 // Supervisor will tell us the port -> container mapping for a given host, and we will store this back in zk in
 // the /host/[host] node
-func (h ZkHost) SetContainerAndPort(container string, port uint16) (err error) {
+func (h ZkSupervisor) SetContainerAndPort(container string, port uint16) (err error) {
 	err = h.createOrUpdateContainer(container, &ContainerData{port})
 	if err != nil {
 		log.Printf("Error setting mapping in container node. Error: %s.", err.Error())
@@ -77,7 +77,7 @@ func (h ZkHost) SetContainerAndPort(container string, port uint16) (err error) {
 	return
 }
 
-func (h ZkHost) RemoveContainer(container string) (retErr error) {
+func (h ZkSupervisor) RemoveContainer(container string) (retErr error) {
 	err := h.deleteContainer(container)
 	if err != nil {
 		log.Printf("Error deleting container %s. Error: %s.", container, err.Error())
@@ -91,15 +91,15 @@ func (h ZkHost) RemoveContainer(container string) (retErr error) {
 	return
 }
 
-func ListHostsForApp(app string) (hosts []string, err error) {
-	hosts, err = ListHosts()
+func ListSupervisorsForApp(app string) (hosts []string, err error) {
+	hosts, err = ListSupervisors()
 	// TODO(jbhat): Filter out hosts that already are running the app or cannot run the app (whitelist/blacklist).
 	// For now, return all hosts.
 	return
 }
 
-func ListHosts() (hosts []string, err error) {
-	hosts, _, err = Zk.Children(helper.GetBaseHostPath())
+func ListSupervisors() (hosts []string, err error) {
+	hosts, _, err = Zk.Children(helper.GetBaseSupervisorPath())
 	if err != nil {
 		log.Printf("Error getting list of hosts. Error: %s.", err.Error())
 	}
@@ -110,8 +110,8 @@ func ListHosts() (hosts []string, err error) {
 	return
 }
 
-func (h ZkHost) Info() (*HostData, error) {
-	data := &HostData{}
+func (h ZkSupervisor) Info() (*SupervisorData, error) {
+	data := &SupervisorData{}
 	err := getJson(h.path(), data)
 	if err != nil {
 		log.Printf("Error retrieving host data. Error: %s.", err.Error())
@@ -122,7 +122,7 @@ func (h ZkHost) Info() (*HostData, error) {
 
 // We will create private functions for use within this package
 
-func (h ZkHost) deleteContainer(container string) (err error) {
+func (h ZkSupervisor) deleteContainer(container string) (err error) {
 	nodePath := h.containerPath(container)
 	err = Zk.Delete(nodePath, -1)
 	if err != nil {
@@ -131,7 +131,7 @@ func (h ZkHost) deleteContainer(container string) (err error) {
 	return
 }
 
-func (h ZkHost) createOrUpdateContainer(container string, data *ContainerData) error {
+func (h ZkSupervisor) createOrUpdateContainer(container string, data *ContainerData) error {
 	err := h.Touch()
 	if err != nil {
 		return err
@@ -139,16 +139,16 @@ func (h ZkHost) createOrUpdateContainer(container string, data *ContainerData) e
 	return setJson(h.containerPath(container), data)
 }
 
-func (h ZkHost) containerPath(container string) string {
-	return helper.GetBaseHostPath(string(h), container)
+func (h ZkSupervisor) containerPath(container string) string {
+	return helper.GetBaseSupervisorPath(string(h), container)
 }
 
-func (h ZkHost) path() string {
-	return helper.GetBaseHostPath(string(h))
+func (h ZkSupervisor) path() string {
+	return helper.GetBaseSupervisorPath(string(h))
 }
 
-func (h ZkHost) addRelation(container string, port uint16) (err error) {
-	data := HostData{}
+func (h ZkSupervisor) addRelation(container string, port uint16) (err error) {
+	data := SupervisorData{}
 	err = getJson(h.path(), &data)
 	if err != nil {
 		log.Printf("Error getting json from host node. Error: %s.", err.Error())
@@ -165,8 +165,8 @@ func (h ZkHost) addRelation(container string, port uint16) (err error) {
 	return
 }
 
-func (h ZkHost) removeRelation(container string) (retErr error) {
-	data := HostData{}
+func (h ZkSupervisor) removeRelation(container string) (retErr error) {
+	data := SupervisorData{}
 	err := getJson(h.path(), &data)
 	if err != nil {
 		log.Printf("Error getting json from host node %s. Error: %s.", h.path(), err.Error())
@@ -192,30 +192,30 @@ func (h ZkHost) removeRelation(container string) (retErr error) {
 }
 
 // used to sort host+weight
-type HostAndWeight struct {
-	Host   string
+type SupervisorAndWeight struct {
+	Supervisor   string
 	Zone   string
 	Free   uint
 	Weight float64
 }
 
-type HostAndWeightList []HostAndWeight
+type SupervisorAndWeightList []SupervisorAndWeight
 
-func (h HostAndWeightList) Len() int {
+func (h SupervisorAndWeightList) Len() int {
 	return len(h)
 }
 
-func (h HostAndWeightList) Less(i, j int) bool {
+func (h SupervisorAndWeightList) Less(i, j int) bool {
 	return h[i].Weight < h[j].Weight
 }
 
-func (h HostAndWeightList) Swap(i, j int) {
+func (h SupervisorAndWeightList) Swap(i, j int) {
 	h[i], h[j] = h[j], h[i]
 }
 
-func ChooseHostsList(app, sha, env string, cpu, memory uint, zones []string,
-	excludeHosts map[string]bool) (HostAndWeightList, error) {
-	hosts, err := ListHostsForApp(app)
+func ChooseSupervisorsList(app, sha, env string, cpu, memory uint, zones []string,
+	excludeSupervisors map[string]bool) (SupervisorAndWeightList, error) {
+	hosts, err := ListSupervisorsForApp(app)
 	if err != nil {
 		log.Println("Error listing hosts for app "+app+":", err)
 		return nil, err
@@ -223,13 +223,13 @@ func ChooseHostsList(app, sha, env string, cpu, memory uint, zones []string,
 	if len(hosts) == 0 {
 		return nil, errors.New("No hosts available for app " + app)
 	}
-	list := HostAndWeightList{}
+	list := SupervisorAndWeightList{}
 	for _, host := range hosts {
-		if excludeHosts != nil && excludeHosts[host] {
+		if excludeSupervisors != nil && excludeSupervisors[host] {
 			continue
 		}
 		// check if this host already has this app-sha
-		hostInfo, err := Host(host).Info()
+		hostInfo, err := Supervisor(host).Info()
 		if err != nil {
 			continue // bad host, skip.
 		}
@@ -253,32 +253,32 @@ func ChooseHostsList(app, sha, env string, cpu, memory uint, zones []string,
 		weight := float64(2*hostInfo.CountAppShaEnv(app, sha, env)) +
 			(float64(health.Memory.Used+memory) / float64(health.Memory.Total)) +
 			(float64(health.CPUShares.Used+cpu) / float64(health.CPUShares.Total))
-		list = append(list, HostAndWeight{Host: host, Zone: health.Zone, Free: free, Weight: weight})
+		list = append(list, SupervisorAndWeight{Supervisor: host, Zone: health.Zone, Free: free, Weight: weight})
 	}
 	sort.Sort(list) // sort in weight order, lowest to highest
 	return list, nil
 }
 
 // Choses hosts and sorts them based on how "free" they are. returns a map of zone -> host slice.
-func ChooseHosts(app, sha, env string, instances, cpu, memory uint, zones []string,
-	excludeHosts map[string]bool) (map[string][]string, error) {
-	list, err := ChooseHostsList(app, sha, env, cpu, memory, zones, excludeHosts)
+func ChooseSupervisors(app, sha, env string, instances, cpu, memory uint, zones []string,
+	excludeSupervisors map[string]bool) (map[string][]string, error) {
+	list, err := ChooseSupervisorsList(app, sha, env, cpu, memory, zones, excludeSupervisors)
 	if err != nil {
 		return nil, err
 	}
-	chosenHosts := map[string][]string{}
+	chosenSupervisors := map[string][]string{}
 	freeZones := map[string]uint{}
 	for _, host := range list {
-		if hosts, ok := chosenHosts[host.Zone]; !ok || hosts == nil {
-			chosenHosts[host.Zone] = []string{host.Host}
+		if hosts, ok := chosenSupervisors[host.Zone]; !ok || hosts == nil {
+			chosenSupervisors[host.Zone] = []string{host.Supervisor}
 		} else {
-			chosenHosts[host.Zone] = append(hosts, host.Host)
+			chosenSupervisors[host.Zone] = append(hosts, host.Supervisor)
 		}
 		freeZones[host.Zone] = freeZones[host.Zone] + host.Free
 	}
 	// ensure all zones are represented and have enough free
 	for _, zone := range zones {
-		if hosts, ok := chosenHosts[zone]; !ok || hosts == nil {
+		if hosts, ok := chosenSupervisors[zone]; !ok || hosts == nil {
 			msg := fmt.Sprintf("No host for app %s available in zone %s", app, zone)
 			log.Println(msg)
 			return nil, errors.New(msg)
@@ -290,5 +290,5 @@ func ChooseHosts(app, sha, env string, instances, cpu, memory uint, zones []stri
 			return nil, errors.New(msg)
 		}
 	}
-	return chosenHosts, nil
+	return chosenSupervisors, nil
 }

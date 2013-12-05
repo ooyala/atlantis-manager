@@ -136,7 +136,7 @@ func deployToHostsInZones(manifest *Manifest, sha, env string, hosts map[string]
 			}
 			ihReply.Container.Host = host
 			instance.SetPort(ihReply.Container.PrimaryPort)
-			datamodel.Host(host).SetContainerAndPort(instance.Id, ihReply.Container.PrimaryPort)
+			datamodel.Supervisor(host).SetContainerAndPort(instance.Id, ihReply.Container.PrimaryPort)
 			deployedContainers = append(deployedContainers, ihReply.Container)
 			deployedIds = append(deployedIds, ihReply.Container.Id)
 			AddAppShaToEnv(manifest.Name, sha, env)
@@ -189,7 +189,7 @@ func devDeployToHosts(manifest *Manifest, sha, env string, hosts []string, t *Ta
 		}
 		ihReply.Container.Host = host
 		instance.SetPort(ihReply.Container.PrimaryPort)
-		datamodel.Host(host).SetContainerAndPort(instance.Id, ihReply.Container.PrimaryPort)
+		datamodel.Supervisor(host).SetContainerAndPort(instance.Id, ihReply.Container.PrimaryPort)
 		deployedContainers = append(deployedContainers, ihReply.Container)
 		deployedIds = append(deployedIds, ihReply.Container.Id)
 		AddAppShaToEnv(manifest.Name, sha, env)
@@ -221,11 +221,11 @@ func deploy(auth *ManagerAuthArg, manifest *Manifest, sha, env string, t *Task) 
 		return nil, err
 	}
 	// choose hosts
-	t.LogStatus("Choosing Hosts")
-	hosts, err := datamodel.ChooseHosts(manifest.Name, sha, env, manifest.Instances, manifest.CPUShares,
+	t.LogStatus("Choosing Supervisors")
+	hosts, err := datamodel.ChooseSupervisors(manifest.Name, sha, env, manifest.Instances, manifest.CPUShares,
 		manifest.MemoryLimit, AvailableZones, map[string]bool{})
 	if err != nil {
-		return nil, errors.New("Choose Hosts Error: " + err.Error())
+		return nil, errors.New("Choose Supervisors Error: " + err.Error())
 	}
 	return deployToHostsInZones(manifest, sha, env, hosts, AvailableZones, t)
 }
@@ -236,15 +236,15 @@ func devDeploy(auth *ManagerAuthArg, manifest *Manifest, sha, env string, t *Tas
 		return nil, err
 	}
 	// choose hosts
-	t.LogStatus("Choosing Hosts")
-	list, err := datamodel.ChooseHostsList(manifest.Name, sha, env, manifest.CPUShares, manifest.MemoryLimit,
+	t.LogStatus("Choosing Supervisors")
+	list, err := datamodel.ChooseSupervisorsList(manifest.Name, sha, env, manifest.CPUShares, manifest.MemoryLimit,
 		AvailableZones, map[string]bool{})
 	if err != nil {
-		return nil, errors.New("Choose Hosts Error: " + err.Error())
+		return nil, errors.New("Choose Supervisors Error: " + err.Error())
 	}
 	hosts := make([]string, len(list))
 	for i, elem := range list {
-		hosts[i] = elem.Host
+		hosts[i] = elem.Supervisor
 	}
 	return devDeployToHosts(manifest, sha, env, hosts, t)
 }
@@ -256,12 +256,12 @@ func moveContainer(auth *ManagerAuthArg, cont *Container, t *Task) (*Container, 
 		return nil, err
 	}
 	// choose host
-	t.LogStatus("Choosing Host")
+	t.LogStatus("Choosing Supervisor")
 	zone, err := supervisor.GetZone(cont.Host)
 	if err != nil {
 		return nil, err
 	}
-	hosts, err := datamodel.ChooseHosts(manifest.Name, cont.Sha, cont.Env, manifest.Instances, manifest.CPUShares,
+	hosts, err := datamodel.ChooseSupervisors(manifest.Name, cont.Sha, cont.Env, manifest.Instances, manifest.CPUShares,
 		manifest.MemoryLimit, []string{zone}, map[string]bool{cont.Host: true})
 	if err != nil {
 		return nil, err
@@ -289,7 +289,7 @@ func cleanup(deployedContainers []*Container, t *Task) {
 			t.Log(fmt.Sprintf("Failed to clean up instance %s: %s", container.Id, err.Error()))
 		}
 		DeleteAppShaFromEnv(container.App, container.Sha, container.Env)
-		datamodel.Host(container.Host).RemoveContainer(container.Id)
+		datamodel.Supervisor(container.Host).RemoveContainer(container.Id)
 	}
 }
 
@@ -342,7 +342,7 @@ func getContainerIdsToTeardown(t *Task, arg ManagerTeardownArg) (hostMap map[str
 	hostMap = map[string][]string{} // map of host -> []string container ids
 	if arg.All {
 		var hosts []string
-		hosts, err = datamodel.ListHosts()
+		hosts, err = datamodel.ListSupervisors()
 		if err != nil {
 			return nil, errors.New("Error listing hosts: " + err.Error())
 		}

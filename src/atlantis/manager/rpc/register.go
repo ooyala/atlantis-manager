@@ -401,7 +401,7 @@ func (e *RegisterSupervisorExecutor) Execute(t *Task) error {
 		e.reply.Status = "Region Mismatch"
 		return errors.New("Supervisor Region (" + health.Region + ") does not match Manager Region (" + Region + ")")
 	}
-	err = datamodel.Host(e.arg.Host).Touch()
+	err = datamodel.Supervisor(e.arg.Host).Touch()
 	if err != nil {
 		return err
 	}
@@ -436,7 +436,7 @@ func (e *UnregisterSupervisorExecutor) Execute(t *Task) error {
 	}
 	// teardown containers
 	supervisor.Teardown(e.arg.Host, []string{}, true)
-	err := datamodel.Host(e.arg.Host).Delete()
+	err := datamodel.Supervisor(e.arg.Host).Delete()
 	if err != nil {
 		return err
 	}
@@ -466,7 +466,7 @@ func (e *ListSupervisorsExecutor) Description() string {
 }
 
 func (e *ListSupervisorsExecutor) Execute(t *Task) (err error) {
-	e.reply.Supervisors, err = datamodel.ListHosts()
+	e.reply.Supervisors, err = datamodel.ListSupervisors()
 	if err != nil {
 		e.reply.Status = StatusError
 	} else {

@@ -298,7 +298,7 @@ func (e *TeardownExecutor) Execute(t *Task) error {
 			if err != nil {
 				t.Log("Error removing %s from pool: %v", tornContainerId, err)
 			}
-			datamodel.Host(host).RemoveContainer(tornContainerId)
+			datamodel.Supervisor(host).RemoveContainer(tornContainerId)
 			instance, err := datamodel.GetInstance(tornContainerId)
 			if err != nil {
 				continue

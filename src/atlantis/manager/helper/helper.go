@@ -44,8 +44,8 @@ func GetBaseInstanceDataPath(args ...string) string {
 	return JoinWithBase(base, args...)
 }
 
-func GetBaseHostPath(args ...string) string {
-	base := fmt.Sprintf("/atlantis/hosts/%s", Region)
+func GetBaseSupervisorPath(args ...string) string {
+	base := fmt.Sprintf("/atlantis/supervisors/%s", Region)
 	return JoinWithBase(base, args...)
 }
 
