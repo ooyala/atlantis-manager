@@ -193,10 +193,10 @@ func (h ZkSupervisor) removeRelation(container string) (retErr error) {
 
 // used to sort host+weight
 type SupervisorAndWeight struct {
-	Supervisor   string
-	Zone   string
-	Free   uint
-	Weight float64
+	Supervisor string
+	Zone       string
+	Free       uint
+	Weight     float64
 }
 
 type SupervisorAndWeightList []SupervisorAndWeight
