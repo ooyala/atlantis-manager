@@ -73,9 +73,9 @@ func Init(listenAddr string) error {
 
 	// Router Management
 	gmux.HandleFunc("/routers", ListRouters).Methods("GET")
-	gmux.HandleFunc("/routers/{Zone}/{IP}", GetRouter).Methods("GET")
-	gmux.HandleFunc("/routers/{Zone}/{IP}", RegisterRouter).Methods("PUT")
-	gmux.HandleFunc("/routers/{Zone}/{IP}", UnregisterRouter).Methods("DELETE")
+	gmux.HandleFunc("/routers/{Zone}/{PublicIP}", GetRouter).Methods("GET")
+	gmux.HandleFunc("/routers/{Zone}/{PublicIP}", RegisterRouter).Methods("PUT")
+	gmux.HandleFunc("/routers/{Zone}/{PublicIP}", UnregisterRouter).Methods("DELETE")
 
 	// App Management
 	gmux.HandleFunc("/apps", ListRegisteredApps).Methods("GET")
