@@ -48,11 +48,17 @@ func CreateAppAliases(internal bool, app, sha, env string) error {
 	// check if records were created already, if so add sha to list
 	zkDNS, err := datamodel.GetDNS(app, env)
 	if zkDNS != nil && err == nil {
+		if zkDNS.Shas == nil {
+			zkDNS.Shas = map[string]bool{}
+		}
 		zkDNS.Shas[sha] = true
 		return zkDNS.Save()
 	}
 	// for each zone
 	zkDNS = datamodel.DNS(app, env)
+	if zkDNS.Shas == nil {
+		zkDNS.Shas = map[string]bool{}
+	}
 	zkDNS.Shas[sha] = true
 	if Provider == nil {
 		return zkDNS.Save()
@@ -101,6 +107,9 @@ func DeleteAppAliases(app, sha, env string) error {
 	zkDNS, err := datamodel.GetDNS(app, env)
 	if err != nil {
 		return err
+	}
+	if zkDNS.Shas == nil {
+		zkDNS.Shas = map[string]bool{}
 	}
 	// remove sha from sha references
 	delete(zkDNS.Shas, sha)
