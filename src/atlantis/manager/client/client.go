@@ -201,8 +201,8 @@ func New() *ManagerClient {
 	o.AddCommand("version", "check manager' client and server versions", "", &VersionCommand{})
 	o.AddCommand("health", "check manager' health", "", &HealthCommand{})
 	o.AddCommand("idle", "check if manager is idle", "", &IdleCommand{})
-	o.AddCommand("register-manager", "register an manager", "", &RegisterManagerCommand{})
-	o.AddCommand("unregister-manager", "unregister an manager", "", &UnregisterManagerCommand{})
+	o.AddCommand("register-manager", "[async] register an manager", "", &RegisterManagerCommand{})
+	o.AddCommand("unregister-manager", "[async] unregister an manager", "", &UnregisterManagerCommand{})
 	o.AddCommand("list-managers", "list available managers", "", &ListManagersCommand{})
 
 	// Supervisor Management
@@ -211,8 +211,8 @@ func New() *ManagerClient {
 	o.AddCommand("list-supervisors", "list available supervisors", "", &ListSupervisorsCommand{})
 
 	// Router Management
-	o.AddCommand("register-router", "register an router", "", &RegisterRouterCommand{})
-	o.AddCommand("unregister-router", "unregister an router", "", &UnregisterRouterCommand{})
+	o.AddCommand("register-router", "[async] register an router", "", &RegisterRouterCommand{})
+	o.AddCommand("unregister-router", "[async] unregister an router", "", &UnregisterRouterCommand{})
 	o.AddCommand("list-routers", "list routers", "", &ListRoutersCommand{})
 	o.AddCommand("get-router", "get an router", "", &GetRouterCommand{})
 
