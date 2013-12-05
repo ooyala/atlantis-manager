@@ -497,17 +497,20 @@ func (e *RegisterManagerExecutor) Result() interface{} {
 }
 
 func (e *RegisterManagerExecutor) Description() string {
-	return fmt.Sprintf("%s:%s in %s", e.arg.IP, lPort, e.arg.Region)
+	return fmt.Sprintf("%s/%s:%s in %s", e.arg.PrivateIP, e.arg.PublicIP, lPort, e.arg.Region)
 }
 
 func (e *RegisterManagerExecutor) Execute(t *Task) error {
-	if e.arg.IP == "" {
-		return errors.New("Please specify an IP to register")
+	if e.arg.PublicIP == "" {
+		return errors.New("Please specify an PublicIP to register")
+	}
+	if e.arg.PrivateIP == "" {
+		return errors.New("Please specify an PrivateIP to register")
 	}
 	if e.arg.Region == "" {
 		return errors.New("Please specify a Region to register")
 	}
-	mgr, err := manager.Register(e.arg.Region, e.arg.IP, e.arg.ManagerCName, e.arg.RegistryCName)
+	mgr, err := manager.Register(e.arg.Region, e.arg.PrivateIP, e.arg.PublicIP, e.arg.RegistryCName, e.arg.ManagerCName)
 	castedManager := Manager(*mgr)
 	e.reply.Manager = &castedManager
 	if err != nil {
@@ -564,17 +567,17 @@ func (e *UnregisterManagerExecutor) Result() interface{} {
 }
 
 func (e *UnregisterManagerExecutor) Description() string {
-	return fmt.Sprintf("%s:%s in %s", e.arg.IP, lPort, e.arg.Region)
+	return fmt.Sprintf("%s:%s in %s", e.arg.PublicIP, lPort, e.arg.Region)
 }
 
 func (e *UnregisterManagerExecutor) Execute(t *Task) error {
-	if e.arg.IP == "" {
-		return errors.New("Please specify an IP to unregister")
+	if e.arg.PublicIP == "" {
+		return errors.New("Please specify an PublicIP to unregister")
 	}
 	if e.arg.Region == "" {
 		return errors.New("Please specify a region to unregister")
 	}
-	err := manager.Unregister(e.arg.Region, e.arg.IP)
+	err := manager.Unregister(e.arg.Region, e.arg.PublicIP)
 	if err != nil {
 		e.reply.Status = StatusError
 	} else {

@@ -159,7 +159,8 @@ func RegisterManager(w http.ResponseWriter, r *http.Request) {
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
 	arg := ManagerRegisterManagerArg{
 		ManagerAuthArg: auth,
-		IP:             vars["IP"],
+		PrivateIP:      r.FormValue("PrivateIP"),
+		PublicIP:       vars["PublicIP"],
 		Region:         vars["Region"],
 		ManagerCName:   r.FormValue("ManagerCName"),
 		RegistryCName:  r.FormValue("RegistryCName"),
@@ -172,7 +173,7 @@ func RegisterManager(w http.ResponseWriter, r *http.Request) {
 func UnregisterManager(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
-	arg := ManagerRegisterManagerArg{ManagerAuthArg: auth, IP: vars["IP"], Region: vars["Region"]}
+	arg := ManagerRegisterManagerArg{ManagerAuthArg: auth, PublicIP: vars["PublicIP"], Region: vars["Region"]}
 	var reply AsyncReply
 	err := manager.UnregisterManager(arg, &reply)
 	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Id": reply.Id}, err))

@@ -15,15 +15,15 @@ func Init(port string) {
 	Port = port
 }
 
-func Register(region, ip, managerCName, registryCName string) (*datamodel.ZkManager, error) {
-	if tmpManager, err := datamodel.GetManager(region, ip); err == nil {
+func Register(region, privateIP, publicIP, registryCName, managerCName string) (*datamodel.ZkManager, error) {
+	if tmpManager, err := datamodel.GetManager(region, publicIP); err == nil {
 		return tmpManager, errors.New("Already registered.")
 	}
 
 	// NOTE[jigish]: health check removed because we can't actually do it security-group wise.
 
 	// set up datamodel
-	zkManager := datamodel.Manager(region, ip)
+	zkManager := datamodel.Manager(region, privateIP, publicIP)
 	err := zkManager.Save()
 	if err != nil {
 		return zkManager, err
@@ -47,7 +47,11 @@ func Register(region, ip, managerCName, registryCName string) (*datamodel.ZkMana
 
 	// set up unspecified cnames
 	// first delete all entries we may already have for this IP in DNS
-	err = dns.DeleteRecordsForIP(ip)
+	err = dns.DeleteRecordsForIP(publicIP)
+	if err != nil {
+		return zkManager, err
+	}
+	err = dns.DeleteRecordsForIP(privateIP)
 	if err != nil {
 		return zkManager, err
 	}
@@ -77,7 +81,7 @@ func Register(region, ip, managerCName, registryCName string) (*datamodel.ZkMana
 		// managerX.<region>.<suffix>
 		cname := dns.ARecord{
 			Name: zkManager.ManagerCName,
-			IP:   zkManager.IP,
+			IP:   zkManager.PublicIP,
 		}
 		zkManager.ManagerRecordId = cname.Id()
 		cnames = append(cnames, cname)
@@ -91,7 +95,7 @@ func Register(region, ip, managerCName, registryCName string) (*datamodel.ZkMana
 		// registryX.<region>.<suffix>
 		cname := dns.ARecord{
 			Name: zkManager.RegistryCName,
-			IP:   zkManager.IP,
+			IP:   zkManager.PrivateIP,
 		}
 		zkManager.RegistryRecordId = cname.Id()
 		cnames = append(cnames, cname)
@@ -100,7 +104,7 @@ func Register(region, ip, managerCName, registryCName string) (*datamodel.ZkMana
 	if len(cnames) == 0 {
 		return zkManager, nil
 	}
-	err, errChan := dns.Provider.CreateARecords("CREATE_MANAGER "+ip+" in "+region, cnames)
+	err, errChan := dns.Provider.CreateARecords("CREATE_MANAGER "+privateIP+"/"+publicIP+" in "+region, cnames)
 	if err != nil {
 		return zkManager, err
 	}
@@ -111,8 +115,8 @@ func Register(region, ip, managerCName, registryCName string) (*datamodel.ZkMana
 	return zkManager, zkManager.Save()
 }
 
-func Unregister(region, ip string) error {
-	zkManager, err := datamodel.GetManager(region, ip)
+func Unregister(region, publicIP string) error {
+	zkManager, err := datamodel.GetManager(region, publicIP)
 	if err != nil {
 		return err
 	}
@@ -128,7 +132,7 @@ func Unregister(region, ip string) error {
 		records = append(records, zkManager.RegistryRecordId)
 	}
 	if len(records) > 0 {
-		err, errChan := dns.Provider.DeleteRecords("DELETE_MANAGER "+ip+" in "+region, records...)
+		err, errChan := dns.Provider.DeleteRecords("DELETE_MANAGER "+publicIP+" in "+region, records...)
 		if err != nil {
 			return err
 		}

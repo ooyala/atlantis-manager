@@ -23,7 +23,8 @@ type Router struct {
 
 type Manager struct {
 	Region           string
-	IP               string
+	PrivateIP        string
+	PublicIP         string
 	ManagerCName     string
 	ManagerRecordId  string
 	RegistryCName    string
@@ -58,10 +59,11 @@ type ManagerRegisterSupervisorReply struct {
 // Used to register an Manager
 type ManagerRegisterManagerArg struct {
 	ManagerAuthArg
-	IP            string
 	Region        string
-	ManagerCName  string
+	PrivateIP     string
+	PublicIP      string
 	RegistryCName string
+	ManagerCName  string
 }
 
 type ManagerRegisterManagerReply struct {

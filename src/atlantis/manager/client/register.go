@@ -325,7 +325,8 @@ func (c *HealthCommand) Execute(args []string) error {
 
 type RegisterManagerCommand struct {
 	Wait          bool   `long:"wait" description:"wait until done before exiting"`
-	IP            string `short:"i" long:"ip" description:"the ip to register"`
+	PrivateIP     string `short:"p" long:"private-ip" description:"the private ip to register"`
+	PublicIP      string `short:"i" long:"public-ip" description:"the public ip to register"`
 	Region        string `short:"r" long:"region" description:"the region to unregister"`
 	ManagerCName  string `long:"manager-cname" description:"the manager's cname if it already has one"`
 	RegistryCName string `long:"registry-cname" description:"the registry's cname if it already has one"`
@@ -337,7 +338,7 @@ func (c *RegisterManagerCommand) Execute(args []string) error {
 		return OutputError(err)
 	}
 	Log("Register Manager...")
-	args = ExtractArgs([]*string{&c.IP, &c.Region}, args)
+	args = ExtractArgs([]*string{&c.PrivateIP, &c.PublicIP, &c.Region}, args)
 	user, secret, err := GetSecret()
 	if err != nil {
 		return err
@@ -345,7 +346,8 @@ func (c *RegisterManagerCommand) Execute(args []string) error {
 	authArg := ManagerAuthArg{user, "", secret}
 	arg := ManagerRegisterManagerArg{
 		ManagerAuthArg: authArg,
-		IP:             c.IP,
+		PrivateIP:      c.PrivateIP,
+		PublicIP:       c.PublicIP,
 		Region:         c.Region,
 		ManagerCName:   c.ManagerCName,
 		RegistryCName:  c.RegistryCName,
@@ -363,9 +365,9 @@ func (c *RegisterManagerCommand) Execute(args []string) error {
 }
 
 type UnregisterManagerCommand struct {
-	Wait   bool   `long:"wait" description:"wait until done before exiting"`
-	IP     string `short:"i" long:"ip" description:"the ip to unregister"`
-	Region string `short:"r" long:"region" description:"the region to ununregister"`
+	Wait     bool   `long:"wait" description:"wait until done before exiting"`
+	PublicIP string `short:"i" long:"ip" description:"the public ip to unregister"`
+	Region   string `short:"r" long:"region" description:"the region to ununregister"`
 }
 
 func (c *UnregisterManagerCommand) Execute(args []string) error {
@@ -374,13 +376,13 @@ func (c *UnregisterManagerCommand) Execute(args []string) error {
 		return OutputError(err)
 	}
 	Log("Unregister Manager...")
-	args = ExtractArgs([]*string{&c.IP, &c.Region}, args)
+	args = ExtractArgs([]*string{&c.PublicIP, &c.Region}, args)
 	user, secret, err := GetSecret()
 	if err != nil {
 		return err
 	}
 	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerRegisterManagerArg{ManagerAuthArg: authArg, IP: c.IP, Region: c.Region}
+	arg := ManagerRegisterManagerArg{ManagerAuthArg: authArg, PublicIP: c.PublicIP, Region: c.Region}
 	var reply atlantis.AsyncReply
 	err = rpcClient.Call("UnregisterManager", arg, &reply)
 	if err != nil {
@@ -398,9 +400,10 @@ func OutputRegisterManagerReply(reply *ManagerRegisterManagerReply) error {
 	if reply.Manager == nil {
 		Log("-> Manager:")
 		Log("->   Region:         %s", reply.Manager.Region)
-		Log("->   IP:             %s", reply.Manager.IP)
-		Log("->   Manager CName:  %s", reply.Manager.ManagerCName)
+		Log("->   PrivateIP:      %s", reply.Manager.PrivateIP)
+		Log("->   PublicIP:       %s", reply.Manager.PublicIP)
 		Log("->   Registry CName: %s", reply.Manager.RegistryCName)
+		Log("->   Manager CName:  %s", reply.Manager.ManagerCName)
 	}
 	return Output(map[string]interface{}{"status": reply.Status, "manager": reply.Manager},
 		nil, nil)
