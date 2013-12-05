@@ -251,7 +251,7 @@ func (c *UnregisterAppCommand) Execute(args []string) error {
 }
 
 type GetAppCommand struct {
-	App string `short:"a" long:"app" description:"the app to unregister"`
+	App string `short:"a" long:"app" description:"the app to get"`
 }
 
 func (c *GetAppCommand) Execute(args []string) error {
