@@ -63,23 +63,23 @@ func createRecordSets(internal bool, zone, value string, zkRouter *datamodel.ZkR
 
 	records := make([]dns.Record, 3)
 
-	// WEIGHT=1 router.<region>.<suffix>
+	// WEIGHT=1 router.<suffix>
 	records[0] = dns.NewRecord(helper.GetRegionRouterCName(internal, suffix), value, 1)
 
-	// WEIGHT=1 routerX.<region+zone>.<suffix>
+	// WEIGHT=1 routerX.<zone>.<suffix>
 	records[1] = dns.NewRecord(zkRouter.CName, value, 1)
 
-	// WEIGHT=1 router.<region+zone>.<suffix>
+	// WEIGHT=1 router.<zone>.<suffix>
 	records[2] = dns.NewRecord(helper.GetZoneRouterCName(internal, zkRouter.Zone, suffix), value, 1)
 
-	// WEIGHT=0 router.<region+zone>.<suffix> -> will be activated when needed
+	/*// WEIGHT=0 router.<zone>.<suffix> -> will be activated when needed
 	for _, azone := range AvailableZones {
 		if azone == zone {
 			continue
 		}
 		record := dns.NewRecord(helper.GetZoneRouterCName(internal, azone, suffix), value, 0)
 		records = append(records, record)
-	}
+	}*/ // we don't need this yet
 	return records, nil
 }
 
