@@ -63,8 +63,8 @@ func Init(listenAddr string) error {
 	// Manager Management
 	gmux.HandleFunc("/health", Health).Methods("GET")
 	gmux.HandleFunc("/managers", ListManagers).Methods("GET")
-	gmux.HandleFunc("/managers/{Region}/{PublicIP}", RegisterManager).Methods("PUT")
-	gmux.HandleFunc("/managers/{Region}/{PublicIP}", UnregisterManager).Methods("DELETE")
+	gmux.HandleFunc("/managers/{Region}/{Host}", RegisterManager).Methods("PUT")
+	gmux.HandleFunc("/managers/{Region}/{Host}", UnregisterManager).Methods("DELETE")
 
 	// Supervisor Management
 	gmux.HandleFunc("/supervisors", ListSupervisors).Methods("GET")
@@ -73,9 +73,9 @@ func Init(listenAddr string) error {
 
 	// Router Management
 	gmux.HandleFunc("/routers", ListRouters).Methods("GET")
-	gmux.HandleFunc("/routers/{Zone}/{PublicIP}", GetRouter).Methods("GET")
-	gmux.HandleFunc("/routers/{Zone}/{PublicIP}", RegisterRouter).Methods("PUT")
-	gmux.HandleFunc("/routers/{Zone}/{PublicIP}", UnregisterRouter).Methods("DELETE")
+	gmux.HandleFunc("/routers/{Zone}/{Host}", GetRouter).Methods("GET")
+	gmux.HandleFunc("/routers/{Zone}/{Host}", RegisterRouter).Methods("PUT")
+	gmux.HandleFunc("/routers/{Zone}/{Host}", UnregisterRouter).Methods("DELETE")
 
 	// App Management
 	gmux.HandleFunc("/apps", ListRegisteredApps).Methods("GET")

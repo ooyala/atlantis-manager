@@ -6,18 +6,42 @@ import (
 	"atlantis/manager/helper"
 	"crypto/sha256"
 	"fmt"
+	"regexp"
+)
+
+var (
+	IPRegexp = regexp.MustCompile("[0-9]+.[0-9]+.[0-9]+.[0-9]+")
 )
 
 var Provider DNSProvider
 
 type DNSProvider interface {
-	CreateAliases(string, string, []Alias) (error, chan error)
-	CreateARecords(string, string, []ARecord) (error, chan error)
-	GetRecordsForIP(string, string) ([]string, error)
+	CreateRecords(string, string, []Record) error
+	// CreateCNames(string, string, []*CName) (error, chan error) // used for CreateRecords
+	// CreateARecords(string, string, []*ARecord) (error, chan error) // used for CreateRecords
+	// CreateAliases(string, string, []*Alias) (error, chan error) // unused
+	GetRecordsForValue(string, string) ([]string, error)
 	DeleteRecords(string, string, ...string) (error, chan error)
-	CreateHealthCheck(string, uint16) (string, error)
-	DeleteHealthCheck(string) error
+	// CreateHealthCheck(string, uint16) (string, error) // unused
+	// DeleteHealthCheck(string) error // unused
 	Suffix(string) (string, error)
+}
+
+func NewRecord(name, original string, weight uint8) Record {
+	if IPRegexp.MatchString(original) {
+		return &ARecord{
+			Name: name,
+			IP:   original,
+		}
+	}
+	return &CName{
+		Name:     name,
+		Original: original,
+	}
+}
+
+type Record interface {
+	Id() string
 }
 
 type Alias struct {
@@ -44,8 +68,21 @@ func (a *ARecord) Id() string {
 	return fmt.Sprintf("%x", checksumArr[:sha256.Size])
 }
 
-func CreateAppAliases(internal bool, app, sha, env string) error {
-	// aliases are created for only this manager's region.
+type CName struct {
+	Name          string
+	Original      string
+	HealthCheckId string
+	Failover      string
+	Weight        uint8
+}
+
+func (c *CName) Id() string {
+	checksumArr := sha256.Sum256([]byte(fmt.Sprintf("%s %s", c.Original, c.Name)))
+	return fmt.Sprintf("%x", checksumArr[:sha256.Size])
+}
+
+func CreateAppCNames(internal bool, app, sha, env string) error {
+	// cnames are created for only this manager's region.
 	suffix, err := Provider.Suffix(Region)
 	if err != nil {
 		return err
@@ -70,35 +107,21 @@ func CreateAppAliases(internal bool, app, sha, env string) error {
 	}
 
 	zkDNS.RecordIds = []string{}
-	aliases := []Alias{}
-	// set up private zone aliases (no publics, just change the host header you lazy bum!)
+	cnames := []Record{}
+	// set up zone cname
 	for _, zone := range AvailableZones {
-		newAlias := Alias{
-			Alias:    helper.GetZoneAppAlias(true, app, env, zone, suffix),
-			Original: helper.GetZoneRouterCName(true, internal, zone, suffix),
-		}
-		aliases = append(aliases, newAlias)
-		zkDNS.RecordIds = append(zkDNS.RecordIds, newAlias.Id())
+		newCName := NewRecord(helper.GetZoneAppCName(app, env, zone, suffix),
+			helper.GetZoneRouterCName(internal, zone, suffix), 1)
+		cnames = append(cnames, newCName)
+		zkDNS.RecordIds = append(zkDNS.RecordIds, newCName.Id())
 	}
-	// region-wide entry (for referencing outside of atlantis, use private for ec2, public for others)
-	privateAlias := Alias{
-		Alias:    helper.GetRegionAppAlias(true, app, env, suffix),
-		Original: helper.GetRegionRouterCName(true, internal, suffix),
-	}
-	aliases = append(aliases, privateAlias)
-	zkDNS.RecordIds = append(zkDNS.RecordIds, privateAlias.Id())
-	publicAlias := Alias{
-		Alias:    helper.GetRegionAppAlias(false, app, env, suffix),
-		Original: helper.GetRegionRouterCName(false, internal, suffix),
-	}
-	aliases = append(aliases, publicAlias)
-	zkDNS.RecordIds = append(zkDNS.RecordIds, publicAlias.Id())
+	// region-wide entry (for referencing outside of atlantis)
+	regionCName := NewRecord(helper.GetRegionAppCName(app, env, suffix),
+		helper.GetRegionRouterCName(internal, suffix), 1)
+	cnames = append(cnames, regionCName)
+	zkDNS.RecordIds = append(zkDNS.RecordIds, regionCName.Id())
 
-	err, errChan := Provider.CreateAliases(Region, "CREATE_APP "+app+" in "+env, aliases)
-	if err != nil {
-		return err
-	}
-	err = <-errChan // wait for change to propagate
+	err = Provider.CreateRecords(Region, "CREATE_APP "+app+" in "+env, cnames)
 	if err != nil {
 		return err
 	}
@@ -106,7 +129,7 @@ func CreateAppAliases(internal bool, app, sha, env string) error {
 	return zkDNS.Save()
 }
 
-func DeleteAppAliases(app, sha, env string) error {
+func DeleteAppCNames(app, sha, env string) error {
 	// find ids for app+env
 	zkDNS, err := datamodel.GetDNS(app, env)
 	if err != nil {
@@ -141,15 +164,15 @@ func DeleteAppAliases(app, sha, env string) error {
 	return zkDNS.Delete()
 }
 
-func DeleteRecordsForIP(region, ip string) error {
+func DeleteRecordsForValue(region, value string) error {
 	if Provider == nil {
 		return nil
 	}
-	ids, err := Provider.GetRecordsForIP(region, ip)
+	ids, err := Provider.GetRecordsForValue(region, value)
 	if err != nil {
 		return err
 	}
-	err, errChan := Provider.DeleteRecords(region, "DELETE_ALL_IP "+ip, ids...)
+	err, errChan := Provider.DeleteRecords(region, "DELETE_ALL "+value, ids...)
 	if err != nil {
 		return err
 	}

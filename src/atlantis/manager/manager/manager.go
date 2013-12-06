@@ -15,8 +15,8 @@ func Init(port string) {
 	Port = port
 }
 
-func Register(region, privateIP, publicIP, registryCName, managerCName string) (*datamodel.ZkManager, error) {
-	if tmpManager, err := datamodel.GetManager(region, publicIP); err == nil {
+func Register(region, value, registryCName, managerCName string) (*datamodel.ZkManager, error) {
+	if tmpManager, err := datamodel.GetManager(region, value); err == nil {
 		return tmpManager, errors.New("Already registered.")
 	}
 
@@ -28,7 +28,7 @@ func Register(region, privateIP, publicIP, registryCName, managerCName string) (
 	// NOTE[jigish]: health check removed because we can't actually do it security-group wise.
 
 	// set up datamodel
-	zkManager := datamodel.Manager(region, privateIP, publicIP)
+	zkManager := datamodel.Manager(region, value)
 	err = zkManager.Save()
 	if err != nil {
 		return zkManager, err
@@ -51,12 +51,8 @@ func Register(region, privateIP, publicIP, registryCName, managerCName string) (
 	}
 
 	// set up unspecified cnames
-	// first delete all entries we may already have for this IP in DNS
-	err = dns.DeleteRecordsForIP(region, publicIP)
-	if err != nil {
-		return zkManager, err
-	}
-	err = dns.DeleteRecordsForIP(region, privateIP)
+	// first delete all entries we may already have for this Value in DNS
+	err = dns.DeleteRecordsForValue(region, value)
 	if err != nil {
 		return zkManager, err
 	}
@@ -76,7 +72,7 @@ func Register(region, privateIP, publicIP, registryCName, managerCName string) (
 		registryMap[tmpManager.RegistryCName] = true
 	}
 
-	cnames := []dns.ARecord{}
+	cnames := []dns.Record{}
 	if zkManager.ManagerCName == "" {
 		managerNum := 1
 		zkManager.ManagerCName = helper.GetManagerCName(managerNum, region, suffix)
@@ -84,10 +80,7 @@ func Register(region, privateIP, publicIP, registryCName, managerCName string) (
 			zkManager.ManagerCName = helper.GetManagerCName(managerNum, region, suffix)
 		}
 		// managerX.<region>.<suffix>
-		cname := dns.ARecord{
-			Name: zkManager.ManagerCName,
-			IP:   zkManager.PublicIP,
-		}
+		cname := dns.NewRecord(zkManager.ManagerCName, zkManager.Host, 0)
 		zkManager.ManagerRecordId = cname.Id()
 		cnames = append(cnames, cname)
 	}
@@ -98,10 +91,7 @@ func Register(region, privateIP, publicIP, registryCName, managerCName string) (
 			zkManager.RegistryCName = helper.GetRegistryCName(registryNum, region, suffix)
 		}
 		// registryX.<region>.<suffix>
-		cname := dns.ARecord{
-			Name: zkManager.RegistryCName,
-			IP:   zkManager.PrivateIP,
-		}
+		cname := dns.NewRecord(zkManager.RegistryCName, zkManager.Host, 0)
 		zkManager.RegistryRecordId = cname.Id()
 		cnames = append(cnames, cname)
 	}
@@ -109,20 +99,15 @@ func Register(region, privateIP, publicIP, registryCName, managerCName string) (
 	if len(cnames) == 0 {
 		return zkManager, nil
 	}
-	err, errChan := dns.Provider.CreateARecords(region, "CREATE_MANAGER "+privateIP+"/"+publicIP+" in "+region,
-		cnames)
-	if err != nil {
-		return zkManager, err
-	}
-	err = <-errChan // wait for change to propagate
+	err = dns.Provider.CreateRecords(region, "CREATE_MANAGER "+zkManager.Host+" in "+region, cnames)
 	if err != nil {
 		return zkManager, err
 	}
 	return zkManager, zkManager.Save()
 }
 
-func Unregister(region, publicIP string) error {
-	zkManager, err := datamodel.GetManager(region, publicIP)
+func Unregister(region, value string) error {
+	zkManager, err := datamodel.GetManager(region, value)
 	if err != nil {
 		return err
 	}
@@ -138,7 +123,7 @@ func Unregister(region, publicIP string) error {
 		records = append(records, zkManager.RegistryRecordId)
 	}
 	if len(records) > 0 {
-		err, errChan := dns.Provider.DeleteRecords(region, "DELETE_MANAGER "+publicIP+" in "+region, records...)
+		err, errChan := dns.Provider.DeleteRecords(region, "DELETE_MANAGER "+value+" in "+region, records...)
 		if err != nil {
 			return err
 		}
@@ -150,8 +135,8 @@ func Unregister(region, publicIP string) error {
 	return zkManager.Delete()
 }
 
-func HealthCheck(ip string) (*ManagerHealthCheckReply, error) {
+func HealthCheck(host string) (*ManagerHealthCheckReply, error) {
 	args := ManagerHealthCheckArg{}
 	var reply ManagerHealthCheckReply
-	return &reply, NewManagerRPCClient(ip+":"+Port).Call("HealthCheck", args, &reply)
+	return &reply, NewManagerRPCClient(host+":"+Port).Call("HealthCheck", args, &reply)
 }

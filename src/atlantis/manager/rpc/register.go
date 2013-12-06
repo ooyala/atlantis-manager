@@ -30,7 +30,7 @@ func (e *RegisterRouterExecutor) Result() interface{} {
 }
 
 func (e *RegisterRouterExecutor) Description() string {
-	return fmt.Sprintf("%s/%s in %s, internal: %t", e.arg.PrivateIP, e.arg.PublicIP, e.arg.Zone, e.arg.Internal)
+	return fmt.Sprintf("%s in %s, internal: %t", e.arg.Host, e.arg.Zone, e.arg.Internal)
 }
 
 func (e *RegisterRouterExecutor) Authorize() error {
@@ -38,16 +38,13 @@ func (e *RegisterRouterExecutor) Authorize() error {
 }
 
 func (e *RegisterRouterExecutor) Execute(t *Task) error {
-	if e.arg.PublicIP == "" {
-		return errors.New("Please specify a Public IP to register")
-	}
-	if e.arg.PrivateIP == "" {
-		return errors.New("Please specify a Private IP to register")
+	if e.arg.Host == "" {
+		return errors.New("Please specify a host to register")
 	}
 	if e.arg.Zone == "" {
 		return errors.New("Please specify a zone")
 	}
-	routerObj, err := router.Register(e.arg.Internal, e.arg.Zone, e.arg.PrivateIP, e.arg.PublicIP)
+	routerObj, err := router.Register(e.arg.Internal, e.arg.Zone, e.arg.Host)
 	if err != nil {
 		e.reply.Status = StatusError
 	}
@@ -99,7 +96,7 @@ func (e *UnregisterRouterExecutor) Result() interface{} {
 }
 
 func (e *UnregisterRouterExecutor) Description() string {
-	return fmt.Sprintf("%s in %s, internal: %t", e.arg.PublicIP, e.arg.Zone, e.arg.Internal)
+	return fmt.Sprintf("%s in %s, internal: %t", e.arg.Host, e.arg.Zone, e.arg.Internal)
 }
 
 func (e *UnregisterRouterExecutor) Authorize() error {
@@ -107,13 +104,13 @@ func (e *UnregisterRouterExecutor) Authorize() error {
 }
 
 func (e *UnregisterRouterExecutor) Execute(t *Task) error {
-	if e.arg.PublicIP == "" {
-		return errors.New("Please specify a PublicIP to uregister")
+	if e.arg.Host == "" {
+		return errors.New("Please specify a host to uregister")
 	}
 	if e.arg.Zone == "" {
 		return errors.New("Please specify a zone")
 	}
-	err := router.Unregister(e.arg.Internal, e.arg.Zone, e.arg.PublicIP)
+	err := router.Unregister(e.arg.Internal, e.arg.Zone, e.arg.Host)
 	if err != nil {
 		e.reply.Status = StatusError
 	}
@@ -193,7 +190,7 @@ func (e *GetRouterExecutor) Result() interface{} {
 }
 
 func (e *GetRouterExecutor) Description() string {
-	return fmt.Sprintf("%s in %s", e.arg.PublicIP, e.arg.Zone)
+	return fmt.Sprintf("%s in %s", e.arg.Host, e.arg.Zone)
 }
 
 func (e *GetRouterExecutor) Authorize() error {
@@ -201,7 +198,7 @@ func (e *GetRouterExecutor) Authorize() error {
 }
 
 func (e *GetRouterExecutor) Execute(t *Task) error {
-	zkRouter, err := datamodel.GetRouter(e.arg.Internal, e.arg.Zone, e.arg.PublicIP)
+	zkRouter, err := datamodel.GetRouter(e.arg.Internal, e.arg.Zone, e.arg.Host)
 	castedRouter := Router(*zkRouter)
 	e.reply.Router = &castedRouter
 	if err != nil {
@@ -497,20 +494,17 @@ func (e *RegisterManagerExecutor) Result() interface{} {
 }
 
 func (e *RegisterManagerExecutor) Description() string {
-	return fmt.Sprintf("%s/%s:%s in %s", e.arg.PrivateIP, e.arg.PublicIP, lPort, e.arg.Region)
+	return fmt.Sprintf("%s:%s in %s", e.arg.Host, lPort, e.arg.Region)
 }
 
 func (e *RegisterManagerExecutor) Execute(t *Task) error {
-	if e.arg.PublicIP == "" {
-		return errors.New("Please specify an PublicIP to register")
-	}
-	if e.arg.PrivateIP == "" {
-		return errors.New("Please specify an PrivateIP to register")
+	if e.arg.Host == "" {
+		return errors.New("Please specify an Host to register")
 	}
 	if e.arg.Region == "" {
 		return errors.New("Please specify a Region to register")
 	}
-	mgr, err := manager.Register(e.arg.Region, e.arg.PrivateIP, e.arg.PublicIP, e.arg.RegistryCName, e.arg.ManagerCName)
+	mgr, err := manager.Register(e.arg.Region, e.arg.Host, e.arg.RegistryCName, e.arg.ManagerCName)
 	castedManager := Manager(*mgr)
 	e.reply.Manager = &castedManager
 	if err != nil {
@@ -567,17 +561,17 @@ func (e *UnregisterManagerExecutor) Result() interface{} {
 }
 
 func (e *UnregisterManagerExecutor) Description() string {
-	return fmt.Sprintf("%s:%s in %s", e.arg.PublicIP, lPort, e.arg.Region)
+	return fmt.Sprintf("%s:%s in %s", e.arg.Host, lPort, e.arg.Region)
 }
 
 func (e *UnregisterManagerExecutor) Execute(t *Task) error {
-	if e.arg.PublicIP == "" {
-		return errors.New("Please specify an PublicIP to unregister")
+	if e.arg.Host == "" {
+		return errors.New("Please specify an host to unregister")
 	}
 	if e.arg.Region == "" {
 		return errors.New("Please specify a region to unregister")
 	}
-	err := manager.Unregister(e.arg.Region, e.arg.PublicIP)
+	err := manager.Unregister(e.arg.Region, e.arg.Host)
 	if err != nil {
 		e.reply.Status = StatusError
 	} else {

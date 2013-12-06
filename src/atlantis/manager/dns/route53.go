@@ -19,6 +19,55 @@ type Route53HostedZone struct {
 	Zone route53.HostedZone
 }
 
+func (r *Route53Provider) CreateRecords(region, comment string, records []Record) error {
+	aliases := []*Alias{}
+	cnames := []*CName{}
+	arecords := []*ARecord{}
+	for _, record := range records {
+		switch typedRecord := record.(type) {
+		case *Alias:
+			aliases = append(aliases, typedRecord)
+		case *CName:
+			cnames = append(cnames, typedRecord)
+		case *ARecord:
+			arecords = append(arecords, typedRecord)
+		default:
+			return errors.New("Unsupported record type")
+		}
+	}
+	if len(aliases) > 0 {
+		err, errChan := r.CreateAliases(region, comment, aliases)
+		if err != nil {
+			return err
+		}
+		err = <-errChan
+		if err != nil {
+			return err
+		}
+	}
+	if len(cnames) > 0 {
+		err, errChan := r.CreateCNames(region, comment, cnames)
+		if err != nil {
+			return err
+		}
+		err = <-errChan
+		if err != nil {
+			return err
+		}
+	}
+	if len(arecords) > 0 {
+		err, errChan := r.CreateARecords(region, comment, arecords)
+		if err != nil {
+			return err
+		}
+		err = <-errChan
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (r *Route53Provider) createRecords(region, comment string, rrsets ...route53.RRSet) (error, chan error) {
 	hostedZone := r.Zones[region]
 	if hostedZone == nil {
@@ -38,10 +87,10 @@ func (r *Route53Provider) createRecords(region, comment string, rrsets ...route5
 	return nil, info.PollForSync(5*time.Second, 10*time.Minute)
 }
 
-func (r *Route53Provider) baseRRSet(id, name, failover string) route53.RRSet {
+func (r *Route53Provider) baseRRSet(typ, id, name, failover string) route53.RRSet {
 	rrset := route53.RRSet{
 		Name:          name,
-		Type:          "A",
+		Type:          typ,
 		SetIdentifier: id,
 	}
 	if failover == "PRIMARY" || failover == "SECONDARY" {
@@ -50,7 +99,25 @@ func (r *Route53Provider) baseRRSet(id, name, failover string) route53.RRSet {
 	return rrset
 }
 
-func (r *Route53Provider) CreateAliases(region, comment string, aliases []Alias) (error, chan error) {
+func (r *Route53Provider) CreateCNames(region, comment string, cnames []*CName) (error, chan error) {
+	rrsets := make([]route53.RRSet, len(cnames))
+	count := 0
+	for _, cname := range cnames {
+		rrsets[count] = r.baseRRSet("CNAME", cname.Id(), cname.Name, cname.Failover)
+		rrsets[count].TTL = r.TTL
+		rrsets[count].ResourceRecords = &route53.ResourceRecords{
+			ResourceRecord: []route53.ResourceRecord{route53.ResourceRecord{Value: cname.Original}},
+		}
+		rrsets[count].Weight = cname.Weight
+		if cname.HealthCheckId != "" {
+			rrsets[count].HealthCheckId = cname.HealthCheckId
+		}
+		count++
+	}
+	return r.createRecords(region, comment, rrsets...)
+}
+
+func (r *Route53Provider) CreateAliases(region, comment string, aliases []*Alias) (error, chan error) {
 	hostedZone := r.Zones[region]
 	if hostedZone == nil {
 		return errors.New("Can't Find Route53 Hosted Zone for Region: " + region), nil
@@ -58,7 +125,7 @@ func (r *Route53Provider) CreateAliases(region, comment string, aliases []Alias)
 	rrsets := make([]route53.RRSet, len(aliases))
 	count := 0
 	for _, alias := range aliases {
-		rrsets[count] = r.baseRRSet(alias.Id(), alias.Alias, alias.Failover)
+		rrsets[count] = r.baseRRSet("A", alias.Id(), alias.Alias, alias.Failover)
 		rrsets[count].AliasTarget = &route53.AliasTarget{
 			HostedZoneId:         hostedZone.Id,
 			DNSName:              alias.Original,
@@ -69,11 +136,11 @@ func (r *Route53Provider) CreateAliases(region, comment string, aliases []Alias)
 	return r.createRecords(region, comment, rrsets...)
 }
 
-func (r *Route53Provider) CreateARecords(region, comment string, arecords []ARecord) (error, chan error) {
+func (r *Route53Provider) CreateARecords(region, comment string, arecords []*ARecord) (error, chan error) {
 	rrsets := make([]route53.RRSet, len(arecords))
 	count := 0
 	for _, arecord := range arecords {
-		rrsets[count] = r.baseRRSet(arecord.Id(), arecord.Name, arecord.Failover)
+		rrsets[count] = r.baseRRSet("A", arecord.Id(), arecord.Name, arecord.Failover)
 		rrsets[count].TTL = r.TTL
 		rrsets[count].ResourceRecords = &route53.ResourceRecords{
 			ResourceRecord: []route53.ResourceRecord{route53.ResourceRecord{Value: arecord.IP}},
@@ -145,7 +212,7 @@ func (r *Route53Provider) DeleteHealthCheck(id string) error {
 	return r.r53.DeleteHealthCheck(id)
 }
 
-func (r *Route53Provider) GetRecordsForIP(region, ip string) ([]string, error) {
+func (r *Route53Provider) GetRecordsForValue(region, value string) ([]string, error) {
 	hostedZone := r.Zones[region]
 	if hostedZone == nil {
 		return nil, errors.New("Can't Find Route53 Hosted Zone for Region: " + region)
@@ -156,11 +223,14 @@ func (r *Route53Provider) GetRecordsForIP(region, ip string) ([]string, error) {
 	}
 	ids := []string{}
 	for _, rrset := range rrsets {
-		if rrset.ResourceRecords == nil {
-			continue
-		}
-		for _, record := range rrset.ResourceRecords.ResourceRecord {
-			if record.Value == ip {
+		if rrset.ResourceRecords != nil {
+			for _, record := range rrset.ResourceRecords.ResourceRecord {
+				if record.Value == value {
+					ids = append(ids, rrset.SetIdentifier)
+				}
+			}
+		} else if rrset.AliasTarget != nil {
+			if rrset.AliasTarget.DNSName == value {
 				ids = append(ids, rrset.SetIdentifier)
 			}
 		}

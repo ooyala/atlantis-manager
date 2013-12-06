@@ -16,20 +16,8 @@ var _ = Suite(&DeployHelperSuite{})
 
 type FakeDNSProvider bool
 
-func (f FakeDNSProvider) CreateAliases(region, comment string, aliases []dns.Alias) (error, chan error) {
-	errChan := make(chan error)
-	go func(ch chan error) {
-		ch <- nil
-	}(errChan)
-	return nil, errChan
-}
-
-func (f FakeDNSProvider) CreateARecords(region, comment string, arecords []dns.ARecord) (error, chan error) {
-	errChan := make(chan error)
-	go func(ch chan error) {
-		ch <- nil
-	}(errChan)
-	return nil, errChan
+func (f FakeDNSProvider) CreateRecords(region, comment string, arecords []dns.Record) error {
+	return nil
 }
 
 func (f FakeDNSProvider) DeleteRecords(region, comment string, ids ...string) (error, chan error) {
@@ -40,7 +28,7 @@ func (f FakeDNSProvider) DeleteRecords(region, comment string, ids ...string) (e
 	return nil, errChan
 }
 
-func (f FakeDNSProvider) GetRecordsForIP(region, ip string) ([]string, error) {
+func (f FakeDNSProvider) GetRecordsForValue(region, value string) ([]string, error) {
 	return []string{}, nil
 }
 
@@ -92,5 +80,5 @@ func (s *DeployHelperSuite) TestResolveDepValues(c *C) {
 	deps, err = ResolveDepValues(zkEnv, []string{"somedep", "hello-go"}, false)
 	c.Assert(err, IsNil)
 	c.Assert(deps["dev1"]["somedep"], Equals, "somevalue")
-	c.Assert(deps["dev1"]["hello-go"], Equals, "hello-go.private.root.1."+Region+".suffix.com")
+	c.Assert(deps["dev1"]["hello-go"], Equals, "hello-go.root.1."+Region+".suffix.com")
 }

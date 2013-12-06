@@ -34,8 +34,7 @@ func RegisterRouter(w http.ResponseWriter, r *http.Request) {
 		ManagerAuthArg: auth,
 		Internal:       internal,
 		Zone:           vars["Zone"],
-		PublicIP:       vars["PublicIP"],
-		PrivateIP:      r.FormValue("PrivateIP"),
+		Host:           vars["Host"],
 	}
 	var reply AsyncReply
 	err = manager.RegisterRouter(arg, &reply)
@@ -54,7 +53,7 @@ func UnregisterRouter(w http.ResponseWriter, r *http.Request) {
 		ManagerAuthArg: auth,
 		Internal:       internal,
 		Zone:           vars["Zone"],
-		PublicIP:       vars["PublicIP"],
+		Host:           vars["Host"],
 	}
 	var reply AsyncReply
 	err = manager.UnregisterRouter(arg, &reply)
@@ -73,7 +72,7 @@ func GetRouter(w http.ResponseWriter, r *http.Request) {
 		ManagerAuthArg: auth,
 		Internal:       internal,
 		Zone:           vars["Zone"],
-		PublicIP:       vars["PublicIP"],
+		Host:           vars["Host"],
 	}
 	var reply ManagerGetRouterReply
 	err = manager.GetRouter(arg, &reply)
@@ -159,8 +158,7 @@ func RegisterManager(w http.ResponseWriter, r *http.Request) {
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
 	arg := ManagerRegisterManagerArg{
 		ManagerAuthArg: auth,
-		PrivateIP:      r.FormValue("PrivateIP"),
-		PublicIP:       vars["PublicIP"],
+		Host:           vars["Host"],
 		Region:         vars["Region"],
 		ManagerCName:   r.FormValue("ManagerCName"),
 		RegistryCName:  r.FormValue("RegistryCName"),
@@ -173,7 +171,7 @@ func RegisterManager(w http.ResponseWriter, r *http.Request) {
 func UnregisterManager(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
-	arg := ManagerRegisterManagerArg{ManagerAuthArg: auth, PublicIP: vars["PublicIP"], Region: vars["Region"]}
+	arg := ManagerRegisterManagerArg{ManagerAuthArg: auth, Host: vars["Host"], Region: vars["Region"]}
 	var reply AsyncReply
 	err := manager.UnregisterManager(arg, &reply)
 	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Id": reply.Id}, err))

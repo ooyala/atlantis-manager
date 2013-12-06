@@ -27,18 +27,17 @@ func deployContainer(auth *ManagerAuthArg, cont *Container, instances uint, t *T
 func ResolveDepValuesForZone(zkEnv *datamodel.ZkEnv, zone string, names []string, encrypt bool) (map[string]string, error) {
 	deps := map[string]string{}
 	leftoverNames := []string{}
-	// if we're using DNS and the app is registered, try to get the app alias (if deployed)
+	// if we're using DNS and the app is registered, try to get the app cname (if deployed)
 	if dns.Provider != nil {
 		for _, name := range names {
 			if datamodel.InternalAppExistsInEnv(name, zkEnv.Name) {
-				// this is a registered, internal, deployed app, output the alias
-				// NOTE[jigish]: resolve using the private alias. ask me why if you're curious
+				// this is a registered, internal, deployed app, output the cname
 				suffix, err := dns.Provider.Suffix(Region)
 				if err != nil {
 					leftoverNames = append(leftoverNames, name)
 					continue
 				}
-				deps[name] = helper.GetZoneAppAlias(true, name, zkEnv.Name, zone, suffix)
+				deps[name] = helper.GetZoneAppCName(name, zkEnv.Name, zone, suffix)
 			} else {
 				leftoverNames = append(leftoverNames, name)
 			}
@@ -176,7 +175,7 @@ func deployToHostsInZones(deps map[string]map[string]string, manifest *Manifest,
 	if manifest.Internal {
 		t.LogStatus("Updating DNS")
 		// if we're internal, handle the DNS stuff
-		err := dns.CreateAppAliases(manifest.Internal, manifest.Name, sha, env)
+		err := dns.CreateAppCNames(manifest.Internal, manifest.Name, sha, env)
 		if err != nil { // if DNS fails, clean up and fail
 			cleanup(deployedContainers, t)
 			return nil, errors.New("Update DNS Error: " + err.Error())
@@ -231,7 +230,7 @@ func devDeployToHosts(deps map[string]map[string]string, manifest *Manifest, sha
 	if manifest.Internal {
 		t.LogStatus("Updating DNS")
 		// if we're internal, handle the DNS stuff
-		err := dns.CreateAppAliases(manifest.Internal, manifest.Name, sha, env)
+		err := dns.CreateAppCNames(manifest.Internal, manifest.Name, sha, env)
 		if err != nil { // if DNS fails, clean up and fail
 			cleanup(deployedContainers, t)
 			return nil, errors.New("Update DNS Error: " + err.Error())

@@ -8,8 +8,8 @@ import (
 
 type ZkManager types.Manager
 
-func Manager(region, privateIP, publicIP string) *ZkManager {
-	return &ZkManager{Region: region, PrivateIP: privateIP, PublicIP: publicIP}
+func Manager(region, value string) *ZkManager {
+	return &ZkManager{Region: region, Host: value}
 }
 
 func (m *ZkManager) Save() error {
@@ -31,14 +31,14 @@ func (m *ZkManager) Delete() error {
 	return nil
 }
 
-func GetManager(region, ip string) (zm *ZkManager, err error) {
+func GetManager(region, value string) (zm *ZkManager, err error) {
 	zm = &ZkManager{}
-	err = getJson(helper.GetBaseManagerPath(region, ip), zm)
+	err = getJson(helper.GetBaseManagerPath(region, value), zm)
 	return
 }
 
 func (m *ZkManager) path() string {
-	return helper.GetBaseManagerPath(m.Region, m.PublicIP)
+	return helper.GetBaseManagerPath(m.Region, m.Host)
 }
 
 func ListRegions() (regions []string, err error) {

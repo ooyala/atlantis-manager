@@ -110,56 +110,36 @@ func GetBaseLockPath(args ...string) string {
 	return JoinWithBase(base, args...)
 }
 
-func GetRegionRouterCName(private, internal bool, suffix string) string {
+func GetRegionRouterCName(internal bool, suffix string) string {
 	internalStr := ""
 	if internal {
 		internalStr = "internal-"
 	}
-	privateStr := ""
-	if private {
-		privateStr = ".private"
-	}
-	return fmt.Sprintf("%srouter%s.%s", internalStr, privateStr, suffix)
+	return fmt.Sprintf("%srouter.%s", internalStr, suffix)
 }
 
-func GetZoneRouterCName(private, internal bool, zone, suffix string) string {
+func GetZoneRouterCName(internal bool, zone, suffix string) string {
 	internalStr := ""
 	if internal {
 		internalStr = "internal-"
 	}
-	privateStr := ""
-	if private {
-		privateStr = ".private"
-	}
-	return fmt.Sprintf("%srouter%s.%s.%s", internalStr, privateStr, ZoneMinusRegion(zone), suffix)
+	return fmt.Sprintf("%srouter.%s.%s", internalStr, ZoneMinusRegion(zone), suffix)
 }
 
-func GetRouterCName(private, internal bool, num int, zone, suffix string) string {
+func GetRouterCName(internal bool, num int, zone, suffix string) string {
 	internalStr := ""
 	if internal {
 		internalStr = "internal-"
 	}
-	privateStr := ""
-	if private {
-		privateStr = ".private"
-	}
-	return fmt.Sprintf("%srouter%d%s.%s.%s", internalStr, num, privateStr, ZoneMinusRegion(zone), suffix)
+	return fmt.Sprintf("%srouter%d.%s.%s", internalStr, num, ZoneMinusRegion(zone), suffix)
 }
 
-func GetRegionAppAlias(private bool, app, env, suffix string) string {
-	privateStr := ""
-	if private {
-		privateStr = ".private"
-	}
-	return fmt.Sprintf("%s%s%s.%s", app, privateStr, EmptyIfProdPrefix(env), suffix)
+func GetRegionAppCName(app, env, suffix string) string {
+	return fmt.Sprintf("%s%s.%s", app, EmptyIfProdPrefix(env), suffix)
 }
 
-func GetZoneAppAlias(private bool, app, env, zone, suffix string) string {
-	privateStr := ""
-	if private {
-		privateStr = ".private"
-	}
-	return fmt.Sprintf("%s%s%s.%s.%s", app, privateStr, EmptyIfProdPrefix(env), ZoneMinusRegion(zone), suffix)
+func GetZoneAppCName(app, env, zone, suffix string) string {
+	return fmt.Sprintf("%s%s.%s.%s", app, EmptyIfProdPrefix(env), ZoneMinusRegion(zone), suffix)
 }
 
 func RegionAndZone(zone string) string {
