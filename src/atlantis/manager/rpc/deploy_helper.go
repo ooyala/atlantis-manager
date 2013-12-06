@@ -24,7 +24,7 @@ func deployContainer(auth *ManagerAuthArg, cont *Container, instances uint, t *T
 	return deploy(auth, manifest, cont.Sha, cont.Env, t)
 }
 
-func ResolveDepValues(zkEnv *datamodel.ZkEnv, names []string, encrypt bool) (map[string]string, error) {
+func ResolveDepValuesForZone(zkEnv *datamodel.ZkEnv, zone string, names []string, encrypt bool) (map[string]string, error) {
 	deps := map[string]string{}
 	leftoverNames := []string{}
 	// if we're using DNS and the app is registered, try to get the app alias (if deployed)
@@ -38,7 +38,7 @@ func ResolveDepValues(zkEnv *datamodel.ZkEnv, names []string, encrypt bool) (map
 					leftoverNames = append(leftoverNames, name)
 					continue
 				}
-				deps[name] = helper.GetRegionAppAlias(true, name, zkEnv.Name, suffix)
+				deps[name] = helper.GetZoneAppAlias(true, name, zkEnv.Name, zone, suffix)
 			} else {
 				leftoverNames = append(leftoverNames, name)
 			}
@@ -70,43 +70,50 @@ func ResolveDepValues(zkEnv *datamodel.ZkEnv, names []string, encrypt bool) (map
 	return retDeps, nil
 }
 
-func validateDeploy(auth *ManagerAuthArg, manifest *Manifest, sha, env string, t *Task) (err error) {
+func ResolveDepValues(zkEnv *datamodel.ZkEnv, names []string, encrypt bool) (deps map[string]map[string]string, err error) {
+	deps = map[string]map[string]string{}
+	for _, zone := range AvailableZones {
+		deps[zone], err = ResolveDepValuesForZone(zkEnv, zone, names, encrypt)
+		if err != nil {
+			return nil, errors.New("Dependency Error: " + err.Error())
+		}
+	}
+	return deps, nil
+}
+
+func validateDeploy(auth *ManagerAuthArg, manifest *Manifest, sha, env string, t *Task) (deps map[string]map[string]string, err error) {
 	// authorize that we're allowed to use the app
 	if err = AuthorizeApp(auth, manifest.Name); err != nil {
-		return errors.New("Permission Denied: " + err.Error())
+		return nil, errors.New("Permission Denied: " + err.Error())
 	}
 	// fetch the environment
 	t.LogStatus("Fetching Environment")
 	zkEnv, err := datamodel.GetEnv(env)
 	if err != nil {
-		return errors.New("Environment Error: " + err.Error())
+		return nil, errors.New("Environment Error: " + err.Error())
 	}
 	// lock the deploy
 	dl := datamodel.NewDeployLock(t.Id, manifest.Name, sha, env)
 	if err := dl.Lock(); err != nil {
-		return err
+		return nil, err
 	}
 	defer dl.Unlock()
 	if manifest.Instances <= 0 {
-		return errors.New(fmt.Sprintf("Invalid Number of Instances: %d", manifest.Instances))
+		return nil, errors.New(fmt.Sprintf("Invalid Number of Instances: %d", manifest.Instances))
 	}
 	if manifest.CPUShares < 0 ||
 		(manifest.CPUShares > 0 && manifest.CPUShares != 1 && manifest.CPUShares%CPUSharesIncrement != 0) {
-		return errors.New(fmt.Sprintf("CPU Shares should be 1 or a multiple of %d", CPUSharesIncrement))
+		return nil, errors.New(fmt.Sprintf("CPU Shares should be 1 or a multiple of %d", CPUSharesIncrement))
 	}
 	if manifest.MemoryLimit < 0 ||
 		(manifest.MemoryLimit > 0 && manifest.MemoryLimit%MemoryLimitIncrement != 0) {
-		return errors.New(fmt.Sprintf("Memory Limit should be a multiple of %d", MemoryLimitIncrement))
+		return nil, errors.New(fmt.Sprintf("Memory Limit should be a multiple of %d", MemoryLimitIncrement))
 	}
 	t.LogStatus("Resolving Dependencies")
-	manifest.Deps, err = ResolveDepValues(zkEnv, manifest.DepNames(), true)
-	if err != nil {
-		return errors.New("Dependency Error: " + err.Error())
-	}
-	return nil
+	return ResolveDepValues(zkEnv, manifest.DepNames(), true)
 }
 
-func deployToHostsInZones(manifest *Manifest, sha, env string, hosts map[string][]string, zones []string,
+func deployToHostsInZones(deps map[string]map[string]string, manifest *Manifest, sha, env string, hosts map[string][]string, zones []string,
 	t *Task) ([]*Container, error) {
 	// deploy to hosts
 	deployedContainers := []*Container{}
@@ -123,8 +130,12 @@ func deployToHostsInZones(manifest *Manifest, sha, env string, hosts map[string]
 		deployed := uint(0)
 		// keep deploying to hosts until we've deployed the right number in this zone OR we've failed too much
 		for deployed < manifest.Instances && failures < maxFailures {
+			manifest.Deps = deps[zone]
 			host := hosts[zone][hostNum]
 			instance, err := datamodel.CreateInstance(manifest.Internal, manifest.Name, sha, env, host)
+			if err != nil {
+				continue
+			}
 			t.LogStatus("Deploying %s to %s", instance.Id, host)
 			ihReply, err := supervisor.Deploy(host, manifest.Name, sha, env, instance.Id, manifest)
 			if err != nil {
@@ -174,12 +185,20 @@ func deployToHostsInZones(manifest *Manifest, sha, env string, hosts map[string]
 	return deployedContainers, nil
 }
 
-func devDeployToHosts(manifest *Manifest, sha, env string, hosts []string, t *Task) ([]*Container, error) {
+func devDeployToHosts(deps map[string]map[string]string, manifest *Manifest, sha, env string, hosts []string, t *Task) ([]*Container, error) {
 	// deploy to hosts
 	deployedContainers := []*Container{}
 	deployedIds := []string{}
 	for _, host := range hosts {
+		health, err := supervisor.HealthCheck(host)
+		if err != nil {
+			continue
+		}
+		manifest.Deps = deps[health.Zone]
 		instance, err := datamodel.CreateInstance(manifest.Internal, manifest.Name, sha, env, host)
+		if err != nil {
+			continue
+		}
 		t.LogStatus("Deploying %s to %s", instance.Id, host)
 		ihReply, err := supervisor.Deploy(host, manifest.Name, sha, env, instance.Id, manifest)
 		if err != nil {
@@ -222,7 +241,8 @@ func devDeployToHosts(manifest *Manifest, sha, env string, hosts []string, t *Ta
 }
 
 func deploy(auth *ManagerAuthArg, manifest *Manifest, sha, env string, t *Task) ([]*Container, error) {
-	if err := validateDeploy(auth, manifest, sha, env, t); err != nil {
+	deps, err := validateDeploy(auth, manifest, sha, env, t)
+	if err != nil {
 		return nil, err
 	}
 	// choose hosts
@@ -232,12 +252,16 @@ func deploy(auth *ManagerAuthArg, manifest *Manifest, sha, env string, t *Task) 
 	if err != nil {
 		return nil, errors.New("Choose Supervisors Error: " + err.Error())
 	}
-	return deployToHostsInZones(manifest, sha, env, hosts, AvailableZones, t)
+	return deployToHostsInZones(deps, manifest, sha, env, hosts, AvailableZones, t)
 }
 
 func devDeploy(auth *ManagerAuthArg, manifest *Manifest, sha, env string, t *Task) ([]*Container, error) {
 	manifest.Instances = 1 // set to 1 instance regardless of what came in
-	if err := validateDeploy(auth, manifest, sha, env, t); err != nil {
+	deps, err := validateDeploy(auth, manifest, sha, env, t)
+	if err != nil {
+		return nil, err
+	}
+	if err != nil {
 		return nil, err
 	}
 	// choose hosts
@@ -251,13 +275,14 @@ func devDeploy(auth *ManagerAuthArg, manifest *Manifest, sha, env string, t *Tas
 	for i, elem := range list {
 		hosts[i] = elem.Supervisor
 	}
-	return devDeployToHosts(manifest, sha, env, hosts, t)
+	return devDeployToHosts(deps, manifest, sha, env, hosts, t)
 }
 
 func moveContainer(auth *ManagerAuthArg, cont *Container, t *Task) (*Container, error) {
 	manifest := cont.Manifest
 	manifest.Instances = 1 // we only want 1 instance
-	if err := validateDeploy(auth, manifest, cont.Sha, cont.Env, t); err != nil {
+	deps, err := validateDeploy(auth, manifest, cont.Sha, cont.Env, t)
+	if err != nil {
 		return nil, err
 	}
 	// choose host
@@ -271,7 +296,7 @@ func moveContainer(auth *ManagerAuthArg, cont *Container, t *Task) (*Container, 
 	if err != nil {
 		return nil, err
 	}
-	deployed, err := deployToHostsInZones(manifest, cont.Sha, cont.Env, hosts, []string{zone}, t)
+	deployed, err := deployToHostsInZones(deps, manifest, cont.Sha, cont.Env, hosts, []string{zone}, t)
 	if err != nil {
 		return nil, err
 	}

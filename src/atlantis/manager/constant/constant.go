@@ -6,8 +6,8 @@ import (
 
 var (
 	Region         = "dev"
-	Zone           = "dev"
-	AvailableZones = []string{"dev"}
+	Zone           = "dev1"
+	AvailableZones = []string{"dev1"}
 	AppRegexp      = regexp.MustCompile("[A-Za-z0-9-]+") // apps can contain letters, numbers, and -
 )
 

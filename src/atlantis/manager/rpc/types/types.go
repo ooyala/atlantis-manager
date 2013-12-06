@@ -246,7 +246,7 @@ type ManagerResolveDepsArg struct {
 
 type ManagerResolveDepsReply struct {
 	Status string
-	Deps   map[string]string
+	Deps   map[string]map[string]string
 }
 
 // ------------ Teardown ------------

@@ -52,8 +52,11 @@ func (c *ResolveDepsCommand) Execute(args []string) error {
 	}
 	Log("-> status: %s", reply.Status)
 	Log("-> deps:")
-	for name, value := range reply.Deps {
-		Log("->   %s : %s", name, value)
+	for zone, deps := range reply.Deps {
+		Log("->   %s", zone)
+		for name, value := range deps {
+			Log("->     %s : %s", name, value)
+		}
 	}
 	return Output(map[string]interface{}{"status": reply.Status, "Deps": reply.Deps}, reply.Deps, nil)
 }
