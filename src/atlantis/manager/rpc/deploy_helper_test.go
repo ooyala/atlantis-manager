@@ -16,7 +16,7 @@ var _ = Suite(&DeployHelperSuite{})
 
 type FakeDNSProvider bool
 
-func (f FakeDNSProvider) CreateAliases(comment string, aliases []dns.Alias) (error, chan error) {
+func (f FakeDNSProvider) CreateAliases(region, comment string, aliases []dns.Alias) (error, chan error) {
 	errChan := make(chan error)
 	go func(ch chan error) {
 		ch <- nil
@@ -24,7 +24,7 @@ func (f FakeDNSProvider) CreateAliases(comment string, aliases []dns.Alias) (err
 	return nil, errChan
 }
 
-func (f FakeDNSProvider) CreateARecords(comment string, arecords []dns.ARecord) (error, chan error) {
+func (f FakeDNSProvider) CreateARecords(region, comment string, arecords []dns.ARecord) (error, chan error) {
 	errChan := make(chan error)
 	go func(ch chan error) {
 		ch <- nil
@@ -32,7 +32,7 @@ func (f FakeDNSProvider) CreateARecords(comment string, arecords []dns.ARecord) 
 	return nil, errChan
 }
 
-func (f FakeDNSProvider) DeleteRecords(comment string, ids ...string) (error, chan error) {
+func (f FakeDNSProvider) DeleteRecords(region, comment string, ids ...string) (error, chan error) {
 	errChan := make(chan error)
 	go func(ch chan error) {
 		ch <- nil
@@ -40,7 +40,7 @@ func (f FakeDNSProvider) DeleteRecords(comment string, ids ...string) (error, ch
 	return nil, errChan
 }
 
-func (f FakeDNSProvider) GetRecordsForIP(ip string) ([]string, error) {
+func (f FakeDNSProvider) GetRecordsForIP(region, ip string) ([]string, error) {
 	return []string{}, nil
 }
 
@@ -52,8 +52,8 @@ func (f FakeDNSProvider) DeleteHealthCheck(id string) error {
 	return nil
 }
 
-func (f FakeDNSProvider) Suffix() string {
-	return "suffix.com"
+func (f FakeDNSProvider) Suffix(region string) (string, error) {
+	return "suffix.com", nil
 }
 
 var (

@@ -1,6 +1,7 @@
 package dns
 
 import (
+	"errors"
 	"github.com/crowdmob/goamz/aws"
 	"github.com/jigish/route53/src/route53"
 	"strings"
@@ -8,13 +9,21 @@ import (
 )
 
 type Route53Provider struct {
-	r53    *route53.Route53
-	Zone   route53.HostedZone
-	ZoneId string
-	TTL    uint
+	r53   *route53.Route53
+	Zones map[string]*Route53HostedZone // region -> hosted zone
+	TTL   uint
 }
 
-func (r *Route53Provider) createRecords(comment string, rrsets ...route53.RRSet) (error, chan error) {
+type Route53HostedZone struct {
+	Id   string
+	Zone route53.HostedZone
+}
+
+func (r *Route53Provider) createRecords(region, comment string, rrsets ...route53.RRSet) (error, chan error) {
+	hostedZone := r.Zones[region]
+	if hostedZone == nil {
+		return errors.New("Can't Find Route53 Hosted Zone for Region: " + region), nil
+	}
 	changes := make([]route53.RRSetChange, len(rrsets))
 	for i, rrset := range rrsets {
 		changes[i] = route53.RRSetChange{
@@ -22,7 +31,7 @@ func (r *Route53Provider) createRecords(comment string, rrsets ...route53.RRSet)
 			RRSet:  rrset,
 		}
 	}
-	info, err := r.r53.ChangeRRSet(r.ZoneId, changes, comment)
+	info, err := r.r53.ChangeRRSet(hostedZone.Id, changes, comment)
 	if err != nil {
 		return err, nil
 	}
@@ -41,22 +50,26 @@ func (r *Route53Provider) baseRRSet(id, name, failover string) route53.RRSet {
 	return rrset
 }
 
-func (r *Route53Provider) CreateAliases(comment string, aliases []Alias) (error, chan error) {
+func (r *Route53Provider) CreateAliases(region, comment string, aliases []Alias) (error, chan error) {
+	hostedZone := r.Zones[region]
+	if hostedZone == nil {
+		return errors.New("Can't Find Route53 Hosted Zone for Region: " + region), nil
+	}
 	rrsets := make([]route53.RRSet, len(aliases))
 	count := 0
 	for _, alias := range aliases {
 		rrsets[count] = r.baseRRSet(alias.Id(), alias.Alias, alias.Failover)
 		rrsets[count].AliasTarget = &route53.AliasTarget{
-			HostedZoneId:         r.ZoneId,
+			HostedZoneId:         hostedZone.Id,
 			DNSName:              alias.Original,
 			EvaluateTargetHealth: false,
 		}
 		count++
 	}
-	return r.createRecords(comment, rrsets...)
+	return r.createRecords(region, comment, rrsets...)
 }
 
-func (r *Route53Provider) CreateARecords(comment string, arecords []ARecord) (error, chan error) {
+func (r *Route53Provider) CreateARecords(region, comment string, arecords []ARecord) (error, chan error) {
 	rrsets := make([]route53.RRSet, len(arecords))
 	count := 0
 	for _, arecord := range arecords {
@@ -71,10 +84,14 @@ func (r *Route53Provider) CreateARecords(comment string, arecords []ARecord) (er
 		}
 		count++
 	}
-	return r.createRecords(comment, rrsets...)
+	return r.createRecords(region, comment, rrsets...)
 }
 
-func (r *Route53Provider) DeleteRecords(comment string, ids ...string) (error, chan error) {
+func (r *Route53Provider) DeleteRecords(region, comment string, ids ...string) (error, chan error) {
+	hostedZone := r.Zones[region]
+	if hostedZone == nil {
+		return errors.New("Can't Find Route53 Hosted Zone for Region: " + region), nil
+	}
 	if len(ids) == 0 {
 		errChan := make(chan error)
 		go func(ch chan error) { // fake channel with nil error
@@ -83,7 +100,7 @@ func (r *Route53Provider) DeleteRecords(comment string, ids ...string) (error, c
 		return nil, errChan
 	}
 	// fetch all records
-	rrsets, err := r.r53.ListRRSets(r.ZoneId)
+	rrsets, err := r.r53.ListRRSets(hostedZone.Id)
 	if err != nil {
 		return err, nil
 	}
@@ -106,7 +123,7 @@ func (r *Route53Provider) DeleteRecords(comment string, ids ...string) (error, c
 			RRSet:  rrset,
 		}
 	}
-	info, err := r.r53.ChangeRRSet(r.ZoneId, changes, comment)
+	info, err := r.r53.ChangeRRSet(hostedZone.Id, changes, comment)
 	if err != nil {
 		return err, nil
 	}
@@ -128,8 +145,12 @@ func (r *Route53Provider) DeleteHealthCheck(id string) error {
 	return r.r53.DeleteHealthCheck(id)
 }
 
-func (r *Route53Provider) GetRecordsForIP(ip string) ([]string, error) {
-	rrsets, err := r.r53.ListRRSets(r.ZoneId)
+func (r *Route53Provider) GetRecordsForIP(region, ip string) ([]string, error) {
+	hostedZone := r.Zones[region]
+	if hostedZone == nil {
+		return nil, errors.New("Can't Find Route53 Hosted Zone for Region: " + region)
+	}
+	rrsets, err := r.r53.ListRRSets(hostedZone.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -147,11 +168,15 @@ func (r *Route53Provider) GetRecordsForIP(ip string) ([]string, error) {
 	return ids, nil
 }
 
-func (r *Route53Provider) Suffix() string {
-	return strings.TrimRight(r.Zone.Name, ".")
+func (r *Route53Provider) Suffix(region string) (string, error) {
+	hostedZone := r.Zones[region]
+	if hostedZone == nil {
+		return "", errors.New("Can't Find Route53 Hosted Zone for Region: " + region)
+	}
+	return strings.TrimRight(hostedZone.Zone.Name, "."), nil
 }
 
-func NewRoute53Provider(zoneId string, ttl uint) (*Route53Provider, error) {
+func NewRoute53Provider(zoneIds map[string]string, ttl uint) (*Route53Provider, error) {
 	route53.DebugOn()
 	auth, err := aws.GetAuth("", "", "", time.Time{})
 	if err != nil {
@@ -159,9 +184,13 @@ func NewRoute53Provider(zoneId string, ttl uint) (*Route53Provider, error) {
 	}
 	r53 := route53.New(auth)
 	r53.IncludeWeight = true
-	zone, err := r53.GetHostedZone(zoneId)
-	if err != nil {
-		return nil, err
+	zones := map[string]*Route53HostedZone{}
+	for region, zoneId := range zoneIds {
+		zone, err := r53.GetHostedZone(zoneId)
+		if err != nil {
+			return nil, err
+		}
+		zones[region] = &Route53HostedZone{Id: zoneId, Zone: zone}
 	}
-	return &Route53Provider{r53: r53, Zone: zone, ZoneId: zoneId, TTL: ttl}, nil
+	return &Route53Provider{r53: r53, Zones: zones, TTL: ttl}, nil
 }

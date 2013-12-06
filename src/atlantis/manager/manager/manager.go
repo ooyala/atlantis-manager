@@ -20,11 +20,16 @@ func Register(region, privateIP, publicIP, registryCName, managerCName string) (
 		return tmpManager, errors.New("Already registered.")
 	}
 
+	suffix, err := dns.Provider.Suffix(region)
+	if err != nil {
+		return nil, err
+	}
+
 	// NOTE[jigish]: health check removed because we can't actually do it security-group wise.
 
 	// set up datamodel
 	zkManager := datamodel.Manager(region, privateIP, publicIP)
-	err := zkManager.Save()
+	err = zkManager.Save()
 	if err != nil {
 		return zkManager, err
 	}
@@ -47,11 +52,11 @@ func Register(region, privateIP, publicIP, registryCName, managerCName string) (
 
 	// set up unspecified cnames
 	// first delete all entries we may already have for this IP in DNS
-	err = dns.DeleteRecordsForIP(publicIP)
+	err = dns.DeleteRecordsForIP(region, publicIP)
 	if err != nil {
 		return zkManager, err
 	}
-	err = dns.DeleteRecordsForIP(privateIP)
+	err = dns.DeleteRecordsForIP(region, privateIP)
 	if err != nil {
 		return zkManager, err
 	}
@@ -74,9 +79,9 @@ func Register(region, privateIP, publicIP, registryCName, managerCName string) (
 	cnames := []dns.ARecord{}
 	if zkManager.ManagerCName == "" {
 		managerNum := 1
-		zkManager.ManagerCName = helper.GetManagerCName(managerNum, region, dns.Provider.Suffix())
+		zkManager.ManagerCName = helper.GetManagerCName(managerNum, region, suffix)
 		for ; managerMap[zkManager.ManagerCName]; managerNum++ {
-			zkManager.ManagerCName = helper.GetManagerCName(managerNum, region, dns.Provider.Suffix())
+			zkManager.ManagerCName = helper.GetManagerCName(managerNum, region, suffix)
 		}
 		// managerX.<region>.<suffix>
 		cname := dns.ARecord{
@@ -88,9 +93,9 @@ func Register(region, privateIP, publicIP, registryCName, managerCName string) (
 	}
 	if zkManager.RegistryCName == "" {
 		registryNum := 1
-		zkManager.RegistryCName = helper.GetRegistryCName(registryNum, region, dns.Provider.Suffix())
+		zkManager.RegistryCName = helper.GetRegistryCName(registryNum, region, suffix)
 		for ; registryMap[zkManager.RegistryCName]; registryNum++ {
-			zkManager.RegistryCName = helper.GetRegistryCName(registryNum, region, dns.Provider.Suffix())
+			zkManager.RegistryCName = helper.GetRegistryCName(registryNum, region, suffix)
 		}
 		// registryX.<region>.<suffix>
 		cname := dns.ARecord{
@@ -104,7 +109,8 @@ func Register(region, privateIP, publicIP, registryCName, managerCName string) (
 	if len(cnames) == 0 {
 		return zkManager, nil
 	}
-	err, errChan := dns.Provider.CreateARecords("CREATE_MANAGER "+privateIP+"/"+publicIP+" in "+region, cnames)
+	err, errChan := dns.Provider.CreateARecords(region, "CREATE_MANAGER "+privateIP+"/"+publicIP+" in "+region,
+		cnames)
 	if err != nil {
 		return zkManager, err
 	}
@@ -132,7 +138,7 @@ func Unregister(region, publicIP string) error {
 		records = append(records, zkManager.RegistryRecordId)
 	}
 	if len(records) > 0 {
-		err, errChan := dns.Provider.DeleteRecords("DELETE_MANAGER "+publicIP+" in "+region, records...)
+		err, errChan := dns.Provider.DeleteRecords(region, "DELETE_MANAGER "+publicIP+" in "+region, records...)
 		if err != nil {
 			return err
 		}
