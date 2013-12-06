@@ -75,9 +75,9 @@ func Register(region, value, registryCName, managerCName string) (*datamodel.ZkM
 	cnames := []dns.Record{}
 	if zkManager.ManagerCName == "" {
 		managerNum := 1
-		zkManager.ManagerCName = helper.GetManagerCName(managerNum, region, suffix)
+		zkManager.ManagerCName = helper.GetManagerCName(managerNum, suffix)
 		for ; managerMap[zkManager.ManagerCName]; managerNum++ {
-			zkManager.ManagerCName = helper.GetManagerCName(managerNum, region, suffix)
+			zkManager.ManagerCName = helper.GetManagerCName(managerNum, suffix)
 		}
 		// managerX.<region>.<suffix>
 		cname := dns.NewRecord(zkManager.ManagerCName, zkManager.Host, 0)
@@ -86,9 +86,9 @@ func Register(region, value, registryCName, managerCName string) (*datamodel.ZkM
 	}
 	if zkManager.RegistryCName == "" {
 		registryNum := 1
-		zkManager.RegistryCName = helper.GetRegistryCName(registryNum, region, suffix)
+		zkManager.RegistryCName = helper.GetRegistryCName(registryNum, suffix)
 		for ; registryMap[zkManager.RegistryCName]; registryNum++ {
-			zkManager.RegistryCName = helper.GetRegistryCName(registryNum, region, suffix)
+			zkManager.RegistryCName = helper.GetRegistryCName(registryNum, suffix)
 		}
 		// registryX.<region>.<suffix>
 		cname := dns.NewRecord(zkManager.RegistryCName, zkManager.Host, 0)
