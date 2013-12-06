@@ -111,70 +111,75 @@ func (s *HelperSuite) TestHelperLockPath(c *C) {
 }
 
 func (s *HelperSuite) TestGetRegionRouterCName(c *C) {
-	c.Assert(GetRegionRouterCName(true, true, "atlantis.com"), Equals, "internal-router.private."+Region+".atlantis.com")
-	c.Assert(GetRegionRouterCName(true, false, "atlantis.com"), Equals, "router.private."+Region+".atlantis.com")
-	c.Assert(GetRegionRouterCName(false, true, "atlantis.com"), Equals, "internal-router."+Region+".atlantis.com")
-	c.Assert(GetRegionRouterCName(false, false, "atlantis.com"), Equals, "router."+Region+".atlantis.com")
+	c.Assert(GetRegionRouterCName(true, true, "us-east-1.atlantis.com"), Equals, "internal-router.private.us-east-1.atlantis.com")
+	c.Assert(GetRegionRouterCName(true, false, "us-east-1.atlantis.com"), Equals, "router.private.us-east-1.atlantis.com")
+	c.Assert(GetRegionRouterCName(false, true, "us-east-1.atlantis.com"), Equals, "internal-router.us-east-1.atlantis.com")
+	c.Assert(GetRegionRouterCName(false, false, "us-east-1.atlantis.com"), Equals, "router.us-east-1.atlantis.com")
 }
 
 func (s *HelperSuite) TestGetZoneRouterCName(c *C) {
-	c.Assert(GetZoneRouterCName(true, true, Region+"1", "atlantis.com"), Equals, "internal-router.private."+Region+"1.atlantis.com")
-	c.Assert(GetZoneRouterCName(true, false, Region+"1", "atlantis.com"), Equals, "router.private."+Region+"1.atlantis.com")
-	c.Assert(GetZoneRouterCName(false, true, Region+"1", "atlantis.com"), Equals, "internal-router."+Region+"1.atlantis.com")
-	c.Assert(GetZoneRouterCName(false, false, Region+"1", "atlantis.com"), Equals, "router."+Region+"1.atlantis.com")
+	c.Assert(GetZoneRouterCName(true, true, Region+"1", Region+".atlantis.com"), Equals, "internal-router.private.1."+Region+".atlantis.com")
+	c.Assert(GetZoneRouterCName(true, false, Region+"1", Region+".atlantis.com"), Equals, "router.private.1."+Region+".atlantis.com")
+	c.Assert(GetZoneRouterCName(false, true, Region+"1", Region+".atlantis.com"), Equals, "internal-router.1."+Region+".atlantis.com")
+	c.Assert(GetZoneRouterCName(false, false, Region+"1", Region+".atlantis.com"), Equals, "router.1."+Region+".atlantis.com")
 }
 
 func (s *HelperSuite) TestGetRouterCName(c *C) {
-	c.Assert(GetRouterCName(true, true, 1, Region+"1", "atlantis.com"), Equals, "internal-router1.private."+Region+"1.atlantis.com")
-	c.Assert(GetRouterCName(true, false, 1, Region+"1", "atlantis.com"), Equals, "router1.private."+Region+"1.atlantis.com")
-	c.Assert(GetRouterCName(false, true, 1, Region+"1", "atlantis.com"), Equals, "internal-router1."+Region+"1.atlantis.com")
-	c.Assert(GetRouterCName(false, false, 1, Region+"1", "atlantis.com"), Equals, "router1."+Region+"1.atlantis.com")
+	c.Assert(GetRouterCName(true, true, 1, Region+"1", Region+".atlantis.com"), Equals, "internal-router1.private.1."+Region+".atlantis.com")
+	c.Assert(GetRouterCName(true, false, 1, Region+"1", Region+".atlantis.com"), Equals, "router1.private.1."+Region+".atlantis.com")
+	c.Assert(GetRouterCName(false, true, 1, Region+"1", Region+".atlantis.com"), Equals, "internal-router1.1."+Region+".atlantis.com")
+	c.Assert(GetRouterCName(false, false, 1, Region+"1", Region+".atlantis.com"), Equals, "router1.1."+Region+".atlantis.com")
 }
 
 func (s *HelperSuite) TestGetRegionAppAlias(c *C) {
-	c.Assert(GetRegionAppAlias(true, app, env, "atlantis.com"), Equals, app+".private."+env+"."+Region+".atlantis.com")
-	c.Assert(GetRegionAppAlias(false, app, env, "atlantis.com"), Equals, app+"."+env+"."+Region+".atlantis.com")
+	c.Assert(GetRegionAppAlias(true, app, env, "us-east-1.atlantis.com"), Equals, app+".private."+env+".us-east-1.atlantis.com")
+	c.Assert(GetRegionAppAlias(false, app, env, "us-east-1.atlantis.com"), Equals, app+"."+env+".us-east-1.atlantis.com")
 }
 
 func (s *HelperSuite) TestGetZoneAppAlias(c *C) {
 	env := "oogabooga"
-	c.Assert(GetZoneAppAlias(false, app, env, Region+"1", "atlantis.com"), Equals,
-		app+"."+env+"."+Region+"1.atlantis.com")
+	c.Assert(GetZoneAppAlias(false, app, env, Region+"1", Region+".atlantis.com"), Equals,
+		app+"."+env+".1."+Region+".atlantis.com")
 	env = "ooga-booga"
-	c.Assert(GetZoneAppAlias(false, app, env, Region+"1", "atlantis.com"), Equals,
-		app+"."+env+"."+Region+"1.atlantis.com")
+	c.Assert(GetZoneAppAlias(false, app, env, Region+"1", Region+".atlantis.com"), Equals,
+		app+"."+env+".1."+Region+".atlantis.com")
 	env = "ooga_booga"
-	c.Assert(GetZoneAppAlias(false, app, env, Region+"1", "atlantis.com"), Equals,
-		app+"."+env+"."+Region+"1.atlantis.com")
+	c.Assert(GetZoneAppAlias(false, app, env, Region+"1", Region+".atlantis.com"), Equals,
+		app+"."+env+".1."+Region+".atlantis.com")
 	env = "prodooga"
-	c.Assert(GetZoneAppAlias(false, app, env, Region+"1", "atlantis.com"), Equals,
-		app+"."+env+"."+Region+"1.atlantis.com")
+	c.Assert(GetZoneAppAlias(false, app, env, Region+"1", Region+".atlantis.com"), Equals,
+		app+"."+env+".1."+Region+".atlantis.com")
 	env = "productionooga"
-	c.Assert(GetZoneAppAlias(false, app, env, Region+"1", "atlantis.com"), Equals,
-		app+"."+env+"."+Region+"1.atlantis.com")
+	c.Assert(GetZoneAppAlias(false, app, env, Region+"1", Region+".atlantis.com"), Equals,
+		app+"."+env+".1."+Region+".atlantis.com")
 	env = "prod"
-	c.Assert(GetZoneAppAlias(false, app, env, Region+"1", "atlantis.com"), Equals,
-		app+"."+Region+"1.atlantis.com")
+	c.Assert(GetZoneAppAlias(false, app, env, Region+"1", Region+".atlantis.com"), Equals,
+		app+".1."+Region+".atlantis.com")
 	env = "production"
-	c.Assert(GetZoneAppAlias(false, app, env, Region+"1", "atlantis.com"), Equals,
-		app+"."+Region+"1.atlantis.com")
+	c.Assert(GetZoneAppAlias(false, app, env, Region+"1", Region+".atlantis.com"), Equals,
+		app+".1."+Region+".atlantis.com")
 	env = "prod-ooga"
-	c.Assert(GetZoneAppAlias(false, app, env, Region+"1", "atlantis.com"), Equals,
-		app+"."+Region+"1.atlantis.com")
+	c.Assert(GetZoneAppAlias(false, app, env, Region+"1", Region+".atlantis.com"), Equals,
+		app+".1."+Region+".atlantis.com")
 	env = "prod_ooga"
-	c.Assert(GetZoneAppAlias(false, app, env, Region+"1", "atlantis.com"), Equals,
-		app+"."+Region+"1.atlantis.com")
+	c.Assert(GetZoneAppAlias(false, app, env, Region+"1", Region+".atlantis.com"), Equals,
+		app+".1."+Region+".atlantis.com")
 	env = "production-ooga"
-	c.Assert(GetZoneAppAlias(false, app, env, Region+"1", "atlantis.com"), Equals,
-		app+"."+Region+"1.atlantis.com")
+	c.Assert(GetZoneAppAlias(false, app, env, Region+"1", Region+".atlantis.com"), Equals,
+		app+".1."+Region+".atlantis.com")
 	env = "production_ooga"
-	c.Assert(GetZoneAppAlias(false, app, env, Region+"1", "atlantis.com"), Equals,
-		app+"."+Region+"1.atlantis.com")
+	c.Assert(GetZoneAppAlias(false, app, env, Region+"1", Region+".atlantis.com"), Equals,
+		app+".1."+Region+".atlantis.com")
 }
 
 func (s *HelperSuite) TestHelperRegionAndZone(c *C) {
 	c.Assert(RegionAndZone(Region+"1"), Equals, Region+"1")
 	c.Assert(RegionAndZone("1"), Equals, Region+"1")
+}
+
+func (s *HelperSuite) TestHelperZoneMinusRegion(c *C) {
+	c.Assert(ZoneMinusRegion(Region+"1"), Equals, "1")
+	c.Assert(ZoneMinusRegion("asdas1"), Equals, "asdas1")
 }
 
 func (s *HelperSuite) TestHelperEmptyIfProdPrefix(c *C) {

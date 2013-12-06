@@ -119,7 +119,7 @@ func GetRegionRouterCName(private, internal bool, suffix string) string {
 	if private {
 		privateStr = ".private"
 	}
-	return fmt.Sprintf("%srouter%s.%s.%s", internalStr, privateStr, Region, suffix)
+	return fmt.Sprintf("%srouter%s.%s", internalStr, privateStr, suffix)
 }
 
 func GetZoneRouterCName(private, internal bool, zone, suffix string) string {
@@ -131,7 +131,7 @@ func GetZoneRouterCName(private, internal bool, zone, suffix string) string {
 	if private {
 		privateStr = ".private"
 	}
-	return fmt.Sprintf("%srouter%s.%s.%s", internalStr, privateStr, RegionAndZone(zone), suffix)
+	return fmt.Sprintf("%srouter%s.%s.%s", internalStr, privateStr, ZoneMinusRegion(zone), suffix)
 }
 
 func GetRouterCName(private, internal bool, num int, zone, suffix string) string {
@@ -143,7 +143,7 @@ func GetRouterCName(private, internal bool, num int, zone, suffix string) string
 	if private {
 		privateStr = ".private"
 	}
-	return fmt.Sprintf("%srouter%d%s.%s.%s", internalStr, num, privateStr, RegionAndZone(zone), suffix)
+	return fmt.Sprintf("%srouter%d%s.%s.%s", internalStr, num, privateStr, ZoneMinusRegion(zone), suffix)
 }
 
 func GetRegionAppAlias(private bool, app, env, suffix string) string {
@@ -151,7 +151,7 @@ func GetRegionAppAlias(private bool, app, env, suffix string) string {
 	if private {
 		privateStr = ".private"
 	}
-	return fmt.Sprintf("%s%s%s.%s.%s", app, privateStr, EmptyIfProdPrefix(env), Region, suffix)
+	return fmt.Sprintf("%s%s%s.%s", app, privateStr, EmptyIfProdPrefix(env), suffix)
 }
 
 func GetZoneAppAlias(private bool, app, env, zone, suffix string) string {
@@ -159,7 +159,7 @@ func GetZoneAppAlias(private bool, app, env, zone, suffix string) string {
 	if private {
 		privateStr = ".private"
 	}
-	return fmt.Sprintf("%s%s%s.%s.%s", app, privateStr, EmptyIfProdPrefix(env), RegionAndZone(zone), suffix)
+	return fmt.Sprintf("%s%s%s.%s.%s", app, privateStr, EmptyIfProdPrefix(env), ZoneMinusRegion(zone), suffix)
 }
 
 func RegionAndZone(zone string) string {
@@ -167,6 +167,10 @@ func RegionAndZone(zone string) string {
 		return zone
 	}
 	return Region + zone
+}
+
+func ZoneMinusRegion(zone string) string {
+	return strings.Replace(zone, Region, "", 1)
 }
 
 var envSuffixRegexp = regexp.MustCompile("^(prod|production)([_-]|$)")

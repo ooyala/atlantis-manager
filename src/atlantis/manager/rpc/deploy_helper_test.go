@@ -53,7 +53,7 @@ func (f FakeDNSProvider) DeleteHealthCheck(id string) error {
 }
 
 func (f FakeDNSProvider) Suffix(region string) (string, error) {
-	return "suffix.com", nil
+	return Region + ".suffix.com", nil
 }
 
 var (
