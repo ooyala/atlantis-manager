@@ -110,6 +110,14 @@ func (s *HelperSuite) TestHelperLockPath(c *C) {
 	c.Assert(GetBaseLockPath("deploy"), Equals, "/atlantis/lock/"+Region+"/deploy")
 }
 
+func (s *HelperSuite) TestGetManagerCName(c *C) {
+	c.Assert(GetManagerCName(1,"us-east-1.atlantis.com"), Equals, "manager1.us-east-1.atlantis.com")
+}
+
+func (s *HelperSuite) TestGetRegistryCName(c *C) {
+	c.Assert(GetRegistryCName(1,"us-east-1.atlantis.com"), Equals, "registry1.us-east-1.atlantis.com")
+}
+
 func (s *HelperSuite) TestGetRegionRouterCName(c *C) {
 	c.Assert(GetRegionRouterCName(true, "us-east-1.atlantis.com"), Equals, "internal-router.us-east-1.atlantis.com")
 	c.Assert(GetRegionRouterCName(false, "us-east-1.atlantis.com"), Equals, "router.us-east-1.atlantis.com")
