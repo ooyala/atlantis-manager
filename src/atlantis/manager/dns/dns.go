@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	IPRegexp = regexp.MustCompile("[0-9]+.[0-9]+.[0-9]+.[0-9]+")
+	IPRegexp = regexp.MustCompile("^[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+$")
 )
 
 var Provider DNSProvider
