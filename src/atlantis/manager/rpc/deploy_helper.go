@@ -230,7 +230,6 @@ func deployToHostsInZones(deps map[string]map[string]string, manifest *Manifest,
 			close(respCh)
 		}
 	}
-	close(respCh)
 	if err != nil {
 		cleanup(false, deployedContainers, t)
 		return nil, err
