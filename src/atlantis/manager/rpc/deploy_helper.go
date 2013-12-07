@@ -112,64 +112,148 @@ func validateDeploy(auth *ManagerAuthArg, manifest *Manifest, sha, env string, t
 	return ResolveDepValues(zkEnv, manifest.DepNames(), true)
 }
 
-func deployToHostsInZones(deps map[string]map[string]string, manifest *Manifest, sha, env string, hosts map[string][]string, zones []string,
-	t *Task) ([]*Container, error) {
-	// deploy to hosts
+type DeployHostResult struct {
+	Host string
+	Container *Container
+	Error error
+}
+
+func deployToHost(respCh chan *DeployHostResult, manifest *Manifest, sha, env, host string) {
+	instance, err := datamodel.CreateInstance(manifest.Internal, manifest.Name, sha, env, host)
+	if err != nil {
+		respCh <- &DeployHostResult{Host: host, Container: nil, Error: err}
+		return
+	}
+	ihReply, err := supervisor.Deploy(host, manifest.Name, sha, env, instance.Id, manifest)
+	if err != nil {
+		instance.Delete()
+		respCh <- &DeployHostResult{Host: host, Container: nil, Error: err}
+		return
+	}
+	if ihReply.Status != StatusOk {
+		instance.Delete()
+		respCh <- &DeployHostResult{Host: host, Container: nil, Error: err}
+		return
+	}
+	ihReply.Container.Host = host
+	instance.SetPort(ihReply.Container.PrimaryPort)
+	AddAppShaToEnv(manifest.Name, sha, env)
+	respCh <- &DeployHostResult{Host: host, Container: ihReply.Container, Error: nil}
+}
+
+type DeployZoneResult struct {
+	Zone string
+	Containers []*Container
+	Error error
+}
+
+func deployToZone(respCh chan *DeployZoneResult, manifest *Manifest, sha, env string, hosts []string, zone string) {
+	hostNum := 0
+	failures := 0
+	deployed := uint(0)
+	maxFailures := len(hosts)
 	deployedContainers := []*Container{}
-	deployedIds := []string{}
-	for _, zone := range zones {
-		// fail if zone has no hosts
-		if hosts[zone] == nil || len(hosts[zone]) == 0 {
-			cleanup(deployedContainers, t)
-			return nil, errors.New(fmt.Sprintf("No hosts available for app %s in zone %s", manifest.Name, zone))
-		}
-		failures := 0
-		maxFailures := len(hosts[zone]) // allow as many failures as there are hosts
-		hostNum := 0
-		deployed := uint(0)
-		// keep deploying to hosts until we've deployed the right number in this zone OR we've failed too much
-		for deployed < manifest.Instances && failures < maxFailures {
-			manifest.Deps = deps[zone]
-			host := hosts[zone][hostNum]
-			instance, err := datamodel.CreateInstance(manifest.Internal, manifest.Name, sha, env, host)
-			if err != nil {
-				continue
-			}
-			t.LogStatus("Deploying %s to %s", instance.Id, host)
-			ihReply, err := supervisor.Deploy(host, manifest.Name, sha, env, instance.Id, manifest)
-			if err != nil {
-				instance.Delete()
-				t.LogStatus("Supervisor " + host + " Deploy " + instance.Id + " Failed: " + err.Error())
-				failures++
-				continue // try another host
-			}
-			if ihReply.Status != StatusOk {
-				instance.Delete()
-				t.LogStatus("Supervisor " + host + " Deploy " + instance.Id + " Status Not OK: " + ihReply.Status)
-				failures++
-				continue // try another host
-			}
-			ihReply.Container.Host = host
-			instance.SetPort(ihReply.Container.PrimaryPort)
-			datamodel.Supervisor(host).SetContainerAndPort(instance.Id, ihReply.Container.PrimaryPort)
-			deployedContainers = append(deployedContainers, ihReply.Container)
-			deployedIds = append(deployedIds, ihReply.Container.Id)
-			AddAppShaToEnv(manifest.Name, sha, env)
-			deployed++
-			hostNum++ // increment through hosts to cycle through them. If we've gone too far, reset
-			if hostNum >= len(hosts[zone]) {
+	for deployed < manifest.Instances && failures < maxFailures {
+		numToDeploy := manifest.Instances - deployed
+		respCh := make(chan *DeployHostResult, numToDeploy)
+		for i := uint(0); i < numToDeploy; i++ {
+			host := hosts[hostNum]
+			go deployToHost(respCh, manifest, sha, env, host)
+			hostNum++
+			if hostNum >= len(hosts) {
 				hostNum = 0
 			}
 		}
-		if failures >= maxFailures { // if we've failed out for this zone, clean up and fail
-			cleanup(deployedContainers, t)
-			return nil, errors.New(fmt.Sprintf("Failed to deploy %d instances to zone %s", manifest.Instances, zone))
+		numResult := uint(0)
+		for result := range respCh {
+			if result.Error != nil {
+				failures++
+			} else {
+				deployed++
+				deployedContainers = append(deployedContainers, result.Container)
+			}
+			numResult++
+			if numResult >= numToDeploy { // we're done
+				close(respCh)
+			}
 		}
 	}
+	if failures >= maxFailures {
+		respCh <- &DeployZoneResult{
+			Zone: zone,
+			Containers: deployedContainers,
+			Error: errors.New(fmt.Sprintf("Failed to deploy %d instances in zone %s.", manifest.Instances, zone)),
+		}
+		return
+	}
+	respCh <- &DeployZoneResult{
+		Zone: zone,
+		Containers: deployedContainers,
+		Error: nil,
+	}
+	return
+}
+
+func deployToHostsInZones(deps map[string]map[string]string, manifest *Manifest, sha, env string,
+		hosts map[string][]string, zones []string, t *Task) ([]*Container, error) {
+	deployedContainers := []*Container{}
+	// first check if zones have enough hosts
+	for _, zone := range zones {
+		// fail if zone has no hosts
+		if hosts[zone] == nil || len(hosts[zone]) == 0 {
+			return nil, errors.New(fmt.Sprintf("No hosts available for app %s in zone %s", manifest.Name, zone))
+		}
+	}
+	// now that we know that enough hosts are available
+	t.LogStatus("Deploying to: %v", zones)
+	respCh := make(chan *DeployZoneResult, len(zones))
+	for _, zone := range zones {
+		zoneManifest := manifest.Dup()
+		zoneManifest.Deps = deps[zone]
+		go deployToZone(respCh, zoneManifest, sha, env, hosts[zone], zone)
+	}
+	var err error
+	numResults := 0
+	status := "Deployed to: "
+	for result := range respCh {
+		deployedContainers = append(deployedContainers, result.Containers...)
+		if result.Error != nil {
+			err = result.Error
+			t.Log(err.Error())
+			status += result.Zone + ":FAIL "
+		} else {
+			status += result.Zone + ":SUCCESS "
+		}
+		t.LogStatus(status)
+		numResults++
+		if numResults >= len(zones) { // we're done
+			close(respCh)
+		}
+	}
+	close(respCh)
+	if err != nil {
+		cleanup(false, deployedContainers, t)
+		return nil, err
+	}
+
+	// set ports on zk supervisor - can't do this in parallel. we may deploy to the same host at the same time
+	// and since we don't lock zookeeper (maybe we should), this would result in a race condition.
+	t.LogStatus("Updating Zookeeper")
+	for _, cont := range deployedContainers {
+		datamodel.Supervisor(cont.Host).SetContainerAndPort(cont.Id, cont.PrimaryPort)
+	}
+
+	// we're good now, so lets move on
 	t.LogStatus("Updating Router")
-	err := datamodel.AddToPool(deployedIds)
+	deployedIds := make([]string, len(deployedContainers))
+	count := 0
+	for _, cont := range deployedContainers {
+		deployedIds[count] = cont.Id
+		count++
+	}
+	err = datamodel.AddToPool(deployedIds)
 	if err != nil { // if we can't add the pool, clean up and fail
-		cleanup(deployedContainers, t)
+		cleanup(true, deployedContainers, t)
 		return nil, errors.New("Update Pool Error: " + err.Error())
 	}
 	if manifest.Internal {
@@ -177,7 +261,7 @@ func deployToHostsInZones(deps map[string]map[string]string, manifest *Manifest,
 		// if we're internal, handle the DNS stuff
 		err := dns.CreateAppCNames(manifest.Internal, manifest.Name, sha, env)
 		if err != nil { // if DNS fails, clean up and fail
-			cleanup(deployedContainers, t)
+			cleanup(true, deployedContainers, t)
 			return nil, errors.New("Update DNS Error: " + err.Error())
 		}
 	}
@@ -224,7 +308,7 @@ func devDeployToHosts(deps map[string]map[string]string, manifest *Manifest, sha
 	t.LogStatus("Updating Router")
 	err := datamodel.AddToPool(deployedIds)
 	if err != nil { // if we can't add the pool, clean up and fail
-		cleanup(deployedContainers, t)
+		cleanup(true, deployedContainers, t)
 		return nil, errors.New("Update Pool Error: " + err.Error())
 	}
 	if manifest.Internal {
@@ -232,7 +316,7 @@ func devDeployToHosts(deps map[string]map[string]string, manifest *Manifest, sha
 		// if we're internal, handle the DNS stuff
 		err := dns.CreateAppCNames(manifest.Internal, manifest.Name, sha, env)
 		if err != nil { // if DNS fails, clean up and fail
-			cleanup(deployedContainers, t)
+			cleanup(true, deployedContainers, t)
 			return nil, errors.New("Update DNS Error: " + err.Error())
 		}
 	}
@@ -301,14 +385,14 @@ func moveContainer(auth *ManagerAuthArg, cont *Container, t *Task) (*Container, 
 	}
 	// should only deploy 1 since we're only moving 1
 	if len(deployed) != 1 {
-		cleanup(deployed, t)
+		cleanup(true, deployed, t)
 		return nil, errors.New(fmt.Sprintf("Didn't deploy 1 container. Deployed %d", len(deployed)))
 	}
-	cleanup([]*Container{cont}, t) // cleanup the old container
+	cleanup(true, []*Container{cont}, t) // cleanup the old container
 	return deployed[0], nil
 }
 
-func cleanup(deployedContainers []*Container, t *Task) {
+func cleanup(removeContainerFromHost bool, deployedContainers []*Container, t *Task) {
 	// kill all references to deployed containers as well as the container itself
 	for _, container := range deployedContainers {
 		supervisor.Teardown(container.Host, []string{container.Id}, false)
@@ -318,7 +402,9 @@ func cleanup(deployedContainers []*Container, t *Task) {
 			t.Log(fmt.Sprintf("Failed to clean up instance %s: %s", container.Id, err.Error()))
 		}
 		DeleteAppShaFromEnv(container.App, container.Sha, container.Env)
-		datamodel.Supervisor(container.Host).RemoveContainer(container.Id)
+		if removeContainerFromHost {
+			datamodel.Supervisor(container.Host).RemoveContainer(container.Id)
+		}
 	}
 }
 
