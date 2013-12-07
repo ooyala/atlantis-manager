@@ -111,11 +111,11 @@ func (s *HelperSuite) TestHelperLockPath(c *C) {
 }
 
 func (s *HelperSuite) TestGetManagerCName(c *C) {
-	c.Assert(GetManagerCName(1,"us-east-1.atlantis.com"), Equals, "manager1.us-east-1.atlantis.com")
+	c.Assert(GetManagerCName(1, "us-east-1.atlantis.com"), Equals, "manager1.us-east-1.atlantis.com")
 }
 
 func (s *HelperSuite) TestGetRegistryCName(c *C) {
-	c.Assert(GetRegistryCName(1,"us-east-1.atlantis.com"), Equals, "registry1.us-east-1.atlantis.com")
+	c.Assert(GetRegistryCName(1, "us-east-1.atlantis.com"), Equals, "registry1.us-east-1.atlantis.com")
 }
 
 func (s *HelperSuite) TestGetRegionRouterCName(c *C) {

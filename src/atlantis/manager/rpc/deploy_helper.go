@@ -113,9 +113,9 @@ func validateDeploy(auth *ManagerAuthArg, manifest *Manifest, sha, env string, t
 }
 
 type DeployHostResult struct {
-	Host string
+	Host      string
 	Container *Container
-	Error error
+	Error     error
 }
 
 func deployToHost(respCh chan *DeployHostResult, manifest *Manifest, sha, env, host string) {
@@ -142,9 +142,9 @@ func deployToHost(respCh chan *DeployHostResult, manifest *Manifest, sha, env, h
 }
 
 type DeployZoneResult struct {
-	Zone string
+	Zone       string
 	Containers []*Container
-	Error error
+	Error      error
 }
 
 func deployToZone(respCh chan *DeployZoneResult, manifest *Manifest, sha, env string, hosts []string, zone string) {
@@ -180,22 +180,22 @@ func deployToZone(respCh chan *DeployZoneResult, manifest *Manifest, sha, env st
 	}
 	if failures >= maxFailures {
 		respCh <- &DeployZoneResult{
-			Zone: zone,
+			Zone:       zone,
 			Containers: deployedContainers,
-			Error: errors.New(fmt.Sprintf("Failed to deploy %d instances in zone %s.", manifest.Instances, zone)),
+			Error:      errors.New(fmt.Sprintf("Failed to deploy %d instances in zone %s.", manifest.Instances, zone)),
 		}
 		return
 	}
 	respCh <- &DeployZoneResult{
-		Zone: zone,
+		Zone:       zone,
 		Containers: deployedContainers,
-		Error: nil,
+		Error:      nil,
 	}
 	return
 }
 
 func deployToHostsInZones(deps map[string]map[string]string, manifest *Manifest, sha, env string,
-		hosts map[string][]string, zones []string, t *Task) ([]*Container, error) {
+	hosts map[string][]string, zones []string, t *Task) ([]*Container, error) {
 	deployedContainers := []*Container{}
 	// first check if zones have enough hosts
 	for _, zone := range zones {
