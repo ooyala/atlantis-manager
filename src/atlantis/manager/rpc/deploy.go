@@ -306,6 +306,7 @@ func (e *TeardownExecutor) Execute(t *Task) error {
 			last, _ := instance.Delete()
 			if last {
 				if instance.Internal {
+					t.LogStatus("Updating DNS")
 					dns.DeleteAppCNames(instance.App, instance.Sha, instance.Env)
 				}
 				DeleteAppShaFromEnv(instance.App, instance.Sha, instance.Env)
