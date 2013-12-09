@@ -1,16 +1,20 @@
-package client
+package dnscli
 
-/*
 import (
 	"atlantis/manager/dns"
 )
 
+var suffix = ""
+
 func InitDNSProvider(provider, zone string, ttl uint) {
-	InitNoLogin()
 	var err error
 	switch provider {
 	case "route53":
-		dns.Provider, err = dns.NewRoute53Provider(zone, ttl)
+		dns.Provider, err = dns.NewRoute53Provider(map[string]string{"cli": zone}, ttl)
+		if err != nil {
+			Output(nil, nil, err)
+		}
+		suffix, err = dns.Provider.Suffix("cli")
 		if err != nil {
 			Output(nil, nil, err)
 		}
@@ -34,20 +38,17 @@ type DNSCreateARecordCommand struct {
 func (c *DNSCreateARecordCommand) Execute(args []string) error {
 	InitDNSProvider(c.Provider, c.ZoneId, c.TTL)
 	arecord := dns.ARecord{
-		Name:          c.Prefix + "." + dns.Provider.Suffix(),
+		Name:          c.Prefix + "." + suffix,
 		IP:            c.IP,
 		HealthCheckId: c.HealthCheckId,
 		Failover:      c.Failover,
 		Weight:        c.Weight,
 	}
-	err, errChan := dns.Provider.CreateARecords(c.Comment, []dns.ARecord{arecord})
+	err := dns.Provider.CreateRecords("cli", c.Comment, []dns.Record{&arecord})
 	if err != nil {
 		return Output(nil, nil, err)
 	}
-	err = <-errChan
-	if err == nil {
-		Log("-> created %s", arecord.Id())
-	}
+	Log("-> created %s", arecord.Id())
 	return Output(map[string]interface{}{"id": arecord.Id()}, arecord.Id(), err)
 }
 
@@ -64,21 +65,19 @@ type DNSCreateAliasCommand struct {
 func (c *DNSCreateAliasCommand) Execute(args []string) error {
 	InitDNSProvider(c.Provider, c.ZoneId, c.TTL)
 	alias := dns.Alias{
-		Alias:    c.Prefix + "." + dns.Provider.Suffix(),
+		Alias:    c.Prefix + "." + suffix,
 		Original: c.Original,
 		Failover: c.Failover,
 	}
-	err, errChan := dns.Provider.CreateAliases(c.Comment, []dns.Alias{alias})
+	err := dns.Provider.CreateRecords("cli", c.Comment, []dns.Record{&alias})
 	if err != nil {
 		return Output(nil, nil, err)
 	}
-	err = <-errChan
-	if err == nil {
-		Log("-> created %s", alias.Id())
-	}
+	Log("-> created %s", alias.Id())
 	return Output(map[string]interface{}{"id": alias.Id()}, alias.Id(), err)
 }
 
+/*
 type DNSCreateHealthCheckCommand struct {
 	Provider string `long:"provider" default:"route53" description:"the dns provider"`
 	ZoneId   string `short:"z" long:"zone" description:"the dns zone to use"`
@@ -111,7 +110,7 @@ func (c *DNSDeleteHealthCheckCommand) Execute(args []string) error {
 	}
 	return Output(map[string]interface{}{"id": c.HealthCheckId}, c.HealthCheckId, err)
 }
-
+*/
 type DNSDeleteRecordsCommand struct {
 	Provider  string   `long:"provider" default:"route53" description:"the dns provider"`
 	ZoneId    string   `short:"z" long:"zone" description:"the dns zone to use"`
@@ -122,7 +121,7 @@ type DNSDeleteRecordsCommand struct {
 
 func (c *DNSDeleteRecordsCommand) Execute(args []string) error {
 	InitDNSProvider(c.Provider, c.ZoneId, c.TTL)
-	err, errChan := dns.Provider.DeleteRecords(c.Comment, c.RecordIds...)
+	err, errChan := dns.Provider.DeleteRecords("cli", c.Comment, c.RecordIds...)
 	if err != nil {
 		return Output(nil, nil, err)
 	}
@@ -136,16 +135,16 @@ func (c *DNSDeleteRecordsCommand) Execute(args []string) error {
 	return Output(map[string]interface{}{"ids": c.RecordIds}, c.RecordIds, err)
 }
 
-type DNSGetRecordsForIPCommand struct {
+type DNSGetRecordsForValueCommand struct {
 	Provider string `long:"provider" default:"route53" description:"the dns provider"`
 	ZoneId   string `short:"z" long:"zone" description:"the dns zone to use"`
 	TTL      uint   `long:"ttl" default:"10" description:"the ttl to use"`
-	IP       string `short:"i" long:"ip" description:"the ip to use"`
+	Value    string `short:"v" long:"value" description:"the value to use"`
 }
 
-func (c *DNSGetRecordsForIPCommand) Execute(args []string) error {
+func (c *DNSGetRecordsForValueCommand) Execute(args []string) error {
 	InitDNSProvider(c.Provider, c.ZoneId, c.TTL)
-	recordIds, err := dns.Provider.GetRecordsForIP(c.IP)
+	recordIds, err := dns.Provider.GetRecordsForValue("cli", c.Value)
 	if err == nil {
 		Log("-> records:")
 		for _, id := range recordIds {
@@ -155,19 +154,18 @@ func (c *DNSGetRecordsForIPCommand) Execute(args []string) error {
 	return Output(map[string]interface{}{"ids": recordIds}, recordIds, err)
 }
 
-type DNSDeleteRecordsForIPCommand struct {
+type DNSDeleteRecordsForValueCommand struct {
 	Provider string `long:"provider" default:"route53" description:"the dns provider"`
 	ZoneId   string `short:"z" long:"zone" description:"the dns zone to use"`
 	TTL      uint   `long:"ttl" default:"10" description:"the ttl to use"`
-	IP       string `short:"i" long:"ip" description:"the ip to use"`
+	Value    string `short:"v" long:"value" description:"the value to use"`
 }
 
-func (c *DNSDeleteRecordsForIPCommand) Execute(args []string) error {
+func (c *DNSDeleteRecordsForValueCommand) Execute(args []string) error {
 	InitDNSProvider(c.Provider, c.ZoneId, c.TTL)
-	err := dns.DeleteRecordsForIP(c.IP)
+	err := dns.DeleteRecordsForValue("cli", c.Value)
 	if err == nil {
 		Log("-> deleted")
 	}
 	return Output(nil, nil, err)
 }
-*/
