@@ -9,11 +9,44 @@ import (
 type ZkManager types.Manager
 
 func Manager(region, value string) *ZkManager {
-	return &ZkManager{Region: region, Host: value}
+	return &ZkManager{Region: region, Host: value, Roles: map[string]map[string]bool{}}
 }
 
 func (m *ZkManager) Save() error {
+	if m.Roles == nil {
+		m.Roles = map[string]map[string]bool{}
+	}
 	return setJson(m.path(), m)
+}
+
+func (m *ZkManager) AddRole(name string, roleType string) error {
+	if m.Roles == nil {
+		m.Roles = map[string]map[string]bool{}
+	}
+	if m.Roles[name] == nil {
+		m.Roles[name] = map[string]bool{}
+	}
+	m.Roles[name][roleType] = true
+	return m.Save()
+}
+
+func (m *ZkManager) HasRole(name string, roleType string) bool {
+	if m.Roles[name] == nil {
+		return false
+	}
+	return m.Roles[name][roleType]
+}
+
+func (m *ZkManager) RemoveRole(name string, roleType string) error {
+	if m.Roles == nil {
+		m.Roles = map[string]map[string]bool{}
+		return m.Save()
+	}
+	if m.Roles[name] == nil {
+		return nil
+	}
+	delete(m.Roles[name], roleType)
+	return m.Save()
 }
 
 // Delete the manager node and all children (don't realy need DelDir here but there isn't much overhead)
@@ -34,6 +67,9 @@ func (m *ZkManager) Delete() error {
 func GetManager(region, value string) (zm *ZkManager, err error) {
 	zm = &ZkManager{}
 	err = getJson(helper.GetBaseManagerPath(region, value), zm)
+	if err == nil && zm.Roles == nil {
+		err = zm.Save()
+	}
 	return
 }
 

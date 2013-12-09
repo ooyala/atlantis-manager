@@ -24,6 +24,47 @@ func (s *DatamodelSuite) TestManagerTouchAndDelete(c *C) {
 	c.Assert(err, IsNil)
 }
 
+func (s *DatamodelSuite) TestManagerRoles(c *C) {
+	Zk.RecursiveDelete(helper.GetBaseManagerPath())
+	CreateManagerPath()
+	opt := Manager("dev", "2.1.1.1")
+	c.Assert(opt.Save(), IsNil)
+	c.Assert(opt.HasRole("deploy", "write"), Equals, false)
+	c.Assert(opt.HasRole("permissions", "read"), Equals, false)
+	c.Assert(opt.HasRole("permissions", "write"), Equals, false)
+
+	c.Assert(opt.AddRole("deploy", "write"), IsNil)
+	c.Assert(opt.HasRole("deploy", "write"), Equals, true)
+	c.Assert(opt.HasRole("permissions", "read"), Equals, false)
+	c.Assert(opt.HasRole("permissions", "write"), Equals, false)
+
+	c.Assert(opt.AddRole("permissions", "read"), IsNil)
+	c.Assert(opt.HasRole("deploy", "write"), Equals, true)
+	c.Assert(opt.HasRole("permissions", "read"), Equals, true)
+	c.Assert(opt.HasRole("permissions", "write"), Equals, false)
+
+	c.Assert(opt.AddRole("permissions", "write"), IsNil)
+	c.Assert(opt.HasRole("deploy", "write"), Equals, true)
+	c.Assert(opt.HasRole("permissions", "read"), Equals, true)
+	c.Assert(opt.HasRole("permissions", "write"), Equals, true)
+
+	c.Assert(opt.RemoveRole("deploy", "write"), IsNil)
+	c.Assert(opt.HasRole("deploy", "write"), Equals, false)
+	c.Assert(opt.HasRole("permissions", "read"), Equals, true)
+	c.Assert(opt.HasRole("permissions", "write"), Equals, true)
+
+	c.Assert(opt.RemoveRole("permissions", "write"), IsNil)
+	c.Assert(opt.HasRole("deploy", "write"), Equals, false)
+	c.Assert(opt.HasRole("permissions", "read"), Equals, true)
+	c.Assert(opt.HasRole("permissions", "write"), Equals, false)
+
+	c.Assert(opt.RemoveRole("permissions", "read"), IsNil)
+	c.Assert(opt.HasRole("deploy", "write"), Equals, false)
+	c.Assert(opt.HasRole("permissions", "read"), Equals, false)
+	c.Assert(opt.HasRole("permissions", "write"), Equals, false)
+	c.Assert(opt.Delete(), IsNil)
+}
+
 func (s *DatamodelSuite) TestManagerListers(c *C) {
 	Zk.RecursiveDelete(helper.GetBaseManagerPath())
 	CreateManagerPath()

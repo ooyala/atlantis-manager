@@ -26,6 +26,7 @@ type Manager struct {
 	ManagerRecordId  string
 	RegistryCName    string
 	RegistryRecordId string
+	Roles            map[string]map[string]bool
 }
 
 // Manager RPC Types
