@@ -2,7 +2,6 @@ package dns
 
 import (
 	"errors"
-	"github.com/crowdmob/goamz/aws"
 	"github.com/jigish/route53/src/route53"
 	"strings"
 	"time"
@@ -248,11 +247,10 @@ func (r *Route53Provider) Suffix(region string) (string, error) {
 
 func NewRoute53Provider(zoneIds map[string]string, ttl uint) (*Route53Provider, error) {
 	route53.DebugOn()
-	auth, err := aws.GetAuth("", "", "", time.Time{})
+	r53, err := route53.New()
 	if err != nil {
 		return nil, err
 	}
-	r53 := route53.New(auth)
 	r53.IncludeWeight = true
 	zones := map[string]*Route53HostedZone{}
 	for region, zoneId := range zoneIds {
