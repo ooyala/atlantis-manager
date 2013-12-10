@@ -197,3 +197,61 @@ func GetSelf(w http.ResponseWriter, r *http.Request) {
 	err := manager.GetSelf(arg, &reply)
 	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Status": reply.Status, "Manager": reply.Manager}, err))
 }
+
+func AddRole(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
+	arg := ManagerRoleArg{
+		ManagerAuthArg: auth,
+		Host:   vars["Host"],
+		Region: vars["Region"],
+		Role:   vars["Role"],
+	}
+	var reply ManagerRoleReply
+	err := manager.AddRole(arg, &reply)
+	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Status": reply.Status, "Manager": reply.Manager}, err))
+}
+
+func RemoveRole(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
+	arg := ManagerRoleArg{
+		ManagerAuthArg: auth,
+		Host:   vars["Host"],
+		Region: vars["Region"],
+		Role:   vars["Role"],
+	}
+	var reply ManagerRoleReply
+	err := manager.RemoveRole(arg, &reply)
+	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Status": reply.Status, "Manager": reply.Manager}, err))
+}
+
+func AddRoleType(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
+	arg := ManagerRoleArg{
+		ManagerAuthArg: auth,
+		Host:   vars["Host"],
+		Region: vars["Region"],
+		Role:   vars["Role"],
+		Type:   vars["Type"],
+	}
+	var reply ManagerRoleReply
+	err := manager.AddRole(arg, &reply)
+	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Status": reply.Status, "Manager": reply.Manager}, err))
+}
+
+func RemoveRoleType(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
+	arg := ManagerRoleArg{
+		ManagerAuthArg: auth,
+		Host:   vars["Host"],
+		Region: vars["Region"],
+		Role:   vars["Role"],
+		Type:   vars["Type"],
+	}
+	var reply ManagerRoleReply
+	err := manager.RemoveRole(arg, &reply)
+	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Status": reply.Status, "Manager": reply.Manager}, err))
+}

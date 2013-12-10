@@ -26,7 +26,9 @@ func (m *ZkManager) AddRole(name, roleType string) error {
 	if m.Roles[name] == nil {
 		m.Roles[name] = map[string]bool{}
 	}
-	m.Roles[name][roleType] = true
+	if roleType != "" {
+		m.Roles[name][roleType] = true
+	}
 	return m.Save()
 }
 
@@ -45,7 +47,11 @@ func (m *ZkManager) RemoveRole(name, roleType string) error {
 	if m.Roles[name] == nil {
 		return nil
 	}
-	delete(m.Roles[name], roleType)
+	if roleType != "" {
+		delete(m.Roles[name], roleType)
+	} else {
+		delete(m.Roles, name)
+	}
 	return m.Save()
 }
 

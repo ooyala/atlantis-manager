@@ -39,9 +39,6 @@ func (e *AddRoleExecutor) Execute(t *Task) error {
 	if e.arg.Role == "" {
 		return errors.New("Please specify a role")
 	}
-	if e.arg.Type == "" {
-		return errors.New("Please specify a type")
-	}
 	zkManager, err := datamodel.GetManager(e.arg.Region, e.arg.Host)
 	if err != nil {
 		e.reply.Status = StatusError
@@ -92,9 +89,6 @@ func (e *RemoveRoleExecutor) Execute(t *Task) error {
 	}
 	if e.arg.Role == "" {
 		return errors.New("Please specify a role")
-	}
-	if e.arg.Type == "" {
-		return errors.New("Please specify a type")
 	}
 	zkManager, err := datamodel.GetManager(e.arg.Region, e.arg.Host)
 	if err != nil {

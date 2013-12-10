@@ -66,6 +66,10 @@ func Init(listenAddr string) error {
 	gmux.HandleFunc("/managers/{Region}/{Host}", GetManager).Methods("GET")
 	gmux.HandleFunc("/managers/{Region}/{Host}", RegisterManager).Methods("PUT")
 	gmux.HandleFunc("/managers/{Region}/{Host}", UnregisterManager).Methods("DELETE")
+	gmux.HandleFunc("/managers/{Region}/{Host}/roles/{Role}", AddRole).Methods("PUT")
+	gmux.HandleFunc("/managers/{Region}/{Host}/roles/{Role}", RemoveRole).Methods("DELETE")
+	gmux.HandleFunc("/managers/{Region}/{Host}/roles/{Role}/{Type}", AddRoleType).Methods("PUT")
+	gmux.HandleFunc("/managers/{Region}/{Host}/roles/{Role}/{Type}", RemoveRoleType).Methods("DELETE")
 	gmux.HandleFunc("/managers/self", GetSelf).Methods("GET")
 
 	// Supervisor Management
