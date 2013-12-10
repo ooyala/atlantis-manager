@@ -64,11 +64,14 @@ func Listen() {
 }
 
 func checkRole(role string, rType string) error {
+	log.Printf("[CheckRole] checking myself (%s:%s) for %s:%s", Region, Host, rType, role)
 	zkManager, err := datamodel.GetManager(Region, Host)
 	if err != nil {
 		return err
 	}
+	log.Printf("[CheckRole] roles: %v", zkManager.Roles)
 	if !zkManager.HasRole(role, rType) {
+		log.Printf("[CheckRole] role check fail.")
 		managersWithRole := ""
 		managers, err := datamodel.ListManagers()
 		if err != nil {
@@ -88,5 +91,6 @@ func checkRole(role string, rType string) error {
 		return errors.New(fmt.Sprintf("This manager does not have the ability to %s %s. "+
 			"Please try one of these:\n%s", rType, role, managersWithRole))
 	}
+	log.Printf("[CheckRole] role check success.")
 	return nil
 }

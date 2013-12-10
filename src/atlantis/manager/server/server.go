@@ -99,6 +99,7 @@ func New() *ManagerServer {
 			MemoryLimitIncrement:     1,
 			ResultDuration:           DefaultResultDuration,
 			SkipAuthorization:        false,
+			Host:                     DefaultManagerHost,
 			Region:                   DefaultRegion,
 			Zone:                     DefaultZone,
 			AvailableZones:           DefaultZone,

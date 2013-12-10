@@ -203,9 +203,9 @@ func AddRole(w http.ResponseWriter, r *http.Request) {
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
 	arg := ManagerRoleArg{
 		ManagerAuthArg: auth,
-		Host:   vars["Host"],
-		Region: vars["Region"],
-		Role:   vars["Role"],
+		Host:           vars["Host"],
+		Region:         vars["Region"],
+		Role:           vars["Role"],
 	}
 	var reply ManagerRoleReply
 	err := manager.AddRole(arg, &reply)
@@ -217,9 +217,9 @@ func RemoveRole(w http.ResponseWriter, r *http.Request) {
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
 	arg := ManagerRoleArg{
 		ManagerAuthArg: auth,
-		Host:   vars["Host"],
-		Region: vars["Region"],
-		Role:   vars["Role"],
+		Host:           vars["Host"],
+		Region:         vars["Region"],
+		Role:           vars["Role"],
 	}
 	var reply ManagerRoleReply
 	err := manager.RemoveRole(arg, &reply)
@@ -231,10 +231,10 @@ func AddRoleType(w http.ResponseWriter, r *http.Request) {
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
 	arg := ManagerRoleArg{
 		ManagerAuthArg: auth,
-		Host:   vars["Host"],
-		Region: vars["Region"],
-		Role:   vars["Role"],
-		Type:   vars["Type"],
+		Host:           vars["Host"],
+		Region:         vars["Region"],
+		Role:           vars["Role"],
+		Type:           vars["Type"],
 	}
 	var reply ManagerRoleReply
 	err := manager.AddRole(arg, &reply)
@@ -246,10 +246,10 @@ func RemoveRoleType(w http.ResponseWriter, r *http.Request) {
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
 	arg := ManagerRoleArg{
 		ManagerAuthArg: auth,
-		Host:   vars["Host"],
-		Region: vars["Region"],
-		Role:   vars["Role"],
-		Type:   vars["Type"],
+		Host:           vars["Host"],
+		Region:         vars["Region"],
+		Role:           vars["Role"],
+		Type:           vars["Type"],
 	}
 	var reply ManagerRoleReply
 	err := manager.RemoveRole(arg, &reply)

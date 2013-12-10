@@ -50,7 +50,6 @@ func Register(region, value, registryCName, managerCName string) (*datamodel.ZkM
 		return nil, err
 	}
 
-
 	// set up unspecified cnames
 	// first delete all entries we may already have for this Value in DNS
 	err = dns.DeleteRecordsForValue(region, value)
