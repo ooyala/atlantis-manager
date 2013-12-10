@@ -56,11 +56,27 @@ func Init(listenAddr string, supervisorPort uint16, cpuIncr, memIncr uint, resDu
 }
 
 func Listen() {
+	go selfRegister()
 	if l == nil {
 		panic("Not Initialized.")
 	}
 	log.Println("[RPC] Listening on", lAddr)
 	server.Accept(l)
+}
+
+func selfRegister() {
+	log.Println("[SelfRegister] Registering Self.")
+	zkManager, err := datamodel.GetManager(Region, Host)
+	if err == nil && zkManager != nil {
+		// i'm already registered
+		log.Println("[SelfRegister] Already Registered")
+		return
+	}
+	mgr, err := manager.Register(Region, Host, "", "")
+	if err != nil {
+		log.Fatalln("[SelfRegister] Failure: ", err)
+	}
+	log.Printf("[SelfRegister] Success: %s", mgr.ManagerCName)
 }
 
 func checkRole(role string, rType string) error {
