@@ -49,6 +49,7 @@ type ServerConfig struct {
 	LdapUserClassAttr        string `toml:"ldap_user_class_attr"`
 	SkipAuthorization        bool   `toml:"skip_authorization"`
 	LdapSuperUserGroup       string `toml:"ldap_super_user_group"`
+	Host                     string `toml:"host"`
 	Region                   string `toml:"region"`
 	Zone                     string `toml:"zone"`
 	AvailableZones           string `toml:"available_zones"`
@@ -69,6 +70,7 @@ type ServerOpts struct {
 	MemoryLimitIncrement     uint   `long:"memory-limit-increment" description:"Memory Limit increment"`
 	ResultDuration           string `long:"result-duration" description:"How long to keep the results of an Async Command"`
 	SkipAuthorization        bool   `long:"skip-authorization" description:"Skip verification for LDAP UTA Details"`
+	Host                     string `long:"host" description:"the host of this manager"`
 	Region                   string `long:"region" description:"the region this manager is in"`
 	Zone                     string `long:"zone" description:"the availability zone this manager is in"`
 	AvailableZones           string `long:"available-zones" description:"the available availability zones"`
@@ -127,10 +129,11 @@ func (m *ManagerServer) Run(bldr builder.Builder) {
 	log.Println("Fate rarely calls upon us at a moment of our choosing.")
 	log.Println("                                                       -- Manager\n")
 	ldap.Init(m.Config.LdapHost, m.Config.LdapPort, m.Config.LdapBaseDomain)
+	Host = m.Config.Host
 	Region = m.Config.Region
 	Zone = m.Config.Zone
 	AvailableZones = strings.Split(m.Config.AvailableZones, ",")
-	log.Printf("Initializing Manager [%s] [%s]", Region, Zone)
+	log.Printf("Initializing Manager [%s] [%s] [%s]", Region, Zone, Host)
 	datamodel.Init(m.Config.ZookeeperUri)
 	resultDuration, err := time.ParseDuration(m.Config.ResultDuration)
 	if err != nil {
@@ -196,6 +199,9 @@ func (m *ManagerServer) overlayConfig() {
 	}
 	if m.Opts.ResultDuration != "" {
 		m.Config.ResultDuration = m.Opts.ResultDuration
+	}
+	if m.Opts.Host != "" {
+		m.Config.Host = m.Opts.Host
 	}
 	if m.Opts.Region != "" {
 		m.Config.Region = m.Opts.Region

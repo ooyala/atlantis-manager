@@ -176,3 +176,24 @@ func UnregisterManager(w http.ResponseWriter, r *http.Request) {
 	err := manager.UnregisterManager(arg, &reply)
 	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Id": reply.Id}, err))
 }
+
+func GetManager(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
+	arg := ManagerGetManagerArg{
+		ManagerAuthArg: auth,
+		Region:         vars["Region"],
+		Host:           vars["Host"],
+	}
+	var reply ManagerGetManagerReply
+	err := manager.GetManager(arg, &reply)
+	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Status": reply.Status, "Manager": reply.Manager}, err))
+}
+
+func GetSelf(w http.ResponseWriter, r *http.Request) {
+	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
+	arg := ManagerGetSelfArg{ManagerAuthArg: auth}
+	var reply ManagerGetManagerReply
+	err := manager.GetSelf(arg, &reply)
+	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Status": reply.Status, "Manager": reply.Manager}, err))
+}

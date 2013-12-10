@@ -68,6 +68,41 @@ type ManagerRegisterManagerReply struct {
 	Manager *Manager
 }
 
+// get a manager
+type ManagerGetManagerArg struct {
+	ManagerAuthArg
+	Region string
+	Host   string
+}
+
+type ManagerGetManagerReply struct {
+	Status  string
+	Manager *Manager
+}
+
+type ManagerGetSelfArg struct {
+	ManagerAuthArg
+}
+
+// Used to manager Manager Roles
+type ManagerRoleArg struct {
+	ManagerAuthArg
+	Region string
+	Host   string
+	Role   string
+	Type   string
+}
+
+type ManagerRoleReply struct {
+	Status  string
+	Manager *Manager
+}
+
+type ManagerHasRoleReply struct {
+	Status  string
+	HasRole bool
+}
+
 // ------------ Register App ------------
 // Used to register an App
 type ManagerRegisterAppArg struct {

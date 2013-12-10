@@ -643,6 +643,70 @@ func (e *ListManagersExecutor) Authorize() error {
 	return SimpleAuthorize(&e.arg.ManagerAuthArg)
 }
 
+type GetManagerExecutor struct {
+	arg   ManagerGetManagerArg
+	reply *ManagerGetManagerReply
+}
+
+func (e *GetManagerExecutor) Request() interface{} {
+	return e.arg
+}
+
+func (e *GetManagerExecutor) Result() interface{} {
+	return e.reply
+}
+
+func (e *GetManagerExecutor) Description() string {
+	return fmt.Sprintf("%s in %s", e.arg.Host, e.arg.Region)
+}
+
+func (e *GetManagerExecutor) Authorize() error {
+	return SimpleAuthorize(&e.arg.ManagerAuthArg)
+}
+
+func (e *GetManagerExecutor) Execute(t *Task) error {
+	zkManager, err := datamodel.GetManager(e.arg.Region, e.arg.Host)
+	castedManager := Manager(*zkManager)
+	e.reply.Manager = &castedManager
+	if err != nil {
+		e.reply.Status = StatusError
+	}
+	e.reply.Status = StatusOk
+	return err
+}
+
+type GetSelfExecutor struct {
+	arg   ManagerGetSelfArg
+	reply *ManagerGetManagerReply
+}
+
+func (e *GetSelfExecutor) Request() interface{} {
+	return e.arg
+}
+
+func (e *GetSelfExecutor) Result() interface{} {
+	return e.reply
+}
+
+func (e *GetSelfExecutor) Description() string {
+	return fmt.Sprintf("%s in %s", Host, Region)
+}
+
+func (e *GetSelfExecutor) Authorize() error {
+	return SimpleAuthorize(&e.arg.ManagerAuthArg)
+}
+
+func (e *GetSelfExecutor) Execute(t *Task) error {
+	zkManager, err := datamodel.GetManager(Host, Region)
+	castedManager := Manager(*zkManager)
+	e.reply.Manager = &castedManager
+	if err != nil {
+		e.reply.Status = StatusError
+	}
+	e.reply.Status = StatusOk
+	return err
+}
+
 func (m *ManagerRPC) RegisterRouter(arg ManagerRegisterRouterArg, reply *AsyncReply) error {
 	return NewTask("RegisterRouter", &RegisterRouterExecutor{arg, &ManagerRegisterRouterReply{}}).RunAsync(reply)
 }
@@ -697,4 +761,12 @@ func (m *ManagerRPC) UnregisterManager(arg ManagerRegisterManagerArg, reply *Asy
 
 func (m *ManagerRPC) ListManagers(arg ManagerListManagersArg, reply *ManagerListManagersReply) error {
 	return NewTask("ListManagers", &ListManagersExecutor{arg, reply}).Run()
+}
+
+func (m *ManagerRPC) GetManager(arg ManagerGetManagerArg, reply *ManagerGetManagerReply) error {
+	return NewTask("GetManager", &GetManagerExecutor{arg, reply}).Run()
+}
+
+func (m *ManagerRPC) GetSelf(arg ManagerGetSelfArg, reply *ManagerGetManagerReply) error {
+	return NewTask("GetSelf", &GetSelfExecutor{arg, reply}).Run()
 }

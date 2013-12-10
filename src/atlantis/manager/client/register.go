@@ -322,7 +322,7 @@ func (c *HealthCommand) Execute(args []string) error {
 
 type RegisterManagerCommand struct {
 	Wait          bool   `long:"wait" description:"wait until done before exiting"`
-	Host          string `short:"H" long:"host" description:"the hsot to register"`
+	Host          string `short:"H" long:"host" description:"the host to register"`
 	Region        string `short:"r" long:"region" description:"the region to register"`
 	ManagerCName  string `long:"manager-cname" description:"the manager's cname if it already has one"`
 	RegistryCName string `long:"registry-cname" description:"the registry's cname if it already has one"`
@@ -361,7 +361,7 @@ func (c *RegisterManagerCommand) Execute(args []string) error {
 
 type UnregisterManagerCommand struct {
 	Wait   bool   `long:"wait" description:"wait until done before exiting"`
-	Host   string `short:"H" long:"host" description:"the hsot to register"`
+	Host   string `short:"H" long:"host" description:"the host to register"`
 	Region string `short:"r" long:"region" description:"the region to unregister"`
 }
 
@@ -399,8 +399,7 @@ func OutputRegisterManagerReply(reply *ManagerRegisterManagerReply) error {
 		Log("->   Registry CName: %s", reply.Manager.RegistryCName)
 		Log("->   Manager CName:  %s", reply.Manager.ManagerCName)
 	}
-	return Output(map[string]interface{}{"status": reply.Status, "manager": reply.Manager},
-		nil, nil)
+	return Output(map[string]interface{}{"status": reply.Status, "manager": reply.Manager}, nil, nil)
 }
 
 type RegisterManagerResultCommand struct {
@@ -467,6 +466,74 @@ func (c *ListManagersCommand) Execute(args []string) error {
 		}
 	}
 	return Output(map[string]interface{}{"status": reply.Status, "managers": reply.Managers}, reply.Managers, nil)
+}
+
+func OutputGetManagerReply(reply *ManagerGetManagerReply) error {
+	Log("-> Status: %s", reply.Status)
+	if reply.Manager == nil {
+		Log("-> Manager:")
+		Log("->   Region:         %s", reply.Manager.Region)
+		Log("->   Host:           %s", reply.Manager.Host)
+		Log("->   Registry CName: %s", reply.Manager.RegistryCName)
+		Log("->   Manager CName:  %s", reply.Manager.ManagerCName)
+		Log("->   Roles:")
+		for role, typeMap := range reply.Manager.Roles {
+			Log("->     %s", role)
+			for typeName, val := range typeMap {
+				Log("->       %s : %t", typeName, val)
+			}
+		}
+	}
+	return Output(map[string]interface{}{"status": reply.Status, "manager": reply.Manager}, nil, nil)
+}
+
+type GetManagerCommand struct {
+	Region string `short:"r" long:"region" description:"the region to get"`
+	Host   string `short:"H" long:"host" description:"the host to get"`
+}
+
+func (c *GetManagerCommand) Execute(args []string) error {
+	err := Init()
+	if err != nil {
+		return OutputError(err)
+	}
+	Log("Get Manager...")
+	args = ExtractArgs([]*string{&c.Region, &c.Host}, args)
+	user, secret, err := GetSecret()
+	if err != nil {
+		return err
+	}
+	authArg := ManagerAuthArg{user, "", secret}
+	arg := ManagerGetManagerArg{ManagerAuthArg: authArg, Region: c.Region, Host: c.Host}
+	var reply ManagerGetManagerReply
+	err = rpcClient.Call("GetManager", arg, &reply)
+	if err != nil {
+		return OutputError(err)
+	}
+	return OutputGetManagerReply(&reply)
+}
+
+type GetSelfCommand struct {
+}
+
+func (c *GetSelfCommand) Execute(args []string) error {
+	err := Init()
+	if err != nil {
+		return OutputError(err)
+	}
+	Log("Get Self...")
+	user, secret, err := GetSecret()
+	if err != nil {
+		return err
+	}
+	authArg := ManagerAuthArg{user, "", secret}
+	arg := ManagerGetSelfArg{ManagerAuthArg: authArg}
+	var reply ManagerGetManagerReply
+	err = rpcClient.Call("GetSelf", arg, &reply)
+	if err != nil {
+		return OutputError(err)
+	}
+	return OutputGetManagerReply(&reply)
 }
 
 type RegisterSupervisorCommand struct {

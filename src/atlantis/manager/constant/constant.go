@@ -5,6 +5,7 @@ import (
 )
 
 var (
+	Host           = "localhost"
 	Region         = "dev"
 	Zone           = "dev1"
 	AvailableZones = []string{"dev1"}
