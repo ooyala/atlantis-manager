@@ -85,7 +85,7 @@ func checkRole(role string, rType string) error {
 				}
 			}
 		}
-		return errors.New(fmt.Sprintf("This manager does not have the ability to %s %s."+
+		return errors.New(fmt.Sprintf("This manager does not have the ability to %s %s. "+
 			"Please try one of these:\n%s", rType, role, managersWithRole))
 	}
 	return nil
