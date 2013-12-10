@@ -20,16 +20,11 @@ func Register(region, value, registryCName, managerCName string) (*datamodel.ZkM
 		return tmpManager, errors.New("Already registered.")
 	}
 
-	suffix, err := dns.Provider.Suffix(region)
-	if err != nil {
-		return nil, err
-	}
-
 	// NOTE[jigish]: health check removed because we can't actually do it security-group wise.
 
 	// set up datamodel
 	zkManager := datamodel.Manager(region, value)
-	err = zkManager.Save()
+	err := zkManager.Save()
 	if err != nil {
 		return zkManager, err
 	}
@@ -49,6 +44,12 @@ func Register(region, value, registryCName, managerCName string) (*datamodel.ZkM
 	if dns.Provider == nil {
 		return zkManager, nil
 	}
+
+	suffix, err := dns.Provider.Suffix(region)
+	if err != nil {
+		return nil, err
+	}
+
 
 	// set up unspecified cnames
 	// first delete all entries we may already have for this Value in DNS
