@@ -30,6 +30,9 @@ func (e *DeployExecutor) Description() string {
 }
 
 func (e *DeployExecutor) Authorize() error {
+	if err := checkRole("deploys", "write"); err != nil {
+		return err
+	}
 	return SimpleAuthorize(&e.arg.ManagerAuthArg)
 }
 
@@ -113,6 +116,9 @@ func (e *CopyContainerExecutor) Description() string {
 }
 
 func (e *CopyContainerExecutor) Authorize() error {
+	if err := checkRole("deploys", "write"); err != nil {
+		return err
+	}
 	// app is authorized in deploy()
 	return SimpleAuthorize(&e.arg.ManagerAuthArg)
 }
@@ -158,6 +164,9 @@ func (e *MoveContainerExecutor) Description() string {
 }
 
 func (e *MoveContainerExecutor) Authorize() error {
+	if err := checkRole("deploys", "write"); err != nil {
+		return err
+	}
 	// app is authorized in deploy()
 	return SimpleAuthorize(&e.arg.ManagerAuthArg)
 }
@@ -240,6 +249,9 @@ func (e *TeardownExecutor) Description() string {
 }
 
 func (e *TeardownExecutor) Authorize() error {
+	if err := checkRole("deploys", "write"); err != nil {
+		return err
+	}
 	if e.arg.All {
 		return AuthorizeSuperUser(&e.arg.ManagerAuthArg)
 	}

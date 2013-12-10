@@ -150,12 +150,12 @@ func (e *HasRoleExecutor) Execute(t *Task) error {
 	if e.arg.Type == "" {
 		return errors.New("Please specify a type")
 	}
-	zkManager, err := datamodel.GetManager(e.arg.Region, e.arg.Host)
+	has, err := datamodel.ManagerHasRole(e.arg.Region, e.arg.Host, e.arg.Role, e.arg.Type)
 	if err != nil {
 		e.reply.Status = StatusError
 		return err
 	}
-	e.reply.HasRole = zkManager.HasRole(e.arg.Role, e.arg.Type)
+	e.reply.HasRole = has
 	e.reply.Status = StatusOk
 	return err
 }

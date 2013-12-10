@@ -19,7 +19,7 @@ func (m *ZkManager) Save() error {
 	return setJson(m.path(), m)
 }
 
-func (m *ZkManager) AddRole(name string, roleType string) error {
+func (m *ZkManager) AddRole(name, roleType string) error {
 	if m.Roles == nil {
 		m.Roles = map[string]map[string]bool{}
 	}
@@ -30,14 +30,14 @@ func (m *ZkManager) AddRole(name string, roleType string) error {
 	return m.Save()
 }
 
-func (m *ZkManager) HasRole(name string, roleType string) bool {
+func (m *ZkManager) HasRole(name, roleType string) bool {
 	if m.Roles[name] == nil {
 		return false
 	}
 	return m.Roles[name][roleType]
 }
 
-func (m *ZkManager) RemoveRole(name string, roleType string) error {
+func (m *ZkManager) RemoveRole(name, roleType string) error {
 	if m.Roles == nil {
 		m.Roles = map[string]map[string]bool{}
 		return m.Save()
@@ -71,6 +71,14 @@ func GetManager(region, value string) (zm *ZkManager, err error) {
 		err = zm.Save()
 	}
 	return
+}
+
+func ManagerHasRole(region, value, name, roleType string) (bool, error) {
+	zm, err := GetManager(region, value)
+	if err != nil {
+		return false, err
+	}
+	return zm.HasRole(name, roleType), nil
 }
 
 func (m *ZkManager) path() string {

@@ -2,10 +2,13 @@ package rpc
 
 import (
 	atlantis "atlantis/common"
+	. "atlantis/manager/constant"
 	"atlantis/manager/crypto"
+	"atlantis/manager/datamodel"
 	"atlantis/manager/manager"
 	"atlantis/manager/supervisor"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"log"
 	"net"
@@ -58,4 +61,32 @@ func Listen() {
 	}
 	log.Println("[RPC] Listening on", lAddr)
 	server.Accept(l)
+}
+
+func checkRole(role string, rType string) error {
+	zkManager, err := datamodel.GetManager(Region, Host)
+	if err != nil {
+		return err
+	}
+	if !zkManager.HasRole(role, rType) {
+		managersWithRole := ""
+		managers, err := datamodel.ListManagers()
+		if err != nil {
+			return err
+		}
+		for region, rManagers := range managers {
+			for _, manager := range rManagers {
+				zm, err := datamodel.GetManager(region, manager)
+				if err != nil {
+					continue
+				}
+				if zm.HasRole(role, rType) {
+					managersWithRole = managersWithRole + zm.ManagerCName + "\n"
+				}
+			}
+		}
+		return errors.New(fmt.Sprintf("This manager does not have the ability to %s %s."+
+			"Please try one of these:\n%s", rType, role, managersWithRole))
+	}
+	return nil
 }

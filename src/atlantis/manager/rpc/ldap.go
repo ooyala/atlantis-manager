@@ -71,6 +71,9 @@ func (e *CreateTeamExecutor) Execute(t *Task) error {
 }
 
 func (e *CreateTeamExecutor) Authorize() error {
+	if err := checkRole("permissions", "write"); err != nil {
+		return err
+	}
 	return SimpleAuthorize(&e.arg.ManagerAuthArg)
 }
 
@@ -110,6 +113,9 @@ func (e *DeleteTeamExecutor) Execute(t *Task) error {
 }
 
 func (e *DeleteTeamExecutor) Authorize() error {
+	if err := checkRole("permissions", "write"); err != nil {
+		return err
+	}
 	return AuthorizeTeamAdmin(&e.arg.ManagerAuthArg, e.arg.Team)
 }
 
@@ -143,6 +149,9 @@ func (e *AddTeamEmailExecutor) Execute(t *Task) error {
 }
 
 func (e *AddTeamEmailExecutor) Authorize() error {
+	if err := checkRole("permissions", "write"); err != nil {
+		return err
+	}
 	return AuthorizeTeamAdmin(&e.arg.ManagerAuthArg, e.arg.Team)
 }
 
@@ -168,6 +177,9 @@ func (e *RemoveTeamEmailExecutor) Execute(t *Task) error {
 }
 
 func (e *RemoveTeamEmailExecutor) Authorize() error {
+	if err := checkRole("permissions", "write"); err != nil {
+		return err
+	}
 	return AuthorizeTeamAdmin(&e.arg.ManagerAuthArg, e.arg.Team)
 }
 
@@ -230,6 +242,9 @@ func (e *AddTeamAdminExecutor) Execute(t *Task) error {
 }
 
 func (e *AddTeamAdminExecutor) Authorize() error {
+	if err := checkRole("permissions", "write"); err != nil {
+		return err
+	}
 	req := ManagerTeamAdminArg{e.arg.ManagerAuthArg, e.arg.Team}
 	var res ManagerTeamAdminReply
 	err := NewTask("AddTeamAdmin-IsTeamAdmin", &IsTeamAdminExecutor{req, &res}).Run()
@@ -261,6 +276,9 @@ func (e *RemoveTeamAdminExecutor) Execute(t *Task) error {
 }
 
 func (e *RemoveTeamAdminExecutor) Authorize() error {
+	if err := checkRole("permissions", "write"); err != nil {
+		return err
+	}
 	req := ManagerTeamAdminArg{e.arg.ManagerAuthArg, e.arg.Team}
 	var res ManagerTeamAdminReply
 	err := NewTask("RemoveTeamAdmin-IsTeamAdmin", &IsTeamAdminExecutor{req, &res}).Run()
@@ -327,6 +345,9 @@ func (e *AddTeamMemberExecutor) Execute(t *Task) error {
 }
 
 func (e *AddTeamMemberExecutor) Authorize() error {
+	if err := checkRole("permissions", "write"); err != nil {
+		return err
+	}
 	return AuthorizeTeamAdmin(&e.arg.ManagerAuthArg, e.arg.Team)
 }
 
@@ -352,6 +373,9 @@ func (e *RemoveTeamMemberExecutor) Execute(t *Task) error {
 }
 
 func (e *RemoveTeamMemberExecutor) Authorize() error {
+	if err := checkRole("permissions", "write"); err != nil {
+		return err
+	}
 	return AuthorizeTeamAdmin(&e.arg.ManagerAuthArg, e.arg.Team)
 }
 
@@ -596,6 +620,9 @@ func (e *AllowAppExecutor) Execute(t *Task) error {
 }
 
 func (e *AllowAppExecutor) Authorize() error {
+	if err := checkRole("permissions", "write"); err != nil {
+		return err
+	}
 	return AuthorizeTeamAdmin(&e.arg.ManagerAuthArg, e.arg.Team)
 }
 
@@ -633,6 +660,9 @@ func (e *DisallowAppExecutor) Execute(t *Task) error {
 }
 
 func (e *DisallowAppExecutor) Authorize() error {
+	if err := checkRole("permissions", "write"); err != nil {
+		return err
+	}
 	return AuthorizeTeamAdmin(&e.arg.ManagerAuthArg, e.arg.Team)
 }
 

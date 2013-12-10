@@ -32,6 +32,9 @@ func (s *DatamodelSuite) TestManagerRoles(c *C) {
 	c.Assert(opt.HasRole("deploy", "write"), Equals, false)
 	c.Assert(opt.HasRole("permissions", "read"), Equals, false)
 	c.Assert(opt.HasRole("permissions", "write"), Equals, false)
+	ok, err := ManagerHasRole("dev", "2.1.1.1", "permissions", "write")
+	c.Assert(err, IsNil)
+	c.Assert(ok, Equals, false)
 
 	c.Assert(opt.AddRole("deploy", "write"), IsNil)
 	c.Assert(opt.HasRole("deploy", "write"), Equals, true)
@@ -47,6 +50,9 @@ func (s *DatamodelSuite) TestManagerRoles(c *C) {
 	c.Assert(opt.HasRole("deploy", "write"), Equals, true)
 	c.Assert(opt.HasRole("permissions", "read"), Equals, true)
 	c.Assert(opt.HasRole("permissions", "write"), Equals, true)
+	ok, err = ManagerHasRole("dev", "2.1.1.1", "permissions", "write")
+	c.Assert(err, IsNil)
+	c.Assert(ok, Equals, true)
 
 	c.Assert(opt.RemoveRole("deploy", "write"), IsNil)
 	c.Assert(opt.HasRole("deploy", "write"), Equals, false)
