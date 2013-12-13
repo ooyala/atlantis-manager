@@ -41,7 +41,7 @@ func Register(region, value, registryCName, managerCName string) (*datamodel.ZkM
 		return zkManager, err
 	}
 
-	if dns.Provider == nil {
+	if dns.Provider == nil || (zkManager.ManagerCName != "" && zkManager.RegistryCName != "") {
 		return zkManager, nil
 	}
 
