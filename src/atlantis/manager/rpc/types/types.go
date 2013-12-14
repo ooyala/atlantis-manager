@@ -6,10 +6,11 @@ import (
 )
 
 type App struct {
-	Name  string
-	Repo  string
-	Root  string
-	Email string
+	Name                string
+	Repo                string
+	Root                string
+	Email               string
+	AllowedDependerApps map[string]bool
 }
 
 type Router struct {

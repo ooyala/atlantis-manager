@@ -11,21 +11,24 @@ type ZkApp types.App
 func GetApp(name string) (za *ZkApp, err error) {
 	za = &ZkApp{}
 	err = getJson(helper.GetBaseAppPath(name), za)
+	if za.AllowedDependerApps == nil {
+		za.AllowedDependerApps = map[string]bool{}
+		za.Save()
+	}
 	return
 }
 
 func CreateOrUpdateApp(name, repo, root, email string) (*ZkApp, error) {
-	za := &ZkApp{Name: name, Repo: repo, Root: root, Email: email}
-	if _, err := Zk.Touch(za.path()); err != nil {
-		Zk.RecursiveDelete(za.path())
-		return za, err
+	za, err := GetApp(name)
+	if err != nil {
+		za = &ZkApp{Name: name, Repo: repo, Root: root, Email: email, AllowedDependerApps: map[string]bool{}}
+	} else {
+		za.Name = name
+		za.Repo = repo
+		za.Root = root
+		za.Email = email
 	}
-	if err := setJson(za.path(), za); err != nil {
-		// clean up if error
-		Zk.RecursiveDelete(za.path())
-		return za, err
-	}
-	return za, nil
+	return za, za.Save()
 }
 
 func (za *ZkApp) Delete() error {
@@ -35,6 +38,42 @@ func (za *ZkApp) Delete() error {
 
 func (za *ZkApp) path() string {
 	return helper.GetBaseAppPath(za.Name)
+}
+
+func (za *ZkApp) Save() error {
+	if err := setJson(za.path(), za); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (za *ZkApp) AddDepender(app string) error {
+	if za.AllowedDependerApps == nil {
+		za.AllowedDependerApps = map[string]bool{}
+		za.Save()
+	}
+	if _, err := GetApp(app); err != nil {
+		return err
+	}
+	za.AllowedDependerApps[app] = true
+	return za.Save()
+}
+
+func (za *ZkApp) RemoveDepender(app string) error {
+	if za.AllowedDependerApps == nil {
+		za.AllowedDependerApps = map[string]bool{}
+		za.Save()
+	}
+	delete(za.AllowedDependerApps, app)
+	return za.Save()
+}
+
+func (za *ZkApp) HasDepender(app string) bool {
+	if za.AllowedDependerApps == nil {
+		za.AllowedDependerApps = map[string]bool{}
+		za.Save()
+	}
+	return za.AllowedDependerApps[app]
 }
 
 func ListRegisteredApps() (apps []string, err error) {
