@@ -6,9 +6,10 @@ import (
 )
 
 type App struct {
-	Name string
-	Repo string
-	Root string
+	Name  string
+	Repo  string
+	Root  string
+	Email string
 }
 
 type Router struct {
@@ -107,9 +108,10 @@ type ManagerHasRoleReply struct {
 // Used to register an App
 type ManagerRegisterAppArg struct {
 	ManagerAuthArg
-	Name string
-	Repo string
-	Root string
+	Name  string
+	Repo  string
+	Root  string
+	Email string
 }
 
 type ManagerRegisterAppReply struct {

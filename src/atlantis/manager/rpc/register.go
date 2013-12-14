@@ -246,7 +246,10 @@ func (e *RegisterAppExecutor) Execute(t *Task) error {
 	if e.arg.Root == "" {
 		return errors.New("Please specify the repo's root")
 	}
-	_, err := datamodel.CreateOrUpdateApp(e.arg.Name, e.arg.Repo, e.arg.Root)
+	if e.arg.Email == "" {
+		return errors.New("Please specify the email of the app owner")
+	}
+	_, err := datamodel.CreateOrUpdateApp(e.arg.Name, e.arg.Repo, e.arg.Root, e.arg.Email)
 	if err != nil {
 		e.reply.Status = StatusError
 	}

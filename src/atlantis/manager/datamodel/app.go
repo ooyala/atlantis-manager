@@ -14,8 +14,8 @@ func GetApp(name string) (za *ZkApp, err error) {
 	return
 }
 
-func CreateOrUpdateApp(name, repo, root string) (*ZkApp, error) {
-	za := &ZkApp{Name: name, Repo: repo, Root: root}
+func CreateOrUpdateApp(name, repo, root, email string) (*ZkApp, error) {
+	za := &ZkApp{Name: name, Repo: repo, Root: root, Email: email}
 	if _, err := Zk.Touch(za.path()); err != nil {
 		Zk.RecursiveDelete(za.path())
 		return za, err

@@ -95,6 +95,7 @@ func RegisterApp(w http.ResponseWriter, r *http.Request) {
 		Name:           vars["App"],
 		Repo:           r.FormValue("Repo"),
 		Root:           r.FormValue("Root"),
+		Email:          r.FormValue("Email"),
 	}
 	var reply ManagerRegisterAppReply
 	err := manager.RegisterApp(arg, &reply)
