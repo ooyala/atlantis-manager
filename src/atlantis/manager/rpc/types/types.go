@@ -6,8 +6,9 @@ import (
 )
 
 type App struct {
+	NonAtlantis         bool
 	Name                string
-	Repo                string
+	Repo                string // if non-atlantis, repo is actually the url (host:port)
 	Root                string
 	Email               string
 	AllowedDependerApps map[string]bool
@@ -109,10 +110,11 @@ type ManagerHasRoleReply struct {
 // Used to register an App
 type ManagerRegisterAppArg struct {
 	ManagerAuthArg
-	Name  string
-	Repo  string
-	Root  string
-	Email string
+	NonAtlantis bool
+	Name        string
+	Repo        string
+	Root        string
+	Email       string
 }
 
 type ManagerRegisterAppReply struct {

@@ -98,8 +98,10 @@ func ListRegisteredApps(w http.ResponseWriter, r *http.Request) {
 func RegisterApp(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
+	nonAtlantis, _ := strconv.ParseBool(r.FormValue("NonAtlantis"))
 	arg := ManagerRegisterAppArg{
 		ManagerAuthArg: auth,
+		NonAtlantis:    nonAtlantis,
 		Name:           vars["App"],
 		Repo:           r.FormValue("Repo"),
 		Root:           r.FormValue("Root"),
@@ -107,6 +109,23 @@ func RegisterApp(w http.ResponseWriter, r *http.Request) {
 	}
 	var reply ManagerRegisterAppReply
 	err := manager.RegisterApp(arg, &reply)
+	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Status": reply.Status}, err))
+}
+
+func UpdateApp(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
+	nonAtlantis, _ := strconv.ParseBool(r.FormValue("NonAtlantis"))
+	arg := ManagerRegisterAppArg{
+		ManagerAuthArg: auth,
+		NonAtlantis:    nonAtlantis,
+		Name:           vars["App"],
+		Repo:           r.FormValue("Repo"),
+		Root:           r.FormValue("Root"),
+		Email:          r.FormValue("Email"),
+	}
+	var reply ManagerRegisterAppReply
+	err := manager.UpdateApp(arg, &reply)
 	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Status": reply.Status}, err))
 }
 

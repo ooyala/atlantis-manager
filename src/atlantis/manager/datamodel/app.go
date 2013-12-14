@@ -18,15 +18,23 @@ func GetApp(name string) (za *ZkApp, err error) {
 	return
 }
 
-func CreateOrUpdateApp(name, repo, root, email string) (*ZkApp, error) {
+func CreateOrUpdateApp(nonAtlantis bool, name, repo, root, email string) (*ZkApp, error) {
 	za, err := GetApp(name)
 	if err != nil {
-		za = &ZkApp{Name: name, Repo: repo, Root: root, Email: email, AllowedDependerApps: map[string]bool{}}
+		za = &ZkApp{
+			NonAtlantis: nonAtlantis,
+			Name: name,
+			Repo: repo,
+			Root: root,
+			Email: email,
+			AllowedDependerApps: map[string]bool{},
+		}
 	} else {
 		za.Name = name
 		za.Repo = repo
 		za.Root = root
 		za.Email = email
+		za.NonAtlantis = nonAtlantis
 	}
 	return za, za.Save()
 }

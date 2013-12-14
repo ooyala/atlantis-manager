@@ -87,6 +87,7 @@ func Init(listenAddr string) error {
 	gmux.HandleFunc("/apps", ListRegisteredApps).Methods("GET")
 	gmux.HandleFunc("/apps/{App}", GetApp).Methods("GET")
 	gmux.HandleFunc("/apps/{App}", RegisterApp).Methods("PUT")
+	gmux.HandleFunc("/apps/{App}", UpdateApp).Methods("POST")
 	gmux.HandleFunc("/apps/{App}", UnregisterApp).Methods("DELETE")
 	gmux.HandleFunc("/apps/{Dependee}/depender/{Depender}", AddDependerApp).Methods("PUT")
 	gmux.HandleFunc("/apps/{Dependee}/depender/{Depender}", RemoveDependerApp).Methods("DELETE")

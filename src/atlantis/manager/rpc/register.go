@@ -226,7 +226,7 @@ func (e *RegisterAppExecutor) Result() interface{} {
 }
 
 func (e *RegisterAppExecutor) Description() string {
-	return fmt.Sprintf("%s -> %s:%s", e.arg.Name, e.arg.Repo, e.arg.Root)
+	return fmt.Sprintf("%s -> %s:%s, non-atlantis: %t", e.arg.Name, e.arg.Repo, e.arg.Root, e.arg.NonAtlantis)
 }
 
 func (e *RegisterAppExecutor) Authorize() error {
@@ -240,16 +240,68 @@ func (e *RegisterAppExecutor) Execute(t *Task) error {
 	if !AppRegexp.MatchString(e.arg.Name) {
 		return errors.New("App name must be [A-Za-z0-9-]+")
 	}
-	if e.arg.Repo == "" {
+	if e.arg.NonAtlantis && e.arg.Repo == "" {
+		return errors.New("Please specify a host and port")
+	} else if e.arg.Repo == "" {
 		return errors.New("Please specify a repo")
 	}
-	if e.arg.Root == "" {
+	if !e.arg.NonAtlantis && e.arg.Root == "" {
 		return errors.New("Please specify the repo's root")
 	}
 	if e.arg.Email == "" {
 		return errors.New("Please specify the email of the app owner")
 	}
-	_, err := datamodel.CreateOrUpdateApp(e.arg.Name, e.arg.Repo, e.arg.Root, e.arg.Email)
+	if _, err := datamodel.GetApp(e.arg.Name); err == nil {
+		return errors.New("Already Registered.")
+	}
+	_, err := datamodel.CreateOrUpdateApp(e.arg.NonAtlantis, e.arg.Name, e.arg.Repo, e.arg.Root, e.arg.Email)
+	if err != nil {
+		e.reply.Status = StatusError
+	}
+	e.reply.Status = StatusOk
+	return err
+}
+
+type UpdateAppExecutor struct {
+	arg   ManagerRegisterAppArg
+	reply *ManagerRegisterAppReply
+}
+
+func (e *UpdateAppExecutor) Request() interface{} {
+	return e.arg
+}
+
+func (e *UpdateAppExecutor) Result() interface{} {
+	return e.reply
+}
+
+func (e *UpdateAppExecutor) Description() string {
+	return fmt.Sprintf("%s -> %s:%s, non-atlantis: %t", e.arg.Name, e.arg.Repo, e.arg.Root, e.arg.NonAtlantis)
+}
+
+func (e *UpdateAppExecutor) Authorize() error {
+	return AuthorizeApp(&e.arg.ManagerAuthArg, e.arg.Name)
+}
+
+func (e *UpdateAppExecutor) Execute(t *Task) error {
+	if e.arg.Name == "" {
+		return errors.New("Please specify an app name to update")
+	}
+	if !AppRegexp.MatchString(e.arg.Name) {
+		return errors.New("App name must be [A-Za-z0-9-]+")
+	}
+	if e.arg.NonAtlantis && e.arg.Repo == "" {
+		return errors.New("Please specify a host and port")
+	} else if e.arg.Repo == "" {
+		return errors.New("Please specify a repo")
+	}
+	if !e.arg.NonAtlantis && e.arg.Root == "" {
+		return errors.New("Please specify the repo's root")
+	}
+	if e.arg.Email == "" {
+		return errors.New("Please specify the email of the app owner")
+	}
+	_, err := datamodel.CreateOrUpdateApp(e.arg.NonAtlantis, e.arg.Name, e.arg.Repo, e.arg.Root, e.arg.Email)
 	if err != nil {
 		e.reply.Status = StatusError
 	}
@@ -766,6 +818,10 @@ func (m *ManagerRPC) ListRouters(arg ManagerListRoutersArg, reply *ManagerListRo
 
 func (m *ManagerRPC) RegisterApp(arg ManagerRegisterAppArg, reply *ManagerRegisterAppReply) error {
 	return NewTask("RegisterApp", &RegisterAppExecutor{arg, reply}).Run()
+}
+
+func (m *ManagerRPC) UpdateApp(arg ManagerRegisterAppArg, reply *ManagerRegisterAppReply) error {
+	return NewTask("UpdateApp", &UpdateAppExecutor{arg, reply}).Run()
 }
 
 func (m *ManagerRPC) UnregisterApp(arg ManagerRegisterAppArg, reply *ManagerRegisterAppReply) error {

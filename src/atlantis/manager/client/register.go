@@ -194,10 +194,11 @@ func (c *ListRoutersCommand) Execute(args []string) error {
 }
 
 type RegisterAppCommand struct {
-	App   string `short:"a" long:"app" description:"the app to register"`
-	Repo  string `short:"g" long:"git" description:"the app's git repository"`
-	Root  string `short:"r" long:"root" description:"the app's root within the repo"`
-	Email string `short:"e" long:"email" description"the email of the app's owner"`
+	App         string `short:"a" long:"app" description:"the app to register"`
+	NonAtlantis bool `short:"n" long:"non-atlantis" description:"true if this is a non-atlantis app"`
+	Repo        string `short:"g" long:"git" description:"the app's git repository (or host:port for non-atlantis apps)"`
+	Root        string `short:"r" long:"root" description:"the app's root within the repo"`
+	Email       string `short:"e" long:"email" description"the email of the app's owner"`
 }
 
 func (c *RegisterAppCommand) Execute(args []string) error {
@@ -212,9 +213,39 @@ func (c *RegisterAppCommand) Execute(args []string) error {
 		return err
 	}
 	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerRegisterAppArg{ManagerAuthArg: authArg, Name: c.App, Repo: c.Repo, Root: c.Root, Email: c.Email}
+	arg := ManagerRegisterAppArg{ManagerAuthArg: authArg, NonAtlantis: c.NonAtlantis, Name: c.App, Repo: c.Repo, Root: c.Root, Email: c.Email}
 	var reply ManagerRegisterAppReply
 	err = rpcClient.Call("RegisterApp", arg, &reply)
+	if err != nil {
+		return OutputError(err)
+	}
+	Log("-> status: %s", reply.Status)
+	return Output(map[string]interface{}{"status": reply.Status}, nil, nil)
+}
+
+type UpdateAppCommand struct {
+	App         string `short:"a" long:"app" description:"the app to update"`
+	NonAtlantis bool `short:"n" long:"non-atlantis" description:"true if this is a non-atlantis app"`
+	Repo        string `short:"g" long:"git" description:"the app's git repository (or host:port for non-atlantis apps)"`
+	Root        string `short:"r" long:"root" description:"the app's root within the repo"`
+	Email       string `short:"e" long:"email" description"the email of the app's owner"`
+}
+
+func (c *UpdateAppCommand) Execute(args []string) error {
+	err := Init()
+	if err != nil {
+		return OutputError(err)
+	}
+	Log("Update App...")
+	args = ExtractArgs([]*string{&c.App, &c.Repo, &c.Root}, args)
+	user, secret, err := GetSecret()
+	if err != nil {
+		return err
+	}
+	authArg := ManagerAuthArg{user, "", secret}
+	arg := ManagerRegisterAppArg{ManagerAuthArg: authArg, NonAtlantis: c.NonAtlantis, Name: c.App, Repo: c.Repo, Root: c.Root, Email: c.Email}
+	var reply ManagerRegisterAppReply
+	err = rpcClient.Call("UpdateApp", arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}
