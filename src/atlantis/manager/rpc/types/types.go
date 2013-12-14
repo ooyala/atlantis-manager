@@ -9,7 +9,7 @@ type App struct {
 	NonAtlantis         bool
 	Name                string
 	Repo                string // if non-atlantis, repo is actually the url (host:port)
-	Root                string
+	Root                string // if non-atlantis, root is actually the proxy type (tcp or http)
 	Email               string
 	AllowedDependerApps map[string]bool
 }
