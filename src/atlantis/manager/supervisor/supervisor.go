@@ -12,13 +12,13 @@ func Init(port string) {
 }
 
 func Deploy(host, app, sha, env, container string, man *Manifest) (*SupervisorDeployReply, error) {
-	args := SupervisorDeployArg{Host: host, App: app, Sha: sha, Env: env, ContainerId: container, Manifest: man}
+	args := SupervisorDeployArg{Host: host, App: app, Sha: sha, Env: env, ContainerID: container, Manifest: man}
 	var reply SupervisorDeployReply
 	return &reply, NewSupervisorRPCClient(host+":"+Port).Call("Deploy", args, &reply)
 }
 
-func Teardown(host string, containerIds []string, all bool) (*SupervisorTeardownReply, error) {
-	args := SupervisorTeardownArg{containerIds, all}
+func Teardown(host string, containerIDs []string, all bool) (*SupervisorTeardownReply, error) {
+	args := SupervisorTeardownArg{containerIDs, all}
 	var reply SupervisorTeardownReply
 	return &reply, NewSupervisorRPCClient(host+":"+Port).Call("Teardown", args, &reply)
 }
@@ -34,26 +34,26 @@ func GetZone(host string) (string, error) {
 	return hReply.Zone, err
 }
 
-func Get(host, containerId string) (*SupervisorGetReply, error) {
-	args := SupervisorGetArg{containerId}
+func Get(host, containerID string) (*SupervisorGetReply, error) {
+	args := SupervisorGetArg{containerID}
 	var reply SupervisorGetReply
 	return &reply, NewSupervisorRPCClient(host+":"+Port).Call("Get", args, &reply)
 }
 
-func AuthorizeSSH(host, containerId, user, publicKey string) (*SupervisorAuthorizeSSHReply, error) {
-	args := SupervisorAuthorizeSSHArg{containerId, user, publicKey}
+func AuthorizeSSH(host, containerID, user, publicKey string) (*SupervisorAuthorizeSSHReply, error) {
+	args := SupervisorAuthorizeSSHArg{containerID, user, publicKey}
 	var reply SupervisorAuthorizeSSHReply
 	return &reply, NewSupervisorRPCClient(host+":"+Port).Call("AuthorizeSSH", args, &reply)
 }
 
-func DeauthorizeSSH(host, containerId, user string) (*SupervisorDeauthorizeSSHReply, error) {
-	args := SupervisorDeauthorizeSSHArg{containerId, user}
+func DeauthorizeSSH(host, containerID, user string) (*SupervisorDeauthorizeSSHReply, error) {
+	args := SupervisorDeauthorizeSSHArg{containerID, user}
 	var reply SupervisorDeauthorizeSSHReply
 	return &reply, NewSupervisorRPCClient(host+":"+Port).Call("DeauthorizeSSH", args, &reply)
 }
 
-func ContainerMaintenance(host, containerId string, maint bool) (*SupervisorContainerMaintenanceReply, error) {
-	args := SupervisorContainerMaintenanceArg{containerId, maint}
+func ContainerMaintenance(host, containerID string, maint bool) (*SupervisorContainerMaintenanceReply, error) {
+	args := SupervisorContainerMaintenanceArg{containerID, maint}
 	var reply SupervisorContainerMaintenanceReply
 	return &reply, NewSupervisorRPCClient(host+":"+Port).Call("ContainerMaintenance", args, &reply)
 }

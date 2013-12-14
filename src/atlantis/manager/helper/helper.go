@@ -10,14 +10,14 @@ import (
 	"strings"
 )
 
-const contRandIdSize = 6
+const contRandIDSize = 6
 
-func CreateContainerId(app, sha, env string) string {
+func CreateContainerID(app, sha, env string) string {
 	trimmedSha := sha
 	if len(trimmedSha) > 6 {
 		trimmedSha = trimmedSha[0:6]
 	}
-	return fmt.Sprintf("%s-%s-%s-%s", app, trimmedSha, env, atlantis.CreateRandomId(contRandIdSize))
+	return fmt.Sprintf("%s-%s-%s-%s", app, trimmedSha, env, atlantis.CreateRandomID(contRandIDSize))
 }
 
 func JoinWithBase(base string, args ...string) string {

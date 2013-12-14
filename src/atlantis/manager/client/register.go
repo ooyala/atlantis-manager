@@ -35,11 +35,11 @@ func (c *RegisterRouterCommand) Execute(args []string) error {
 	if err != nil {
 		return OutputError(err)
 	}
-	Log("-> ID: %s", reply.Id)
+	Log("-> ID: %s", reply.ID)
 	if !c.Wait {
-		return Output(map[string]interface{}{"id": reply.Id}, reply.Id, nil)
+		return Output(map[string]interface{}{"id": reply.ID}, reply.ID, nil)
 	}
-	return (&WaitCommand{reply.Id}).Execute(args)
+	return (&WaitCommand{reply.ID}).Execute(args)
 }
 
 type UnregisterRouterCommand struct {
@@ -72,11 +72,11 @@ func (c *UnregisterRouterCommand) Execute(args []string) error {
 	if err != nil {
 		return OutputError(err)
 	}
-	Log("-> ID: %s", reply.Id)
+	Log("-> ID: %s", reply.ID)
 	if !c.Wait {
-		return Output(map[string]interface{}{"id": reply.Id}, reply.Id, nil)
+		return Output(map[string]interface{}{"id": reply.ID}, reply.ID, nil)
 	}
-	return (&WaitCommand{reply.Id}).Execute(args)
+	return (&WaitCommand{reply.ID}).Execute(args)
 }
 
 func OutputRegisterRouterReply(reply *ManagerRegisterRouterReply) error {
@@ -92,16 +92,16 @@ func OutputRegisterRouterReply(reply *ManagerRegisterRouterReply) error {
 }
 
 type RegisterRouterResultCommand struct {
-	Id string `short:"i" long:"id" description:"the task ID to fetch the result for"`
+	ID string `short:"i" long:"id" description:"the task ID to fetch the result for"`
 }
 
 func (c *RegisterRouterResultCommand) Execute(args []string) error {
 	if err := Init(); err != nil {
 		return OutputError(err)
 	}
-	args = ExtractArgs([]*string{&c.Id}, args)
+	args = ExtractArgs([]*string{&c.ID}, args)
 	Log("RegisterRouter Result...")
-	arg := c.Id
+	arg := c.ID
 	var reply ManagerRegisterRouterReply
 	if err := rpcClient.Call("RegisterRouterResult", arg, &reply); err != nil {
 		return OutputError(err)
@@ -110,16 +110,16 @@ func (c *RegisterRouterResultCommand) Execute(args []string) error {
 }
 
 type UnregisterRouterResultCommand struct {
-	Id string `short:"i" long:"id" description:"the task ID to fetch the result for"`
+	ID string `short:"i" long:"id" description:"the task ID to fetch the result for"`
 }
 
 func (c *UnregisterRouterResultCommand) Execute(args []string) error {
 	if err := Init(); err != nil {
 		return OutputError(err)
 	}
-	args = ExtractArgs([]*string{&c.Id}, args)
+	args = ExtractArgs([]*string{&c.ID}, args)
 	Log("UnregisterRouter Result...")
-	arg := c.Id
+	arg := c.ID
 	var reply ManagerRegisterRouterReply
 	if err := rpcClient.Call("UnregisterRouterResult", arg, &reply); err != nil {
 		return OutputError(err)
@@ -352,11 +352,11 @@ func (c *RegisterManagerCommand) Execute(args []string) error {
 	if err != nil {
 		return OutputError(err)
 	}
-	Log("-> ID: %s", reply.Id)
+	Log("-> ID: %s", reply.ID)
 	if !c.Wait {
-		return Output(map[string]interface{}{"id": reply.Id}, reply.Id, nil)
+		return Output(map[string]interface{}{"id": reply.ID}, reply.ID, nil)
 	}
-	return (&WaitCommand{reply.Id}).Execute(args)
+	return (&WaitCommand{reply.ID}).Execute(args)
 }
 
 type UnregisterManagerCommand struct {
@@ -383,11 +383,11 @@ func (c *UnregisterManagerCommand) Execute(args []string) error {
 	if err != nil {
 		return OutputError(err)
 	}
-	Log("-> ID: %s", reply.Id)
+	Log("-> ID: %s", reply.ID)
 	if !c.Wait {
-		return Output(map[string]interface{}{"id": reply.Id}, reply.Id, nil)
+		return Output(map[string]interface{}{"id": reply.ID}, reply.ID, nil)
 	}
-	return (&WaitCommand{reply.Id}).Execute(args)
+	return (&WaitCommand{reply.ID}).Execute(args)
 }
 
 func OutputRegisterManagerReply(reply *ManagerRegisterManagerReply) error {
@@ -403,16 +403,16 @@ func OutputRegisterManagerReply(reply *ManagerRegisterManagerReply) error {
 }
 
 type RegisterManagerResultCommand struct {
-	Id string `short:"i" long:"id" description:"the task ID to fetch the result for"`
+	ID string `short:"i" long:"id" description:"the task ID to fetch the result for"`
 }
 
 func (c *RegisterManagerResultCommand) Execute(args []string) error {
 	if err := Init(); err != nil {
 		return OutputError(err)
 	}
-	args = ExtractArgs([]*string{&c.Id}, args)
+	args = ExtractArgs([]*string{&c.ID}, args)
 	Log("RegisterManager Result...")
-	arg := c.Id
+	arg := c.ID
 	var reply ManagerRegisterManagerReply
 	if err := rpcClient.Call("RegisterManagerResult", arg, &reply); err != nil {
 		return OutputError(err)
@@ -421,16 +421,16 @@ func (c *RegisterManagerResultCommand) Execute(args []string) error {
 }
 
 type UnregisterManagerResultCommand struct {
-	Id string `short:"i" long:"id" description:"the task ID to fetch the result for"`
+	ID string `short:"i" long:"id" description:"the task ID to fetch the result for"`
 }
 
 func (c *UnregisterManagerResultCommand) Execute(args []string) error {
 	if err := Init(); err != nil {
 		return OutputError(err)
 	}
-	args = ExtractArgs([]*string{&c.Id}, args)
+	args = ExtractArgs([]*string{&c.ID}, args)
 	Log("UnregisterManager Result...")
-	arg := c.Id
+	arg := c.ID
 	var reply ManagerRegisterManagerReply
 	if err := rpcClient.Call("UnregisterManagerResult", arg, &reply); err != nil {
 		return OutputError(err)

@@ -55,12 +55,12 @@ func (l *DeployLock) Lock() error {
 	if err != nil {
 		return err
 	}
-	if allId, ok := lockedPaths[allPath]; ok && allId != "" {
-		return LockConflictError(allId)
+	if allID, ok := lockedPaths[allPath]; ok && allID != "" {
+		return LockConflictError(allID)
 	}
-	for p, conflictId := range lockedPaths {
+	for p, conflictID := range lockedPaths {
 		if strings.HasPrefix(l.path, p) {
-			return LockConflictError(conflictId)
+			return LockConflictError(conflictID)
 		}
 	}
 	// if no conflicts, register our lock
@@ -124,12 +124,12 @@ func (l *TeardownLock) Lock() error {
 	if err != nil {
 		return err
 	}
-	if allId, ok := lockedPaths[allPath]; ok && allId != "" {
-		return LockConflictError(allId)
+	if allID, ok := lockedPaths[allPath]; ok && allID != "" {
+		return LockConflictError(allID)
 	}
-	for p, conflictId := range lockedPaths {
+	for p, conflictID := range lockedPaths {
 		if strings.HasPrefix(p, l.path) {
-			return LockConflictError(conflictId)
+			return LockConflictError(conflictID)
 		}
 	}
 	// if no conflicts, register our lock

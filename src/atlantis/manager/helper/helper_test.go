@@ -28,9 +28,9 @@ type HelperSuite struct{}
 var _ = Suite(&HelperSuite{})
 
 func (s *HelperSuite) TestHelperContainerNaming(c *C) {
-	name := CreateContainerId(app, sha, env)
+	name := CreateContainerID(app, sha, env)
 	c.Assert(name, Matches, app+"."+sha+"."+env+".*")
-	name = CreateContainerId(app, "1234567", env)
+	name = CreateContainerID(app, "1234567", env)
 	c.Assert(name, Matches, app+".123456."+env+".*")
 }
 

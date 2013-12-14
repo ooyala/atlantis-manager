@@ -20,7 +20,7 @@ func (c *ContainerMaintenanceCommand) Execute(args []string) error {
 		return err
 	}
 	arg := ManagerContainerMaintenanceArg{ManagerAuthArg: ManagerAuthArg{user, "", secret},
-		ContainerId: c.Container, Maintenance: c.Maintenance}
+		ContainerID: c.Container, Maintenance: c.Maintenance}
 	var reply ManagerContainerMaintenanceReply
 	err = rpcClient.Call("ContainerMaintenance", arg, &reply)
 	if err != nil {

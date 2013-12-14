@@ -26,24 +26,24 @@ func (e *ContainerMaintenanceExecutor) Result() interface{} {
 }
 
 func (e *ContainerMaintenanceExecutor) Description() string {
-	return fmt.Sprintf("%s : %t", e.arg.ContainerId, e.arg.Maintenance)
+	return fmt.Sprintf("%s : %t", e.arg.ContainerID, e.arg.Maintenance)
 }
 
 func (e *ContainerMaintenanceExecutor) Execute(t *Task) error {
-	if e.arg.ContainerId == "" {
+	if e.arg.ContainerID == "" {
 		return errors.New("Please specify a container id.")
 	}
-	instance, err := datamodel.GetInstance(e.arg.ContainerId)
+	instance, err := datamodel.GetInstance(e.arg.ContainerID)
 	if err != nil {
 		return err
 	}
-	ihReply, err := supervisor.ContainerMaintenance(instance.Host, e.arg.ContainerId, e.arg.Maintenance)
+	ihReply, err := supervisor.ContainerMaintenance(instance.Host, e.arg.ContainerID, e.arg.Maintenance)
 	e.reply.Status = ihReply.Status
 	return err
 }
 
 func (e *ContainerMaintenanceExecutor) Authorize() error {
-	instance, err := datamodel.GetInstance(e.arg.ContainerId)
+	instance, err := datamodel.GetInstance(e.arg.ContainerID)
 	if err != nil {
 		return err
 	}

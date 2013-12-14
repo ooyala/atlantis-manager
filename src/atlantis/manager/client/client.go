@@ -314,11 +314,14 @@ func InitNoLogin() {
 
 func exists(path string) (bool, error) {
 	_, err := os.Stat(path)
-	if err == nil { return true, nil }
-	if os.IsNotExist(err) { return false, nil }
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
 	return false, err
 }
-
 
 func overlayConfig() {
 	if clientOpts.Config != "" {
@@ -328,21 +331,21 @@ func overlayConfig() {
 			// no need to panic here. we have reasonable defaults.
 		}
 	} else if clientOpts.Region != "" {
-		if ok, _ := exists("/usr/local/etc/atlantis/manager/client."+clientOpts.Region+".toml"); ok {
+		if ok, _ := exists("/usr/local/etc/atlantis/manager/client." + clientOpts.Region + ".toml"); ok {
 			// brew config path
 			_, err := toml.DecodeFile("/usr/local/etc/atlantis/manager/client."+clientOpts.Region+".toml", cfg)
 			if err != nil {
 				Log(err.Error())
 				// no need to panic here. we have reasonable defaults.
 			}
-		} else if ok, _ := exists("/etc/atlantis/manager/client."+clientOpts.Region+".toml"); ok {
+		} else if ok, _ := exists("/etc/atlantis/manager/client." + clientOpts.Region + ".toml"); ok {
 			// deb package config path
 			_, err := toml.DecodeFile("/etc/atlantis/manager/client."+clientOpts.Region+".toml", cfg)
 			if err != nil {
 				Log(err.Error())
 				// no need to panic here. we have reasonable defaults.
 			}
-		} else if ok, _ := exists("/opt/atlantis/manager/etc/client."+clientOpts.Region+".toml"); ok {
+		} else if ok, _ := exists("/opt/atlantis/manager/etc/client." + clientOpts.Region + ".toml"); ok {
 			// just in case config path
 			_, err := toml.DecodeFile("/opt/atlantis/manager/etc/client."+clientOpts.Region+".toml", cfg)
 			if err != nil {
@@ -350,7 +353,7 @@ func overlayConfig() {
 				// no need to panic here. we have reasonable defaults.
 			}
 		} else {
-			Log("could not find config file for "+clientOpts.Region+". using defaults.")
+			Log("could not find config file for " + clientOpts.Region + ". using defaults.")
 		}
 	}
 	if clientOpts.Host != "" {

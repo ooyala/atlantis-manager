@@ -86,7 +86,7 @@ func createRecordSets(internal bool, zone, value string, zkRouter *datamodel.ZkR
 func Register(internal bool, zone, value string) (*datamodel.ZkRouter, error) {
 	// create ZkRouter
 	zkRouter := datamodel.Router(internal, zone, value)
-	zkRouter.RecordIds = []string{}
+	zkRouter.RecordIDs = []string{}
 	if dns.Provider == nil {
 		// if we have no dns provider then just save here
 		return zkRouter, zkRouter.Save()
@@ -106,9 +106,9 @@ func Register(internal bool, zone, value string) (*datamodel.ZkRouter, error) {
 		return zkRouter, err
 	}
 
-	// add RecordIds
+	// add RecordIDs
 	for _, cname := range cnames {
-		zkRouter.RecordIds = append(zkRouter.RecordIds, cname.Id())
+		zkRouter.RecordIDs = append(zkRouter.RecordIDs, cname.ID())
 	}
 
 	return zkRouter, zkRouter.Save()
@@ -119,11 +119,11 @@ func Unregister(internal bool, zone, value string) error {
 	if err != nil {
 		return err
 	}
-	if dns.Provider == nil || len(zkRouter.RecordIds) == 0 {
+	if dns.Provider == nil || len(zkRouter.RecordIDs) == 0 {
 		// if we have no dns provider or there aren't any record IDs then just save here
 		return zkRouter.Delete()
 	}
-	err, errChan := dns.Provider.DeleteRecords(Region, "DELETE_ROUTER "+value+" in "+zone, zkRouter.RecordIds...)
+	err, errChan := dns.Provider.DeleteRecords(Region, "DELETE_ROUTER "+value+" in "+zone, zkRouter.RecordIDs...)
 	if err != nil {
 		return err
 	}

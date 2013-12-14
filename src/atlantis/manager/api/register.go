@@ -38,7 +38,7 @@ func RegisterRouter(w http.ResponseWriter, r *http.Request) {
 	}
 	var reply AsyncReply
 	err = manager.RegisterRouter(arg, &reply)
-	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Id": reply.Id}, err))
+	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"ID": reply.ID}, err))
 }
 
 func UnregisterRouter(w http.ResponseWriter, r *http.Request) {
@@ -57,7 +57,7 @@ func UnregisterRouter(w http.ResponseWriter, r *http.Request) {
 	}
 	var reply AsyncReply
 	err = manager.UnregisterRouter(arg, &reply)
-	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Id": reply.Id}, err))
+	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"ID": reply.ID}, err))
 }
 
 func GetRouter(w http.ResponseWriter, r *http.Request) {
@@ -165,7 +165,7 @@ func RegisterManager(w http.ResponseWriter, r *http.Request) {
 	}
 	var reply AsyncReply
 	err := manager.RegisterManager(arg, &reply)
-	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Id": reply.Id}, err))
+	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"ID": reply.ID}, err))
 }
 
 func UnregisterManager(w http.ResponseWriter, r *http.Request) {
@@ -174,7 +174,7 @@ func UnregisterManager(w http.ResponseWriter, r *http.Request) {
 	arg := ManagerRegisterManagerArg{ManagerAuthArg: auth, Host: vars["Host"], Region: vars["Region"]}
 	var reply AsyncReply
 	err := manager.UnregisterManager(arg, &reply)
-	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Id": reply.Id}, err))
+	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"ID": reply.ID}, err))
 }
 
 func GetManager(w http.ResponseWriter, r *http.Request) {

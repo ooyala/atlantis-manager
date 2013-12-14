@@ -112,7 +112,7 @@ func (e *CopyContainerExecutor) Result() interface{} {
 }
 
 func (e *CopyContainerExecutor) Description() string {
-	return fmt.Sprintf("%s x%d", e.arg.ContainerId, e.arg.Instances)
+	return fmt.Sprintf("%s x%d", e.arg.ContainerID, e.arg.Instances)
 }
 
 func (e *CopyContainerExecutor) Authorize() error {
@@ -124,17 +124,17 @@ func (e *CopyContainerExecutor) Authorize() error {
 }
 
 func (e *CopyContainerExecutor) Execute(t *Task) error {
-	if e.arg.ContainerId == "" {
+	if e.arg.ContainerID == "" {
 		return errors.New("Container ID is empty")
 	}
 	if e.arg.Instances <= 0 {
 		return errors.New("Instances should be > 0")
 	}
-	instance, err := datamodel.GetInstance(e.arg.ContainerId)
+	instance, err := datamodel.GetInstance(e.arg.ContainerID)
 	if err != nil {
 		return err
 	}
-	ihReply, err := supervisor.Get(instance.Host, instance.Id)
+	ihReply, err := supervisor.Get(instance.Host, instance.ID)
 	if err != nil {
 		return err
 	}
@@ -160,7 +160,7 @@ func (e *MoveContainerExecutor) Result() interface{} {
 }
 
 func (e *MoveContainerExecutor) Description() string {
-	return fmt.Sprintf("%s", e.arg.ContainerId)
+	return fmt.Sprintf("%s", e.arg.ContainerID)
 }
 
 func (e *MoveContainerExecutor) Authorize() error {
@@ -172,14 +172,14 @@ func (e *MoveContainerExecutor) Authorize() error {
 }
 
 func (e *MoveContainerExecutor) Execute(t *Task) error {
-	if e.arg.ContainerId == "" {
+	if e.arg.ContainerID == "" {
 		return errors.New("Container ID is empty")
 	}
-	instance, err := datamodel.GetInstance(e.arg.ContainerId)
+	instance, err := datamodel.GetInstance(e.arg.ContainerID)
 	if err != nil {
 		return err
 	}
-	ihReply, err := supervisor.Get(instance.Host, instance.Id)
+	ihReply, err := supervisor.Get(instance.Host, instance.ID)
 	if err != nil {
 		return err
 	}
@@ -245,7 +245,7 @@ func (e *TeardownExecutor) Result() interface{} {
 
 func (e *TeardownExecutor) Description() string {
 	return fmt.Sprintf("app: %s, sha: %s, env: %s, container: %s (all:%t)", e.arg.App, e.arg.Sha, e.arg.Env,
-		e.arg.ContainerId, e.arg.All)
+		e.arg.ContainerID, e.arg.All)
 }
 
 func (e *TeardownExecutor) Authorize() error {
@@ -262,56 +262,56 @@ func (e *TeardownExecutor) Authorize() error {
 }
 
 func (e *TeardownExecutor) Execute(t *Task) error {
-	hostMap, err := getContainerIdsToTeardown(t, e.arg)
+	hostMap, err := getContainerIDsToTeardown(t, e.arg)
 	if err != nil {
 		return err
 	}
 	if e.arg.All {
-		tl := datamodel.NewTeardownLock(t.Id)
+		tl := datamodel.NewTeardownLock(t.ID)
 		if err := tl.Lock(); err != nil {
 			return err
 		}
 		defer tl.Unlock()
 	} else if e.arg.Env != "" {
-		tl := datamodel.NewTeardownLock(t.Id, e.arg.App, e.arg.Sha, e.arg.Env)
+		tl := datamodel.NewTeardownLock(t.ID, e.arg.App, e.arg.Sha, e.arg.Env)
 		if err := tl.Lock(); err != nil {
 			return err
 		}
 		defer tl.Unlock()
 	} else if e.arg.Sha != "" {
-		tl := datamodel.NewTeardownLock(t.Id, e.arg.App, e.arg.Sha)
+		tl := datamodel.NewTeardownLock(t.ID, e.arg.App, e.arg.Sha)
 		if err := tl.Lock(); err != nil {
 			return err
 		}
 		defer tl.Unlock()
 	} else if e.arg.App != "" {
-		tl := datamodel.NewTeardownLock(t.Id, e.arg.App)
+		tl := datamodel.NewTeardownLock(t.ID, e.arg.App)
 		if err := tl.Lock(); err != nil {
 			return err
 		}
 		defer tl.Unlock()
 	}
 	tornContainers := []string{}
-	for host, containerIds := range hostMap {
+	for host, containerIDs := range hostMap {
 		if e.arg.All {
 			t.LogStatus("Tearing Down * from %s", host)
 		} else {
-			t.LogStatus("Tearing Down %v from %s", containerIds, host)
+			t.LogStatus("Tearing Down %v from %s", containerIDs, host)
 		}
 
-		ihReply, err := supervisor.Teardown(host, containerIds, e.arg.All)
+		ihReply, err := supervisor.Teardown(host, containerIDs, e.arg.All)
 		if err != nil {
-			return errors.New(fmt.Sprintf("Error Tearing Down %v from %s : %s", containerIds, host,
+			return errors.New(fmt.Sprintf("Error Tearing Down %v from %s : %s", containerIDs, host,
 				err.Error()))
 		}
-		tornContainers = append(tornContainers, ihReply.ContainerIds...)
-		for _, tornContainerId := range tornContainers {
-			err := datamodel.DeleteFromPool([]string{tornContainerId})
+		tornContainers = append(tornContainers, ihReply.ContainerIDs...)
+		for _, tornContainerID := range tornContainers {
+			err := datamodel.DeleteFromPool([]string{tornContainerID})
 			if err != nil {
-				t.Log("Error removing %s from pool: %v", tornContainerId, err)
+				t.Log("Error removing %s from pool: %v", tornContainerID, err)
 			}
-			datamodel.Supervisor(host).RemoveContainer(tornContainerId)
-			instance, err := datamodel.GetInstance(tornContainerId)
+			datamodel.Supervisor(host).RemoveContainer(tornContainerID)
+			instance, err := datamodel.GetInstance(tornContainerID)
 			if err != nil {
 				continue
 			}
@@ -325,7 +325,7 @@ func (e *TeardownExecutor) Execute(t *Task) error {
 			}
 		}
 	}
-	e.reply.ContainerIds = tornContainers
+	e.reply.ContainerIDs = tornContainers
 	return nil
 }
 

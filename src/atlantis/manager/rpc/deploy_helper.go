@@ -92,7 +92,7 @@ func validateDeploy(auth *ManagerAuthArg, manifest *Manifest, sha, env string, t
 		return nil, errors.New("Environment Error: " + err.Error())
 	}
 	// lock the deploy
-	dl := datamodel.NewDeployLock(t.Id, manifest.Name, sha, env)
+	dl := datamodel.NewDeployLock(t.ID, manifest.Name, sha, env)
 	if err := dl.Lock(); err != nil {
 		return nil, err
 	}
@@ -124,7 +124,7 @@ func deployToHost(respCh chan *DeployHostResult, manifest *Manifest, sha, env, h
 		respCh <- &DeployHostResult{Host: host, Container: nil, Error: err}
 		return
 	}
-	ihReply, err := supervisor.Deploy(host, manifest.Name, sha, env, instance.Id, manifest)
+	ihReply, err := supervisor.Deploy(host, manifest.Name, sha, env, instance.ID, manifest)
 	if err != nil {
 		instance.Delete()
 		respCh <- &DeployHostResult{Host: host, Container: nil, Error: err}
@@ -239,18 +239,18 @@ func deployToHostsInZones(deps map[string]map[string]string, manifest *Manifest,
 	// and since we don't lock zookeeper (maybe we should), this would result in a race condition.
 	t.LogStatus("Updating Zookeeper")
 	for _, cont := range deployedContainers {
-		datamodel.Supervisor(cont.Host).SetContainerAndPort(cont.Id, cont.PrimaryPort)
+		datamodel.Supervisor(cont.Host).SetContainerAndPort(cont.ID, cont.PrimaryPort)
 	}
 
 	// we're good now, so lets move on
 	t.LogStatus("Updating Router")
-	deployedIds := make([]string, len(deployedContainers))
+	deployedIDs := make([]string, len(deployedContainers))
 	count := 0
 	for _, cont := range deployedContainers {
-		deployedIds[count] = cont.Id
+		deployedIDs[count] = cont.ID
 		count++
 	}
-	err = datamodel.AddToPool(deployedIds)
+	err = datamodel.AddToPool(deployedIDs)
 	if err != nil { // if we can't add the pool, clean up and fail
 		cleanup(true, deployedContainers, t)
 		return nil, errors.New("Update Pool Error: " + err.Error())
@@ -270,7 +270,7 @@ func deployToHostsInZones(deps map[string]map[string]string, manifest *Manifest,
 func devDeployToHosts(deps map[string]map[string]string, manifest *Manifest, sha, env string, hosts []string, t *Task) ([]*Container, error) {
 	// deploy to hosts
 	deployedContainers := []*Container{}
-	deployedIds := []string{}
+	deployedIDs := []string{}
 	for _, host := range hosts {
 		health, err := supervisor.HealthCheck(host)
 		if err != nil {
@@ -281,23 +281,23 @@ func devDeployToHosts(deps map[string]map[string]string, manifest *Manifest, sha
 		if err != nil {
 			continue
 		}
-		t.LogStatus("Deploying %s to %s", instance.Id, host)
-		ihReply, err := supervisor.Deploy(host, manifest.Name, sha, env, instance.Id, manifest)
+		t.LogStatus("Deploying %s to %s", instance.ID, host)
+		ihReply, err := supervisor.Deploy(host, manifest.Name, sha, env, instance.ID, manifest)
 		if err != nil {
 			instance.Delete()
-			t.LogStatus("Supervisor " + host + " Deploy " + instance.Id + " Failed: " + err.Error())
+			t.LogStatus("Supervisor " + host + " Deploy " + instance.ID + " Failed: " + err.Error())
 			continue // try another host
 		}
 		if ihReply.Status != StatusOk {
 			instance.Delete()
-			t.LogStatus("Supervisor " + host + " Deploy " + instance.Id + " Status Not OK: " + ihReply.Status)
+			t.LogStatus("Supervisor " + host + " Deploy " + instance.ID + " Status Not OK: " + ihReply.Status)
 			continue // try another host
 		}
 		ihReply.Container.Host = host
 		instance.SetPort(ihReply.Container.PrimaryPort)
-		datamodel.Supervisor(host).SetContainerAndPort(instance.Id, ihReply.Container.PrimaryPort)
+		datamodel.Supervisor(host).SetContainerAndPort(instance.ID, ihReply.Container.PrimaryPort)
 		deployedContainers = append(deployedContainers, ihReply.Container)
-		deployedIds = append(deployedIds, ihReply.Container.Id)
+		deployedIDs = append(deployedIDs, ihReply.Container.ID)
 		AddAppShaToEnv(manifest.Name, sha, env)
 		break // only deploy 1
 	}
@@ -305,7 +305,7 @@ func devDeployToHosts(deps map[string]map[string]string, manifest *Manifest, sha
 		return nil, errors.New("Could not deploy to any hosts")
 	}
 	t.LogStatus("Updating Router")
-	err := datamodel.AddToPool(deployedIds)
+	err := datamodel.AddToPool(deployedIDs)
 	if err != nil { // if we can't add the pool, clean up and fail
 		cleanup(true, deployedContainers, t)
 		return nil, errors.New("Update Pool Error: " + err.Error())
@@ -394,15 +394,15 @@ func moveContainer(auth *ManagerAuthArg, cont *Container, t *Task) (*Container, 
 func cleanup(removeContainerFromHost bool, deployedContainers []*Container, t *Task) {
 	// kill all references to deployed containers as well as the container itself
 	for _, container := range deployedContainers {
-		supervisor.Teardown(container.Host, []string{container.Id}, false)
-		if instance, err := datamodel.GetInstance(container.Id); err == nil {
+		supervisor.Teardown(container.Host, []string{container.ID}, false)
+		if instance, err := datamodel.GetInstance(container.ID); err == nil {
 			instance.Delete()
 		} else {
-			t.Log(fmt.Sprintf("Failed to clean up instance %s: %s", container.Id, err.Error()))
+			t.Log(fmt.Sprintf("Failed to clean up instance %s: %s", container.ID, err.Error()))
 		}
 		DeleteAppShaFromEnv(container.App, container.Sha, container.Env)
 		if removeContainerFromHost {
-			datamodel.Supervisor(container.Host).RemoveContainer(container.Id)
+			datamodel.Supervisor(container.Host).RemoveContainer(container.ID)
 		}
 	}
 }
@@ -411,48 +411,48 @@ func cleanup(removeContainerFromHost bool, deployedContainers []*Container, t *T
 // Teardown Stuff
 //
 
-func getContainerIdsOfEnv(t *Task, app, sha, env string) ([]string, error) {
-	containerIds, err := datamodel.ListInstances(app, sha, env)
+func getContainerIDsOfEnv(t *Task, app, sha, env string) ([]string, error) {
+	containerIDs, err := datamodel.ListInstances(app, sha, env)
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("Error listing instances of %s @ %s in %s: %s", app, sha, env,
 			err.Error()))
 	}
-	return containerIds, nil
+	return containerIDs, nil
 }
 
-func getContainerIdsOfSha(t *Task, app, sha string) ([]string, error) {
-	containerIds := []string{}
+func getContainerIDsOfSha(t *Task, app, sha string) ([]string, error) {
+	containerIDs := []string{}
 	envs, err := datamodel.ListAppEnvs(app, sha)
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("Error listing environments of %s @ %s: %s", app, sha, err.Error()))
 	}
 	for _, env := range envs {
-		tmpContainerIds, err := getContainerIdsOfEnv(t, app, sha, env)
+		tmpContainerIDs, err := getContainerIDsOfEnv(t, app, sha, env)
 		if err != nil {
 			return nil, err
 		}
-		containerIds = append(containerIds, tmpContainerIds...)
+		containerIDs = append(containerIDs, tmpContainerIDs...)
 	}
-	return containerIds, nil
+	return containerIDs, nil
 }
 
-func getContainerIdsOfApp(t *Task, app string) ([]string, error) {
-	containerIds := []string{}
+func getContainerIDsOfApp(t *Task, app string) ([]string, error) {
+	containerIDs := []string{}
 	shas, err := datamodel.ListShas(app)
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("Error listing shas of %s: %s", app, err.Error()))
 	}
 	for _, sha := range shas {
-		tmpContainerIds, err := getContainerIdsOfSha(t, app, sha)
+		tmpContainerIDs, err := getContainerIDsOfSha(t, app, sha)
 		if err != nil {
 			return nil, err
 		}
-		containerIds = append(containerIds, tmpContainerIds...)
+		containerIDs = append(containerIDs, tmpContainerIDs...)
 	}
-	return containerIds, nil
+	return containerIDs, nil
 }
 
-func getContainerIdsToTeardown(t *Task, arg ManagerTeardownArg) (hostMap map[string][]string, err error) {
+func getContainerIDsToTeardown(t *Task, arg ManagerTeardownArg) (hostMap map[string][]string, err error) {
 	hostMap = map[string][]string{} // map of host -> []string container ids
 	if arg.All {
 		var hosts []string
@@ -464,41 +464,41 @@ func getContainerIdsToTeardown(t *Task, arg ManagerTeardownArg) (hostMap map[str
 			hostMap[host] = []string{}
 		}
 		return
-	} else if arg.ContainerId != "" {
+	} else if arg.ContainerID != "" {
 		var instance *datamodel.ZkInstance
-		instance, err = datamodel.GetInstance(arg.ContainerId)
+		instance, err = datamodel.GetInstance(arg.ContainerID)
 		if err != nil {
 			return
 		}
-		hostMap[instance.Host] = []string{arg.ContainerId}
+		hostMap[instance.Host] = []string{arg.ContainerID}
 		return
 	} else if arg.App != "" {
-		containerIds := []string{}
+		containerIDs := []string{}
 		if arg.Sha != "" {
 			if arg.Env != "" {
-				if containerIds, err = getContainerIdsOfEnv(t, arg.App, arg.Sha, arg.Env); err != nil {
+				if containerIDs, err = getContainerIDsOfEnv(t, arg.App, arg.Sha, arg.Env); err != nil {
 					return nil, err
 				}
 			} else {
-				if containerIds, err = getContainerIdsOfSha(t, arg.App, arg.Sha); err != nil {
+				if containerIDs, err = getContainerIDsOfSha(t, arg.App, arg.Sha); err != nil {
 					return nil, err
 				}
 			}
 		} else {
-			if containerIds, err = getContainerIdsOfApp(t, arg.App); err != nil {
+			if containerIDs, err = getContainerIDsOfApp(t, arg.App); err != nil {
 				return nil, err
 			}
 		}
-		for _, containerId := range containerIds {
-			instance, err := datamodel.GetInstance(containerId)
+		for _, containerID := range containerIDs {
+			instance, err := datamodel.GetInstance(containerID)
 			if err != nil {
 				continue
 			}
-			currentIds := hostMap[instance.Host]
-			if currentIds == nil {
-				hostMap[instance.Host] = []string{containerId}
+			currentIDs := hostMap[instance.Host]
+			if currentIDs == nil {
+				hostMap[instance.Host] = []string{containerID}
 			} else {
-				hostMap[instance.Host] = append(currentIds, containerId)
+				hostMap[instance.Host] = append(currentIDs, containerID)
 			}
 		}
 		return

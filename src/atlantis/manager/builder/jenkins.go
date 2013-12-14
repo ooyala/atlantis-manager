@@ -26,5 +26,5 @@ func (b *JenkinsBuilder) Build(t *Task, repo, root, sha string) (io.ReadCloser, 
 	if info.Result != "SUCCESS" {
 		return nil, errors.New("Jenkins Build " + info.Url + " " + info.Result)
 	}
-	return jenkins.GetArtifactReader(b.Job, info.Id, ManifestFile)
+	return jenkins.GetArtifactReader(b.Job, info.ID, ManifestFile)
 }

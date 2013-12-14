@@ -44,7 +44,7 @@ func Deploy(w http.ResponseWriter, r *http.Request) {
 	}
 	var reply AsyncReply
 	err = manager.Deploy(dArg, &reply)
-	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Id": reply.Id}, err))
+	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"ID": reply.ID}, err))
 }
 
 func CopyContainer(w http.ResponseWriter, r *http.Request) {
@@ -56,19 +56,19 @@ func CopyContainer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ccArg := ManagerCopyContainerArg{ManagerAuthArg: auth, Instances: uint(instances),
-		ContainerId: vars["Id"]}
+		ContainerID: vars["ID"]}
 	var reply AsyncReply
 	err = manager.CopyContainer(ccArg, &reply)
-	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Id": reply.Id}, err))
+	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"ID": reply.ID}, err))
 }
 
 func MoveContainer(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
-	ccArg := ManagerMoveContainerArg{ManagerAuthArg: auth, ContainerId: vars["Id"]}
+	ccArg := ManagerMoveContainerArg{ManagerAuthArg: auth, ContainerID: vars["ID"]}
 	var reply AsyncReply
 	err := manager.MoveContainer(ccArg, &reply)
-	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Id": reply.Id}, err))
+	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"ID": reply.ID}, err))
 }
 
 func Teardown(w http.ResponseWriter, r *http.Request) {
@@ -77,16 +77,16 @@ func Teardown(w http.ResponseWriter, r *http.Request) {
 	arg := ManagerTeardownArg{auth, vars["App"], vars["Sha"], vars["Env"], "", false}
 	var reply AsyncReply
 	err := manager.Teardown(arg, &reply)
-	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Id": reply.Id}, err))
+	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"ID": reply.ID}, err))
 }
 
-func TeardownContainerId(w http.ResponseWriter, r *http.Request) {
+func TeardownContainerID(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
-	cArg := ManagerTeardownArg{auth, "", "", "", vars["Id"], false}
+	cArg := ManagerTeardownArg{auth, "", "", "", vars["ID"], false}
 	var reply AsyncReply
 	err := manager.Teardown(cArg, &reply)
-	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Id": reply.Id}, err))
+	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"ID": reply.ID}, err))
 }
 
 func TeardownContainers(w http.ResponseWriter, r *http.Request) {
@@ -96,8 +96,8 @@ func TeardownContainers(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "{\"error\": \"%s\"}", err.Error())
 		return
 	}
-	tArg := ManagerTeardownArg{auth, r.FormValue("App"), r.FormValue("Sha"), r.FormValue("Env"), r.FormValue("ContainerId"), all}
+	tArg := ManagerTeardownArg{auth, r.FormValue("App"), r.FormValue("Sha"), r.FormValue("Env"), r.FormValue("ContainerID"), all}
 	var reply AsyncReply
 	err = manager.Teardown(tArg, &reply)
-	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Id": reply.Id}, err))
+	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"ID": reply.ID}, err))
 }

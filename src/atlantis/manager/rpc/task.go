@@ -7,7 +7,7 @@ import (
 
 func (m *ManagerRPC) Status(id string, status *TaskStatus) error {
 	if id == "" {
-		return errors.New("Id empty")
+		return errors.New("ID empty")
 	}
 	getStatus, getError := Tracker.Status(id)
 	if getStatus == nil {

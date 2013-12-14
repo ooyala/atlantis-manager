@@ -16,16 +16,16 @@ type Router struct {
 	Zone      string
 	Host      string
 	CName     string
-	RecordIds []string
+	RecordIDs []string
 }
 
 type Manager struct {
 	Region           string
 	Host             string
 	ManagerCName     string
-	ManagerRecordId  string
+	ManagerRecordID  string
 	RegistryCName    string
-	RegistryRecordId string
+	RegistryRecordID string
 	Roles            map[string]map[string]bool
 }
 
@@ -252,7 +252,7 @@ type ManagerDeployReply struct {
 // Used to deploy by copying a container
 type ManagerCopyContainerArg struct {
 	ManagerAuthArg
-	ContainerId string
+	ContainerID string
 	Instances   uint
 }
 
@@ -262,7 +262,7 @@ type ManagerCopyContainerArg struct {
 // Used to deploy by copying a container
 type ManagerMoveContainerArg struct {
 	ManagerAuthArg
-	ContainerId string
+	ContainerID string
 }
 
 // MoveContainer uses ManagerDeployReply
@@ -287,12 +287,12 @@ type ManagerTeardownArg struct {
 	App         string
 	Sha         string
 	Env         string
-	ContainerId string
+	ContainerID string
 	All         bool
 }
 
 type ManagerTeardownReply struct {
-	ContainerIds []string
+	ContainerIDs []string
 	Status       string
 }
 
@@ -300,7 +300,7 @@ type ManagerTeardownReply struct {
 // Used to get a container
 type ManagerGetContainerArg struct {
 	ManagerAuthArg
-	ContainerId string
+	ContainerID string
 }
 
 type ManagerGetContainerReply struct {
@@ -318,7 +318,7 @@ type ManagerListContainersArg struct {
 }
 
 type ManagerListContainersReply struct {
-	ContainerIds []string
+	ContainerIDs []string
 	Status       string
 }
 
@@ -611,7 +611,7 @@ type ManagerAppReply struct {
 // ------------ Authorize SSH ------------
 // Authorize SSH
 type ManagerAuthorizeSSHArg struct {
-	ContainerId string
+	ContainerID string
 	User        string
 	PublicKey   string
 }
@@ -625,7 +625,7 @@ type ManagerAuthorizeSSHReply struct {
 // ------------ Deauthorize SSH ------------
 // Deauthorize SSH
 type ManagerDeauthorizeSSHArg struct {
-	ContainerId string
+	ContainerID string
 	User        string
 }
 
@@ -689,7 +689,7 @@ type ManagerSuperUserReply struct {
 // Set Container Maintenance Mode
 type ManagerContainerMaintenanceArg struct {
 	ManagerAuthArg
-	ContainerId string
+	ContainerID string
 	Maintenance bool
 }
 

@@ -8,7 +8,7 @@ type ZkDNS struct {
 	App       string
 	Env       string
 	Shas      map[string]bool
-	RecordIds []string
+	RecordIDs []string
 }
 
 func DNS(app, env string) *ZkDNS {

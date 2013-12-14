@@ -14,7 +14,7 @@ func (s *DatamodelSuite) TestDNSModel(c *C) {
 	c.Assert(err, IsNil)
 	c.Assert(zkDNS, DeepEquals, fetchedDNS)
 	zkDNS.Shas = map[string]bool{"sha1": true, "sha2": true}
-	zkDNS.RecordIds = []string{"rid1", "rid2"}
+	zkDNS.RecordIDs = []string{"rid1", "rid2"}
 	zkDNS.Save()
 	fetchedDNS, err = GetDNS(app, env)
 	c.Assert(err, IsNil)

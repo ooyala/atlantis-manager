@@ -14,7 +14,7 @@ type Route53Provider struct {
 }
 
 type Route53HostedZone struct {
-	Id   string
+	ID   string
 	Zone route53.HostedZone
 }
 
@@ -79,7 +79,7 @@ func (r *Route53Provider) createRecords(region, comment string, rrsets ...route5
 			RRSet:  rrset,
 		}
 	}
-	info, err := r.r53.ChangeRRSet(hostedZone.Id, changes, comment)
+	info, err := r.r53.ChangeRRSet(hostedZone.ID, changes, comment)
 	if err != nil {
 		return err, nil
 	}
@@ -102,14 +102,14 @@ func (r *Route53Provider) CreateCNames(region, comment string, cnames []*CName) 
 	rrsets := make([]route53.RRSet, len(cnames))
 	count := 0
 	for _, cname := range cnames {
-		rrsets[count] = r.baseRRSet("CNAME", cname.Id(), cname.Name, cname.Failover)
+		rrsets[count] = r.baseRRSet("CNAME", cname.ID(), cname.Name, cname.Failover)
 		rrsets[count].TTL = r.TTL
 		rrsets[count].ResourceRecords = &route53.ResourceRecords{
 			ResourceRecord: []route53.ResourceRecord{route53.ResourceRecord{Value: cname.Original}},
 		}
 		rrsets[count].Weight = cname.Weight
-		if cname.HealthCheckId != "" {
-			rrsets[count].HealthCheckId = cname.HealthCheckId
+		if cname.HealthCheckID != "" {
+			rrsets[count].HealthCheckID = cname.HealthCheckID
 		}
 		count++
 	}
@@ -124,9 +124,9 @@ func (r *Route53Provider) CreateAliases(region, comment string, aliases []*Alias
 	rrsets := make([]route53.RRSet, len(aliases))
 	count := 0
 	for _, alias := range aliases {
-		rrsets[count] = r.baseRRSet("A", alias.Id(), alias.Alias, alias.Failover)
+		rrsets[count] = r.baseRRSet("A", alias.ID(), alias.Alias, alias.Failover)
 		rrsets[count].AliasTarget = &route53.AliasTarget{
-			HostedZoneId:         hostedZone.Id,
+			HostedZoneID:         hostedZone.ID,
 			DNSName:              alias.Original,
 			EvaluateTargetHealth: false,
 		}
@@ -139,14 +139,14 @@ func (r *Route53Provider) CreateARecords(region, comment string, arecords []*ARe
 	rrsets := make([]route53.RRSet, len(arecords))
 	count := 0
 	for _, arecord := range arecords {
-		rrsets[count] = r.baseRRSet("A", arecord.Id(), arecord.Name, arecord.Failover)
+		rrsets[count] = r.baseRRSet("A", arecord.ID(), arecord.Name, arecord.Failover)
 		rrsets[count].TTL = r.TTL
 		rrsets[count].ResourceRecords = &route53.ResourceRecords{
 			ResourceRecord: []route53.ResourceRecord{route53.ResourceRecord{Value: arecord.IP}},
 		}
 		rrsets[count].Weight = arecord.Weight
-		if arecord.HealthCheckId != "" {
-			rrsets[count].HealthCheckId = arecord.HealthCheckId
+		if arecord.HealthCheckID != "" {
+			rrsets[count].HealthCheckID = arecord.HealthCheckID
 		}
 		count++
 	}
@@ -166,7 +166,7 @@ func (r *Route53Provider) DeleteRecords(region, comment string, ids ...string) (
 		return nil, errChan
 	}
 	// fetch all records
-	rrsets, err := r.r53.ListRRSets(hostedZone.Id)
+	rrsets, err := r.r53.ListRRSets(hostedZone.ID)
 	if err != nil {
 		return err, nil
 	}
@@ -189,7 +189,7 @@ func (r *Route53Provider) DeleteRecords(region, comment string, ids ...string) (
 			RRSet:  rrset,
 		}
 	}
-	info, err := r.r53.ChangeRRSet(hostedZone.Id, changes, comment)
+	info, err := r.r53.ChangeRRSet(hostedZone.ID, changes, comment)
 	if err != nil {
 		return err, nil
 	}
@@ -216,7 +216,7 @@ func (r *Route53Provider) GetRecordsForValue(region, value string) ([]string, er
 	if hostedZone == nil {
 		return nil, errors.New("Can't Find Route53 Hosted Zone for Region: " + region)
 	}
-	rrsets, err := r.r53.ListRRSets(hostedZone.Id)
+	rrsets, err := r.r53.ListRRSets(hostedZone.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -245,7 +245,7 @@ func (r *Route53Provider) Suffix(region string) (string, error) {
 	return strings.TrimRight(hostedZone.Zone.Name, "."), nil
 }
 
-func NewRoute53Provider(zoneIds map[string]string, ttl uint) (*Route53Provider, error) {
+func NewRoute53Provider(zoneIDs map[string]string, ttl uint) (*Route53Provider, error) {
 	route53.DebugOn()
 	r53, err := route53.New()
 	if err != nil {
@@ -253,12 +253,12 @@ func NewRoute53Provider(zoneIds map[string]string, ttl uint) (*Route53Provider, 
 	}
 	r53.IncludeWeight = true
 	zones := map[string]*Route53HostedZone{}
-	for region, zoneId := range zoneIds {
-		zone, err := r53.GetHostedZone(zoneId)
+	for region, zoneID := range zoneIDs {
+		zone, err := r53.GetHostedZone(zoneID)
 		if err != nil {
 			return nil, err
 		}
-		zones[region] = &Route53HostedZone{Id: zoneId, Zone: zone}
+		zones[region] = &Route53HostedZone{ID: zoneID, Zone: zone}
 	}
 	return &Route53Provider{r53: r53, Zones: zones, TTL: ttl}, nil
 }

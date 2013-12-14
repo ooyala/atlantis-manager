@@ -41,15 +41,15 @@ func (c *DeployCommand) Execute(args []string) error {
 	if err := rpcClient.Call("Deploy", arg, &reply); err != nil {
 		return OutputError(err)
 	}
-	Log("-> ID: %s", reply.Id)
+	Log("-> ID: %s", reply.ID)
 	if !c.Wait {
-		return Output(map[string]interface{}{"id": reply.Id}, reply.Id, nil)
+		return Output(map[string]interface{}{"id": reply.ID}, reply.ID, nil)
 	}
-	return (&WaitCommand{reply.Id}).Execute(args)
+	return (&WaitCommand{reply.ID}).Execute(args)
 }
 
 type CopyContainerCommand struct {
-	ContainerId string `short:"c" long:"container" description:"the id of the container to copy"`
+	ContainerID string `short:"c" long:"container" description:"the id of the container to copy"`
 	Instances   uint   `short:"i" long:"instances" default:"1" description:"the number of instances to deploy in each AZ"`
 	Wait        bool   `long:"wait" description:"wait until the deploy is done before exiting"`
 }
@@ -64,20 +64,20 @@ func (c *CopyContainerCommand) Execute(args []string) error {
 		return err
 	}
 	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerCopyContainerArg{ManagerAuthArg: authArg, ContainerId: c.ContainerId, Instances: c.Instances}
+	arg := ManagerCopyContainerArg{ManagerAuthArg: authArg, ContainerID: c.ContainerID, Instances: c.Instances}
 	var reply atlantis.AsyncReply
 	if err := rpcClient.Call("CopyContainer", arg, &reply); err != nil {
 		return OutputError(err)
 	}
-	Log("-> ID: %s", reply.Id)
+	Log("-> ID: %s", reply.ID)
 	if !c.Wait {
-		return Output(map[string]interface{}{"id": reply.Id}, reply.Id, nil)
+		return Output(map[string]interface{}{"id": reply.ID}, reply.ID, nil)
 	}
-	return (&WaitCommand{reply.Id}).Execute(args)
+	return (&WaitCommand{reply.ID}).Execute(args)
 }
 
 type MoveContainerCommand struct {
-	ContainerId string `short:"c" long:"container" description:"the id of the container to move"`
+	ContainerID string `short:"c" long:"container" description:"the id of the container to move"`
 	Wait        bool   `long:"wait" description:"wait until the deploy is done before exiting"`
 }
 
@@ -91,41 +91,41 @@ func (c *MoveContainerCommand) Execute(args []string) error {
 		return err
 	}
 	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerMoveContainerArg{ManagerAuthArg: authArg, ContainerId: c.ContainerId}
+	arg := ManagerMoveContainerArg{ManagerAuthArg: authArg, ContainerID: c.ContainerID}
 	var reply atlantis.AsyncReply
 	if err := rpcClient.Call("MoveContainer", arg, &reply); err != nil {
 		return OutputError(err)
 	}
-	Log("-> ID: %s", reply.Id)
+	Log("-> ID: %s", reply.ID)
 	if !c.Wait {
-		return Output(map[string]interface{}{"id": reply.Id}, reply.Id, nil)
+		return Output(map[string]interface{}{"id": reply.ID}, reply.ID, nil)
 	}
-	return (&WaitCommand{reply.Id}).Execute(args)
+	return (&WaitCommand{reply.ID}).Execute(args)
 }
 
 func OutputDeployReply(reply *ManagerDeployReply) error {
 	Log("-> Status: %s", reply.Status)
 	Log("-> Deployed Containers:")
-	quietContainerIds := make([]string, len(reply.Containers))
+	quietContainerIDs := make([]string, len(reply.Containers))
 	for i, cont := range reply.Containers {
 		Log("->   %s", cont.String())
-		quietContainerIds[i] = cont.Id
+		quietContainerIDs[i] = cont.ID
 	}
 	return Output(map[string]interface{}{"status": reply.Status, "containers": reply.Containers},
-		quietContainerIds, nil)
+		quietContainerIDs, nil)
 }
 
 type DeployResultCommand struct {
-	Id string `short:"i" long:"id" description:"the task ID to fetch the result for"`
+	ID string `short:"i" long:"id" description:"the task ID to fetch the result for"`
 }
 
 func (c *DeployResultCommand) Execute(args []string) error {
 	if err := Init(); err != nil {
 		return OutputError(err)
 	}
-	args = ExtractArgs([]*string{&c.Id}, args)
+	args = ExtractArgs([]*string{&c.ID}, args)
 	Log("Deploy Result...")
-	arg := c.Id
+	arg := c.ID
 	var reply ManagerDeployReply
 	if err := rpcClient.Call("DeployResult", arg, &reply); err != nil {
 		return OutputError(err)
@@ -157,34 +157,34 @@ func (c *TeardownCommand) Execute(args []string) error {
 	if err := rpcClient.Call("Teardown", arg, &reply); err != nil {
 		return OutputError(err)
 	}
-	Log("-> ID: %s", reply.Id)
+	Log("-> ID: %s", reply.ID)
 	if !c.Wait {
-		return Output(map[string]interface{}{"id": reply.Id}, reply.Id, nil)
+		return Output(map[string]interface{}{"id": reply.ID}, reply.ID, nil)
 	}
-	return (&WaitCommand{reply.Id}).Execute(args)
+	return (&WaitCommand{reply.ID}).Execute(args)
 }
 
 func OutputTeardownReply(reply *ManagerTeardownReply) error {
 	Log("-> Status: %s", reply.Status)
 	Log("-> Torn Containers:")
-	for _, cont := range reply.ContainerIds {
+	for _, cont := range reply.ContainerIDs {
 		Log("->   %s", cont)
 	}
-	return Output(map[string]interface{}{"status": reply.Status, "containerIds": reply.ContainerIds},
-		reply.ContainerIds, nil)
+	return Output(map[string]interface{}{"status": reply.Status, "containerIDs": reply.ContainerIDs},
+		reply.ContainerIDs, nil)
 }
 
 type TeardownResultCommand struct {
-	Id string `short:"i" long:"id" description:"the task ID to fetch the result for"`
+	ID string `short:"i" long:"id" description:"the task ID to fetch the result for"`
 }
 
 func (c *TeardownResultCommand) Execute(args []string) error {
 	if err := Init(); err != nil {
 		return OutputError(err)
 	}
-	args = ExtractArgs([]*string{&c.Id}, args)
+	args = ExtractArgs([]*string{&c.ID}, args)
 	Log("Teardown Result...")
-	arg := c.Id
+	arg := c.ID
 	var reply ManagerTeardownReply
 	if err := rpcClient.Call("TeardownResult", arg, &reply); err != nil {
 		return OutputError(err)
@@ -242,11 +242,11 @@ func (c *ListContainersCommand) Execute(args []string) error {
 	}
 	Log("-> status: %s", reply.Status)
 	Log("-> containers:")
-	for _, cont := range reply.ContainerIds {
+	for _, cont := range reply.ContainerIDs {
 		Log("->   %s", cont)
 	}
-	return Output(map[string]interface{}{"status": reply.Status, "containerIds": reply.ContainerIds},
-		reply.ContainerIds, nil)
+	return Output(map[string]interface{}{"status": reply.Status, "containerIDs": reply.ContainerIDs},
+		reply.ContainerIDs, nil)
 }
 
 type ListEnvsCommand struct {

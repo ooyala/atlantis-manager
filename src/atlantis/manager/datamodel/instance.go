@@ -7,7 +7,7 @@ import (
 
 type ZkInstance struct {
 	Internal bool
-	Id       string
+	ID       string
 	App      string
 	Sha      string
 	Env      string
@@ -29,9 +29,9 @@ func GetInstance(id string) (zi *ZkInstance, err error) {
 }
 
 func CreateInstance(internal bool, app, sha, env, host string) (*ZkInstance, error) {
-	id := helper.CreateContainerId(app, sha, env)
+	id := helper.CreateContainerID(app, sha, env)
 	for InstanceExists(id) {
-		id = helper.CreateContainerId(app, sha, env)
+		id = helper.CreateContainerID(app, sha, env)
 	}
 	zi := &ZkInstance{internal, id, app, sha, env, host, 0}
 	if _, err := Zk.Touch(zi.path()); err != nil {
@@ -101,11 +101,11 @@ func (zi *ZkInstance) SetPort(port uint16) error {
 }
 
 func (zi *ZkInstance) path() string {
-	return helper.GetBaseInstancePath(zi.App, zi.Sha, zi.Env, zi.Id)
+	return helper.GetBaseInstancePath(zi.App, zi.Sha, zi.Env, zi.ID)
 }
 
 func (zi *ZkInstance) dataPath() string {
-	return helper.GetBaseInstanceDataPath(zi.Id)
+	return helper.GetBaseInstanceDataPath(zi.ID)
 }
 
 func InternalAppExistsInEnv(app, env string) bool {

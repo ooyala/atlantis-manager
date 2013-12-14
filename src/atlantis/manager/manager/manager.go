@@ -81,7 +81,7 @@ func Register(region, value, registryCName, managerCName string) (*datamodel.ZkM
 		}
 		// managerX.<region>.<suffix>
 		cname := dns.NewRecord(zkManager.ManagerCName, zkManager.Host, 0)
-		zkManager.ManagerRecordId = cname.Id()
+		zkManager.ManagerRecordID = cname.ID()
 		cnames = append(cnames, cname)
 	}
 	if zkManager.RegistryCName == "" {
@@ -92,7 +92,7 @@ func Register(region, value, registryCName, managerCName string) (*datamodel.ZkM
 		}
 		// registryX.<region>.<suffix>
 		cname := dns.NewRecord(zkManager.RegistryCName, zkManager.Host, 0)
-		zkManager.RegistryRecordId = cname.Id()
+		zkManager.RegistryRecordID = cname.ID()
 		cnames = append(cnames, cname)
 	}
 
@@ -116,11 +116,11 @@ func Unregister(region, value string) error {
 		return zkManager.Delete()
 	}
 	records := []string{}
-	if zkManager.ManagerRecordId != "" {
-		records = append(records, zkManager.ManagerRecordId)
+	if zkManager.ManagerRecordID != "" {
+		records = append(records, zkManager.ManagerRecordID)
 	}
-	if zkManager.RegistryRecordId != "" {
-		records = append(records, zkManager.RegistryRecordId)
+	if zkManager.RegistryRecordID != "" {
+		records = append(records, zkManager.RegistryRecordID)
 	}
 	if len(records) > 0 {
 		err, errChan := dns.Provider.DeleteRecords(region, "DELETE_MANAGER "+value+" in "+region, records...)

@@ -7,10 +7,10 @@ import (
 	"net/http"
 )
 
-func ContainerIdGet(w http.ResponseWriter, r *http.Request) {
+func ContainerIDGet(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
-	cArg := ManagerGetContainerArg{auth, vars["Id"]}
+	cArg := ManagerGetContainerArg{auth, vars["ID"]}
 	var reply ManagerGetContainerReply
 	err := manager.GetContainer(cArg, &reply)
 	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Container": reply.Container, "Status": reply.Status}, err))
@@ -66,5 +66,5 @@ func ListContainers(w http.ResponseWriter, r *http.Request) {
 	cArg := ManagerListContainersArg{auth, vars["App"], vars["Sha"], vars["Env"]}
 	var reply ManagerListContainersReply
 	err := manager.ListContainers(cArg, &reply)
-	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"ContainerIds": reply.ContainerIds, "Status": reply.Status}, err))
+	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"ContainerIDs": reply.ContainerIDs, "Status": reply.Status}, err))
 }

@@ -25,24 +25,24 @@ func (e *AuthorizeSSHExecutor) Result() interface{} {
 }
 
 func (e *AuthorizeSSHExecutor) Description() string {
-	return fmt.Sprintf("%s @ %s : \n%s", e.arg.User, e.arg.ContainerId, e.arg.PublicKey)
+	return fmt.Sprintf("%s @ %s : \n%s", e.arg.User, e.arg.ContainerID, e.arg.PublicKey)
 }
 
 func (e *AuthorizeSSHExecutor) Execute(t *Task) error {
 	if e.arg.PublicKey == "" {
 		return errors.New("Please specify an SSH public key.")
 	}
-	if e.arg.ContainerId == "" {
+	if e.arg.ContainerID == "" {
 		return errors.New("Please specify a container id.")
 	}
 	if e.arg.User == "" {
 		return errors.New("Please specify a user.")
 	}
-	instance, err := datamodel.GetInstance(e.arg.ContainerId)
+	instance, err := datamodel.GetInstance(e.arg.ContainerID)
 	if err != nil {
 		return err
 	}
-	ihReply, err := supervisor.AuthorizeSSH(instance.Host, e.arg.ContainerId, e.arg.User, e.arg.PublicKey)
+	ihReply, err := supervisor.AuthorizeSSH(instance.Host, e.arg.ContainerID, e.arg.User, e.arg.PublicKey)
 	if err != nil {
 		e.reply.Status = StatusError
 		return err
@@ -71,21 +71,21 @@ func (e *DeauthorizeSSHExecutor) Result() interface{} {
 }
 
 func (e *DeauthorizeSSHExecutor) Description() string {
-	return fmt.Sprintf("%s @ %s", e.arg.User, e.arg.ContainerId)
+	return fmt.Sprintf("%s @ %s", e.arg.User, e.arg.ContainerID)
 }
 
 func (e *DeauthorizeSSHExecutor) Execute(t *Task) error {
-	if e.arg.ContainerId == "" {
+	if e.arg.ContainerID == "" {
 		return errors.New("Please specify a container id.")
 	}
 	if e.arg.User == "" {
 		return errors.New("Please specify a user.")
 	}
-	instance, err := datamodel.GetInstance(e.arg.ContainerId)
+	instance, err := datamodel.GetInstance(e.arg.ContainerID)
 	if err != nil {
 		return err
 	}
-	ihReply, err := supervisor.DeauthorizeSSH(instance.Host, e.arg.ContainerId, e.arg.User)
+	ihReply, err := supervisor.DeauthorizeSSH(instance.Host, e.arg.ContainerID, e.arg.User)
 	e.reply.Status = ihReply.Status
 	return err
 }

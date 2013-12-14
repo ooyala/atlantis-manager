@@ -15,7 +15,7 @@ func ContainerMaintenance(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		fmt.Fprintf(w, "%s", Output(map[string]interface{}{}, err))
 	}
-	arg := ManagerContainerMaintenanceArg{auth, vars["Id"], maintenance}
+	arg := ManagerContainerMaintenanceArg{auth, vars["ID"], maintenance}
 	var reply ManagerContainerMaintenanceReply
 	err = manager.ContainerMaintenance(arg, &reply)
 	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Status": reply.Status}, err))

@@ -41,7 +41,7 @@ func NewRecord(name, original string, weight uint8) Record {
 }
 
 type Record interface {
-	Id() string
+	ID() string
 }
 
 type Alias struct {
@@ -50,7 +50,7 @@ type Alias struct {
 	Failover string
 }
 
-func (a *Alias) Id() string {
+func (a *Alias) ID() string {
 	checksumArr := sha256.Sum256([]byte(fmt.Sprintf("%s %s", a.Original, a.Alias)))
 	return fmt.Sprintf("%x", checksumArr[:sha256.Size])
 }
@@ -58,12 +58,12 @@ func (a *Alias) Id() string {
 type ARecord struct {
 	Name          string
 	IP            string
-	HealthCheckId string
+	HealthCheckID string
 	Failover      string
 	Weight        uint8
 }
 
-func (a *ARecord) Id() string {
+func (a *ARecord) ID() string {
 	checksumArr := sha256.Sum256([]byte(fmt.Sprintf("%s %s", a.IP, a.Name)))
 	return fmt.Sprintf("%x", checksumArr[:sha256.Size])
 }
@@ -71,12 +71,12 @@ func (a *ARecord) Id() string {
 type CName struct {
 	Name          string
 	Original      string
-	HealthCheckId string
+	HealthCheckID string
 	Failover      string
 	Weight        uint8
 }
 
-func (c *CName) Id() string {
+func (c *CName) ID() string {
 	checksumArr := sha256.Sum256([]byte(fmt.Sprintf("%s %s", c.Original, c.Name)))
 	return fmt.Sprintf("%x", checksumArr[:sha256.Size])
 }
@@ -106,20 +106,20 @@ func CreateAppCNames(internal bool, app, sha, env string) error {
 		return zkDNS.Save()
 	}
 
-	zkDNS.RecordIds = []string{}
+	zkDNS.RecordIDs = []string{}
 	cnames := []Record{}
 	// set up zone cname
 	for _, zone := range AvailableZones {
 		newCName := NewRecord(helper.GetZoneAppCName(app, env, zone, suffix),
 			helper.GetZoneRouterCName(internal, zone, suffix), 1)
 		cnames = append(cnames, newCName)
-		zkDNS.RecordIds = append(zkDNS.RecordIds, newCName.Id())
+		zkDNS.RecordIDs = append(zkDNS.RecordIDs, newCName.ID())
 	}
 	// region-wide entry (for referencing outside of atlantis)
 	regionCName := NewRecord(helper.GetRegionAppCName(app, env, suffix),
 		helper.GetRegionRouterCName(internal, suffix), 1)
 	cnames = append(cnames, regionCName)
-	zkDNS.RecordIds = append(zkDNS.RecordIds, regionCName.Id())
+	zkDNS.RecordIDs = append(zkDNS.RecordIDs, regionCName.ID())
 
 	err = Provider.CreateRecords(Region, "CREATE_APP "+app+" in "+env, cnames)
 	if err != nil {
@@ -152,7 +152,7 @@ func DeleteAppCNames(app, sha, env string) error {
 		return zkDNS.Delete()
 	}
 	// delete all the record ids
-	err, errChan := Provider.DeleteRecords(Region, "DELETE_APP "+app+" in "+env, zkDNS.RecordIds...)
+	err, errChan := Provider.DeleteRecords(Region, "DELETE_APP "+app+" in "+env, zkDNS.RecordIDs...)
 	if err != nil {
 		return err
 	}

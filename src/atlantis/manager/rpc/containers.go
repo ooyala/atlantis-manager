@@ -24,19 +24,19 @@ func (e *GetContainerExecutor) Result() interface{} {
 }
 
 func (e *GetContainerExecutor) Description() string {
-	return e.arg.ContainerId
+	return e.arg.ContainerID
 }
 
 func (e *GetContainerExecutor) Execute(t *Task) (err error) {
-	if e.arg.ContainerId == "" {
+	if e.arg.ContainerID == "" {
 		return errors.New("Container ID is empty")
 	}
-	instance, err := datamodel.GetInstance(e.arg.ContainerId)
+	instance, err := datamodel.GetInstance(e.arg.ContainerID)
 	if err != nil {
 		return err
 	}
 	var ihReply *SupervisorGetReply
-	ihReply, err = supervisor.Get(instance.Host, e.arg.ContainerId)
+	ihReply, err = supervisor.Get(instance.Host, e.arg.ContainerID)
 	e.reply.Status = ihReply.Status
 	ihReply.Container.Host = instance.Host
 	e.reply.Container = ihReply.Container
@@ -77,7 +77,7 @@ func (e *ListContainersExecutor) Execute(t *Task) error {
 	var err error
 	if e.arg.App == "" && e.arg.Sha == "" && e.arg.Env == "" {
 		// try to list all instances
-		e.reply.ContainerIds, err = datamodel.ListAllInstances()
+		e.reply.ContainerIDs, err = datamodel.ListAllInstances()
 		if err != nil {
 			e.reply.Status = StatusError
 		} else {
@@ -94,7 +94,7 @@ func (e *ListContainersExecutor) Execute(t *Task) error {
 	if e.arg.Env == "" {
 		return errors.New("Environment is empty")
 	}
-	e.reply.ContainerIds, err = datamodel.ListInstances(e.arg.App, e.arg.Sha, e.arg.Env)
+	e.reply.ContainerIDs, err = datamodel.ListInstances(e.arg.App, e.arg.Sha, e.arg.Env)
 	if err != nil {
 		e.reply.Status = StatusError
 	} else {
