@@ -6,7 +6,7 @@ import (
 
 func OutputRoleReply(reply *ManagerRoleReply) error {
 	Log("-> Status: %s", reply.Status)
-	if reply.Manager == nil {
+	if reply.Manager != nil {
 		Log("-> Manager:")
 		Log("->   Region:         %s", reply.Manager.Region)
 		Log("->   Host:           %s", reply.Manager.Host)
@@ -35,7 +35,7 @@ func (c *AddRoleCommand) Execute(args []string) error {
 	if err != nil {
 		return OutputError(err)
 	}
-	Log("Get Manager...")
+	Log("Add Role...")
 	args = ExtractArgs([]*string{&c.Region, &c.Host}, args)
 	user, secret, err := GetSecret()
 	if err != nil {
@@ -63,7 +63,7 @@ func (c *RemoveRoleCommand) Execute(args []string) error {
 	if err != nil {
 		return OutputError(err)
 	}
-	Log("Get Manager...")
+	Log("Remove Role...")
 	args = ExtractArgs([]*string{&c.Region, &c.Host}, args)
 	user, secret, err := GetSecret()
 	if err != nil {
@@ -91,7 +91,7 @@ func (c *HasRoleCommand) Execute(args []string) error {
 	if err != nil {
 		return OutputError(err)
 	}
-	Log("Get Manager...")
+	Log("Has Role...")
 	args = ExtractArgs([]*string{&c.Region, &c.Host}, args)
 	user, secret, err := GetSecret()
 	if err != nil {

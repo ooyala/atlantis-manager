@@ -24,7 +24,7 @@ func deployContainer(auth *ManagerAuthArg, cont *Container, instances uint, t *T
 	return deploy(auth, manifest, cont.Sha, cont.Env, t)
 }
 
-func ResolveDepValuesForZone(zkEnv *datamodel.ZkEnv, zone string, names []string, encrypt bool) (map[string]string, error) {
+func ResolveDepValuesForZone(app string, zkEnv *datamodel.ZkEnv, zone string, names []string, encrypt bool) (map[string]string, error) {
 	deps := map[string]string{}
 	leftoverNames := []string{}
 	// if we're using DNS and the app is registered, try to get the app cname (if deployed)
@@ -36,6 +36,15 @@ func ResolveDepValuesForZone(zkEnv *datamodel.ZkEnv, zone string, names []string
 				if err != nil {
 					leftoverNames = append(leftoverNames, name)
 					continue
+				}
+				// get the app we're depending on and make sure our app is a depender
+				zkApp, err := datamodel.GetApp(name)
+				if err != nil {
+					return nil, errors.New("Could not resolve dependency " + name + ": " + err.Error())
+				}
+				fmt.Printf("GOT APP: %+v\n", zkApp)
+				if !zkApp.HasDepender(app) {
+					return nil, errors.New(app + " is not authorized to depend on the app '" + name + "'")
 				}
 				deps[name] = helper.GetZoneAppCName(name, zkEnv.Name, zone, suffix)
 			} else {
@@ -69,10 +78,10 @@ func ResolveDepValuesForZone(zkEnv *datamodel.ZkEnv, zone string, names []string
 	return retDeps, nil
 }
 
-func ResolveDepValues(zkEnv *datamodel.ZkEnv, names []string, encrypt bool) (deps map[string]map[string]string, err error) {
+func ResolveDepValues(app string, zkEnv *datamodel.ZkEnv, names []string, encrypt bool) (deps map[string]map[string]string, err error) {
 	deps = map[string]map[string]string{}
 	for _, zone := range AvailableZones {
-		deps[zone], err = ResolveDepValuesForZone(zkEnv, zone, names, encrypt)
+		deps[zone], err = ResolveDepValuesForZone(app, zkEnv, zone, names, encrypt)
 		if err != nil {
 			return nil, errors.New("Dependency Error: " + err.Error())
 		}
@@ -109,7 +118,7 @@ func validateDeploy(auth *ManagerAuthArg, manifest *Manifest, sha, env string, t
 		return nil, errors.New(fmt.Sprintf("Memory Limit should be a multiple of %d", MemoryLimitIncrement))
 	}
 	t.LogStatus("Resolving Dependencies")
-	return ResolveDepValues(zkEnv, manifest.DepNames(), true)
+	return ResolveDepValues(manifest.Name, zkEnv, manifest.DepNames(), true)
 }
 
 type DeployHostResult struct {

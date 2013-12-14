@@ -131,6 +131,19 @@ type ManagerGetAppReply struct {
 	App    *App
 }
 
+// ------------ Depender App ------------
+// Used to get an App
+type ManagerDependerAppArg struct {
+	ManagerAuthArg
+	Depender string
+	Dependee string
+}
+
+type ManagerDependerAppReply struct {
+	Status   string
+	Dependee *App
+}
+
 // ------------ ListRegisteredApps ------------
 // List all apps
 type ManagerListRegisteredAppsArg struct {
@@ -274,6 +287,7 @@ type ManagerMoveContainerArg struct {
 // used to resolve deps in an environment to see what the deploy will contain
 type ManagerResolveDepsArg struct {
 	ManagerAuthArg
+	App      string
 	Env      string
 	DepNames []string
 }

@@ -275,6 +275,10 @@ func (c *GetAppCommand) Execute(args []string) error {
 	Log("-> repo:  %s", reply.App.Repo)
 	Log("-> root:  %s", reply.App.Root)
 	Log("-> email: %s", reply.App.Email)
+	Log("-> dependers:")
+	for app, depends := range reply.App.AllowedDependerApps {
+		Log("->   %s : %t", app, depends)
+	}
 	return Output(map[string]interface{}{"status": reply.Status, "app": reply.App}, nil, nil)
 }
 

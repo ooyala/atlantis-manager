@@ -31,6 +31,7 @@ func (c *UpdateDepCommand) Execute(args []string) error {
 }
 
 type ResolveDepsCommand struct {
+	App      string   `short:"a" long:"app" description:"the app the resolve dependencies for"`
 	Env      string   `short:"e" long:"env" description:"the environment of the dependencies to resolve"`
 	DepNames []string `short:"d" long:"dep" description:"the dep names to resolve"`
 }
@@ -45,7 +46,7 @@ func (c *ResolveDepsCommand) Execute(args []string) error {
 		return err
 	}
 	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerResolveDepsArg{ManagerAuthArg: authArg, Env: c.Env, DepNames: c.DepNames}
+	arg := ManagerResolveDepsArg{ManagerAuthArg: authArg, App: c.App, Env: c.Env, DepNames: c.DepNames}
 	var reply ManagerResolveDepsReply
 	if err := rpcClient.Call("ResolveDeps", arg, &reply); err != nil {
 		return OutputError(err)

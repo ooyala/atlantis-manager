@@ -206,7 +206,7 @@ func (e *ResolveDepsExecutor) Result() interface{} {
 }
 
 func (e *ResolveDepsExecutor) Description() string {
-	return fmt.Sprintf("%s -> %v", e.arg.Env, e.arg.DepNames)
+	return fmt.Sprintf("%s in %s -> %v", e.arg.App, e.arg.Env, e.arg.DepNames)
 }
 
 func (e *ResolveDepsExecutor) Authorize() error {
@@ -218,7 +218,7 @@ func (e *ResolveDepsExecutor) Execute(t *Task) error {
 	if err != nil {
 		return errors.New("Environment Error: " + err.Error())
 	}
-	e.reply.Deps, err = ResolveDepValues(zkEnv, e.arg.DepNames, false)
+	e.reply.Deps, err = ResolveDepValues(e.arg.App, zkEnv, e.arg.DepNames, false)
 	if err != nil {
 		return err
 	}

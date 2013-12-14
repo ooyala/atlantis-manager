@@ -120,6 +120,32 @@ func GetApp(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Status": reply.Status, "App": reply.App}, err))
 }
 
+func AddDependerApp(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
+	arg := ManagerDependerAppArg{
+		ManagerAuthArg: auth,
+		Dependee:       vars["Dependee"],
+		Depender:       vars["Depender"],
+	}
+	var reply ManagerDependerAppReply
+	err := manager.AddDependerApp(arg, &reply)
+	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Status": reply.Status, "Dependee": reply.Dependee}, err))
+}
+
+func RemoveDependerApp(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
+	arg := ManagerDependerAppArg{
+		ManagerAuthArg: auth,
+		Dependee:       vars["Dependee"],
+		Depender:       vars["Depender"],
+	}
+	var reply ManagerDependerAppReply
+	err := manager.RemoveDependerApp(arg, &reply)
+	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Status": reply.Status, "Dependee": reply.Dependee}, err))
+}
+
 func ListSupervisors(w http.ResponseWriter, r *http.Request) {
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
 	arg := ManagerListSupervisorsArg{auth}
