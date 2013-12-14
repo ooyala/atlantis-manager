@@ -83,8 +83,8 @@ func ListRegisteredApps(w http.ResponseWriter, r *http.Request) {
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
 	authorizedOnly, _ := strconv.ParseBool(r.FormValue("AuthorizedOnly"))
 	if authorizedOnly {
-		arg := ManagerListAuthorizedRegisteredAppsArg{auth}
-		var reply ManagerListAuthorizedRegisteredAppsReply
+		arg := ManagerListRegisteredAppsArg{auth}
+		var reply ManagerListRegisteredAppsReply
 		err := manager.ListAuthorizedRegisteredApps(arg, &reply)
 		fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Apps": reply.Apps, "Status": reply.Status}, err))
 	} else {

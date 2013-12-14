@@ -384,7 +384,7 @@ func (e *ListAuthorizedRegisteredAppsExecutor) Authorize() error {
 }
 
 func (e *ListAuthorizedRegisteredAppsExecutor) Execute(t *Task) (err error) {
-	apps, err = datamodel.ListRegisteredApps()
+	apps, err := datamodel.ListRegisteredApps()
 	if err != nil {
 		e.reply.Status = StatusError
 	} else {
@@ -778,6 +778,10 @@ func (m *ManagerRPC) GetApp(arg ManagerGetAppArg, reply *ManagerGetAppReply) err
 
 func (m *ManagerRPC) ListRegisteredApps(arg ManagerListRegisteredAppsArg, reply *ManagerListRegisteredAppsReply) error {
 	return NewTask("ListRegisteredApps", &ListRegisteredAppsExecutor{arg, reply}).Run()
+}
+
+func (m *ManagerRPC) ListAuthorizedRegisteredApps(arg ManagerListRegisteredAppsArg, reply *ManagerListRegisteredAppsReply) error {
+	return NewTask("ListAuthorizedRegisteredApps", &ListRegisteredAppsExecutor{arg, reply}).Run()
 }
 
 func (m *ManagerRPC) RegisterSupervisor(arg ManagerRegisterSupervisorArg, reply *ManagerRegisterSupervisorReply) error {
