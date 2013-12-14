@@ -222,6 +222,7 @@ func New() *ManagerClient {
 	o.AddCommand("register-app", "register an app", "", &RegisterAppCommand{})
 	o.AddCommand("unregister-app", "unregister an app", "", &UnregisterAppCommand{})
 	o.AddCommand("list-registered-apps", "list registered apps", "", &ListRegisteredAppsCommand{})
+	o.AddCommand("list-authorized-registered-apps", "list authorized registered apps", "", &ListAuthorizedRegisteredAppsCommand{})
 	o.AddCommand("get-app", "get a registered app", "", &GetAppCommand{})
 
 	// Environment Management

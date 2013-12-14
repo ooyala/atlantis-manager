@@ -362,6 +362,44 @@ func (e *ListRegisteredAppsExecutor) Execute(t *Task) (err error) {
 	return err
 }
 
+type ListAuthorizedRegisteredAppsExecutor struct {
+	arg   ManagerListRegisteredAppsArg
+	reply *ManagerListRegisteredAppsReply
+}
+
+func (e *ListAuthorizedRegisteredAppsExecutor) Request() interface{} {
+	return e.arg
+}
+
+func (e *ListAuthorizedRegisteredAppsExecutor) Result() interface{} {
+	return e.reply
+}
+
+func (e *ListAuthorizedRegisteredAppsExecutor) Description() string {
+	return "ListAuthorizedRegisteredApps"
+}
+
+func (e *ListAuthorizedRegisteredAppsExecutor) Authorize() error {
+	return SimpleAuthorize(&e.arg.ManagerAuthArg)
+}
+
+func (e *ListAuthorizedRegisteredAppsExecutor) Execute(t *Task) (err error) {
+	apps, err = datamodel.ListRegisteredApps()
+	if err != nil {
+		e.reply.Status = StatusError
+	} else {
+		e.reply.Status = StatusOk
+	}
+	authdApps := []string{}
+	for _, app := range apps {
+		if err := AuthorizeApp(&e.arg.ManagerAuthArg, app); err == nil {
+			authdApps = append(authdApps, app)
+		}
+	}
+	e.reply.Apps = authdApps
+	return err
+}
+
 // ----------------------------------------------------------------------------------------------------------
 // Register Supervisor
 // ----------------------------------------------------------------------------------------------------------

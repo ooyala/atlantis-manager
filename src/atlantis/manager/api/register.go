@@ -81,10 +81,18 @@ func GetRouter(w http.ResponseWriter, r *http.Request) {
 
 func ListRegisteredApps(w http.ResponseWriter, r *http.Request) {
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
-	arg := ManagerListRegisteredAppsArg{auth}
-	var reply ManagerListRegisteredAppsReply
-	err := manager.ListRegisteredApps(arg, &reply)
-	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Apps": reply.Apps, "Status": reply.Status}, err))
+	authorizedOnly, _ := strconv.ParseBool(r.FormValue("AuthorizedOnly"))
+	if authorizedOnly {
+		arg := ManagerListAuthorizedRegisteredAppsArg{auth}
+		var reply ManagerListAuthorizedRegisteredAppsReply
+		err := manager.ListAuthorizedRegisteredApps(arg, &reply)
+		fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Apps": reply.Apps, "Status": reply.Status}, err))
+	} else {
+		arg := ManagerListRegisteredAppsArg{auth}
+		var reply ManagerListRegisteredAppsReply
+		err := manager.ListRegisteredApps(arg, &reply)
+		fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Apps": reply.Apps, "Status": reply.Status}, err))
+	}
 }
 
 func RegisterApp(w http.ResponseWriter, r *http.Request) {

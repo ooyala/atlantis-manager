@@ -309,6 +309,33 @@ func (c *ListRegisteredAppsCommand) Execute(args []string) error {
 	return Output(map[string]interface{}{"status": reply.Status, "apps": reply.Apps}, reply.Apps, nil)
 }
 
+type ListAuthorizedRegisteredAppsCommand struct {
+}
+
+func (c *ListAuthorizedRegisteredAppsCommand) Execute(args []string) error {
+	err := Init()
+	if err != nil {
+		return OutputError(err)
+	}
+	Log("List Authorized Registered Apps..")
+	user, secret, err := GetSecret()
+	if err != nil {
+		return err
+	}
+	authArg := ManagerAuthArg{user, "", secret}
+	arg := ManagerListRegisteredAppsArg{authArg}
+	var reply ManagerListRegisteredAppsReply
+	err = rpcClient.Call("ListAuthorizedRegisteredApps", arg, &reply)
+	if err != nil {
+		return OutputError(err)
+	}
+	Log("-> status: %s", reply.Status)
+	for _, app := range reply.Apps {
+		Log("->   %s", app)
+	}
+	return Output(map[string]interface{}{"status": reply.Status, "apps": reply.Apps}, reply.Apps, nil)
+}
+
 type HealthCommand struct {
 }
 
