@@ -22,13 +22,13 @@ func CreateOrUpdateApp(nonAtlantis bool, typ, name, repo, root, email string, ad
 	za, err := GetApp(name)
 	if err != nil {
 		za = &ZkApp{
-			NonAtlantis: nonAtlantis,
-			Type: typ,
-			Name: name,
-			Repo: repo,
-			Root: root,
-			Email: email,
-			Addrs: addrs,
+			NonAtlantis:         nonAtlantis,
+			Type:                typ,
+			Name:                name,
+			Repo:                repo,
+			Root:                root,
+			Email:               email,
+			Addrs:               addrs,
 			AllowedDependerApps: map[string]bool{},
 		}
 	} else {

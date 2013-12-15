@@ -9,8 +9,8 @@ type App struct {
 	NonAtlantis         bool
 	Type                string // proxy type. http for atlantis apps, tcp or http for non-atlantis apps
 	Name                string
-	Repo                string // atlantis apps only
-	Root                string // atlantis apps only
+	Repo                string            // atlantis apps only
+	Root                string            // atlantis apps only
 	Addrs               map[string]string // non-atlantis apps only. env -> addr
 	Email               string
 	AllowedDependerApps map[string]bool

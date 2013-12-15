@@ -194,13 +194,13 @@ func (c *ListRoutersCommand) Execute(args []string) error {
 }
 
 type RegisterAppCommand struct {
-	App         string `short:"a" long:"app" description:"the app to register"`
-	NonAtlantis bool `short:"n" long:"non-atlantis" description:"true if this is a non-atlantis app"`
-	Type        string `short:"t" long:"type" description:"the proxy type (http for atlantis, tcp or http for non-atlantis)"`
-	Repo        string `short:"g" long:"git" description:"the app's git repository"`
-	Root        string `short:"r" long:"root" description:"the app's root within the repo"`
+	App         string            `short:"a" long:"app" description:"the app to register"`
+	NonAtlantis bool              `short:"n" long:"non-atlantis" description:"true if this is a non-atlantis app"`
+	Type        string            `short:"t" long:"type" description:"the proxy type (http for atlantis, tcp or http for non-atlantis)"`
+	Repo        string            `short:"g" long:"git" description:"the app's git repository"`
+	Root        string            `short:"r" long:"root" description:"the app's root within the repo"`
 	Addrs       map[string]string `long:"addr" description:"env to address map for non-atlantis apps"`
-	Email       string `short:"e" long:"email" description"the email of the app's owner"`
+	Email       string            `short:"e" long:"email" description"the email of the app's owner"`
 }
 
 func (c *RegisterAppCommand) Execute(args []string) error {
@@ -217,13 +217,13 @@ func (c *RegisterAppCommand) Execute(args []string) error {
 	authArg := ManagerAuthArg{user, "", secret}
 	arg := ManagerRegisterAppArg{
 		ManagerAuthArg: authArg,
-		NonAtlantis: c.NonAtlantis,
-		Type: c.Type,
-		Name: c.App,
-		Repo: c.Repo,
-		Root: c.Root,
-		Email: c.Email,
-		Addrs: c.Addrs,
+		NonAtlantis:    c.NonAtlantis,
+		Type:           c.Type,
+		Name:           c.App,
+		Repo:           c.Repo,
+		Root:           c.Root,
+		Email:          c.Email,
+		Addrs:          c.Addrs,
 	}
 	var reply ManagerRegisterAppReply
 	err = rpcClient.Call("RegisterApp", arg, &reply)
@@ -235,13 +235,13 @@ func (c *RegisterAppCommand) Execute(args []string) error {
 }
 
 type UpdateAppCommand struct {
-	App         string `short:"a" long:"app" description:"the app to update"`
-	NonAtlantis bool `short:"n" long:"non-atlantis" description:"true if this is a non-atlantis app"`
-	Type        string `short:"t" long:"type" description:"the proxy type (http for atlantis, tcp or http for non-atlantis)"`
-	Repo        string `short:"g" long:"git" description:"the app's git repository (or host:port for non-atlantis apps)"`
-	Root        string `short:"r" long:"root" description:"the app's root within the repo"`
+	App         string            `short:"a" long:"app" description:"the app to update"`
+	NonAtlantis bool              `short:"n" long:"non-atlantis" description:"true if this is a non-atlantis app"`
+	Type        string            `short:"t" long:"type" description:"the proxy type (http for atlantis, tcp or http for non-atlantis)"`
+	Repo        string            `short:"g" long:"git" description:"the app's git repository (or host:port for non-atlantis apps)"`
+	Root        string            `short:"r" long:"root" description:"the app's root within the repo"`
 	Addrs       map[string]string `long:"addr" description:"env to address map for non-atlantis apps"`
-	Email       string `short:"e" long:"email" description"the email of the app's owner"`
+	Email       string            `short:"e" long:"email" description"the email of the app's owner"`
 }
 
 func (c *UpdateAppCommand) Execute(args []string) error {
@@ -258,13 +258,13 @@ func (c *UpdateAppCommand) Execute(args []string) error {
 	authArg := ManagerAuthArg{user, "", secret}
 	arg := ManagerRegisterAppArg{
 		ManagerAuthArg: authArg,
-		NonAtlantis: c.NonAtlantis,
-		Type: c.Type,
-		Name: c.App,
-		Repo: c.Repo,
-		Root: c.Root,
-		Email: c.Email,
-		Addrs: c.Addrs,
+		NonAtlantis:    c.NonAtlantis,
+		Type:           c.Type,
+		Name:           c.App,
+		Repo:           c.Repo,
+		Root:           c.Root,
+		Email:          c.Email,
+		Addrs:          c.Addrs,
 	}
 	var reply ManagerRegisterAppReply
 	err = rpcClient.Call("UpdateApp", arg, &reply)
