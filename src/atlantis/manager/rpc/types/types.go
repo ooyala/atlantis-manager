@@ -7,9 +7,11 @@ import (
 
 type App struct {
 	NonAtlantis         bool
+	Type                string // proxy type. http for atlantis apps, tcp or http for non-atlantis apps
 	Name                string
-	Repo                string // if non-atlantis, repo is actually the url (host:port)
-	Root                string // if non-atlantis, root is actually the proxy type (tcp or http)
+	Repo                string // atlantis apps only
+	Root                string // atlantis apps only
+	Addrs               map[string]string // non-atlantis apps only. env -> addr
 	Email               string
 	AllowedDependerApps map[string]bool
 }
@@ -111,9 +113,11 @@ type ManagerHasRoleReply struct {
 type ManagerRegisterAppArg struct {
 	ManagerAuthArg
 	NonAtlantis bool
+	Type        string
 	Name        string
 	Repo        string
 	Root        string
+	Addrs       map[string]string
 	Email       string
 }
 

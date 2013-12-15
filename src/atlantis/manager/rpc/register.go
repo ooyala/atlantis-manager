@@ -240,9 +240,7 @@ func (e *RegisterAppExecutor) Execute(t *Task) error {
 	if !AppRegexp.MatchString(e.arg.Name) {
 		return errors.New("App name must be [A-Za-z0-9-]+")
 	}
-	if e.arg.NonAtlantis && e.arg.Repo == "" {
-		return errors.New("Please specify a host and port")
-	} else if e.arg.Repo == "" {
+	if !e.arg.NonAtlantis && e.arg.Repo == "" {
 		return errors.New("Please specify a repo")
 	}
 	if !e.arg.NonAtlantis && e.arg.Root == "" {
@@ -251,10 +249,15 @@ func (e *RegisterAppExecutor) Execute(t *Task) error {
 	if e.arg.Email == "" {
 		return errors.New("Please specify the email of the app owner")
 	}
+	typ := "http"
+	if e.arg.Type != "" {
+		typ = e.arg.Type
+	}
 	if _, err := datamodel.GetApp(e.arg.Name); err == nil {
 		return errors.New("Already Registered.")
 	}
-	_, err := datamodel.CreateOrUpdateApp(e.arg.NonAtlantis, e.arg.Name, e.arg.Repo, e.arg.Root, e.arg.Email)
+	_, err := datamodel.CreateOrUpdateApp(e.arg.NonAtlantis, typ, e.arg.Name, e.arg.Repo, e.arg.Root,
+		e.arg.Email, e.arg.Addrs)
 	if err != nil {
 		e.reply.Status = StatusError
 	}
@@ -290,9 +293,7 @@ func (e *UpdateAppExecutor) Execute(t *Task) error {
 	if !AppRegexp.MatchString(e.arg.Name) {
 		return errors.New("App name must be [A-Za-z0-9-]+")
 	}
-	if e.arg.NonAtlantis && e.arg.Repo == "" {
-		return errors.New("Please specify a host and port")
-	} else if e.arg.Repo == "" {
+	if !e.arg.NonAtlantis && e.arg.Repo == "" {
 		return errors.New("Please specify a repo")
 	}
 	if !e.arg.NonAtlantis && e.arg.Root == "" {
@@ -301,7 +302,12 @@ func (e *UpdateAppExecutor) Execute(t *Task) error {
 	if e.arg.Email == "" {
 		return errors.New("Please specify the email of the app owner")
 	}
-	_, err := datamodel.CreateOrUpdateApp(e.arg.NonAtlantis, e.arg.Name, e.arg.Repo, e.arg.Root, e.arg.Email)
+	typ := "http"
+	if e.arg.Type != "" {
+		typ = e.arg.Type
+	}
+	_, err := datamodel.CreateOrUpdateApp(e.arg.NonAtlantis, typ, e.arg.Name, e.arg.Repo, e.arg.Root,
+		e.arg.Email, e.arg.Addrs)
 	if err != nil {
 		e.reply.Status = StatusError
 	}
