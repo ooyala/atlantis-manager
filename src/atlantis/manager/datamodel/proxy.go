@@ -46,6 +46,44 @@ func (zp *ZkProxy) PortForAppEnv(app, env string) (string, error) {
 	return portStr, nil
 }
 
+func (zp *ZkProxy) AddAll(app string, envs []string) error {
+	i := MinProxyPort
+	for envCount := 0; envCount < len(envs); envCount++ {
+		if _, ok := zp.AppMap[app+"."+envs[envCount]]; ok {
+			continue
+		}
+		// find a port
+		for ; MinProxyPort <= i && i <= MaxProxyPort; i++ {
+			iStr := fmt.Sprintf("%d", i)
+			if _, taken := zp.PortMap[iStr]; taken {
+				continue
+			}
+			zp.PortMap[iStr] = ZkProxyAppEnv{App: app, Env: envs[envCount]}
+			zp.AppMap[app+"."+envs[envCount]] = iStr
+			break
+		}
+		if i == MaxProxyPort+1 {
+			// TODO[jigish] email appsplat. this is a problem lol.
+			return errors.New("Not Enough Available Ports")
+		}
+	}
+	// TODO[jigish] add app+env to all proxies
+	return zp.Save()
+}
+
+func (zp *ZkProxy) RemoveAll(app string, envs []string) error {
+	for _, env := range envs {
+		currentPort, ok := zp.AppMap[app+"."+env]
+		if !ok {
+			continue
+		}
+		delete(zp.AppMap, app+"."+env)
+		delete(zp.PortMap, currentPort)
+	}
+	// TODO[jigish] remove app+env from all proxies
+	return zp.Save()
+}
+
 func (zp *ZkProxy) AddAppEnv(app, env string) error {
 	if _, ok := zp.AppMap[app+"."+env]; ok {
 		return nil // we already have added this

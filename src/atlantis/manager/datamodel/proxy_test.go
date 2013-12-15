@@ -31,4 +31,10 @@ func (s *DatamodelSuite) TestProxy(c *C) {
 	c.Assert(zp.RemoveAppEnv("app2", "staging"), IsNil)
 	c.Assert(len(zp.AppMap), Equals, 0)
 	c.Assert(len(zp.PortMap), Equals, 0)
+	c.Assert(zp.AddAll("app1", []string{"prod", "staging"}), IsNil)
+	c.Assert(len(zp.AppMap), Equals, 2)
+	c.Assert(len(zp.PortMap), Equals, 2)
+	c.Assert(zp.RemoveAll("app1", []string{"prod", "staging"}), IsNil)
+	c.Assert(len(zp.AppMap), Equals, 0)
+	c.Assert(len(zp.PortMap), Equals, 0)
 }

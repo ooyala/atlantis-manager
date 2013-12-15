@@ -36,10 +36,17 @@ func CreateOrUpdateApp(nonAtlantis bool, typ, name, repo, root, email string, ad
 		}
 		// new app. if non-atlantis, add proxyies
 		if nonAtlantis {
+			lock := NewProxyLock()
+			lock.Lock()
 			zp := GetProxy()
+			envs := make([]string, len(addrs))
+			i := 0
 			for env, _ := range addrs {
-				zp.AddAppEnv(name, env)
+				envs[i] = env
+				i++
 			}
+			zp.AddAll(name, envs)
+			lock.Unlock()
 		}
 	} else {
 		oldAddrs := za.Addrs
@@ -55,19 +62,27 @@ func CreateOrUpdateApp(nonAtlantis bool, typ, name, repo, root, email string, ad
 		}
 		// old app. if non-atlantis, remove unused proxyies and add new proxyies
 		if nonAtlantis {
+			lock := NewProxyLock()
+			lock.Lock()
 			zp := GetProxy()
-			for env, _ := range addrs { // add new proxies
-				if err := zp.AddAppEnv(name, env); err != nil {
-					return za, err
-				}
+			envs := make([]string, len(addrs))
+			i := 0
+			for env, _ := range addrs {
+				envs[i] = env
+				i++
 			}
-			for env, _ := range oldAddrs { // remove old unused proxies
+			zp.AddAll(name, envs)
+			// remove unused proxies
+			oldEnvs := make([]string, len(addrs))
+			i = 0
+			for env, _ := range oldAddrs {
 				if _, ok := addrs[env]; !ok {
-					if err := zp.RemoveAppEnv(name, env); err != nil {
-						return za, err
-					}
+					oldEnvs[i] = env
 				}
+				i++
 			}
+			zp.RemoveAll(name, oldEnvs)
+			lock.Unlock()
 		}
 	}
 	return za, nil

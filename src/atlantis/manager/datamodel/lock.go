@@ -163,3 +163,36 @@ func (l *TeardownLock) Unlock() error {
 	l.locked = false
 	return nil
 }
+
+func NewProxyLock() *ProxyLock {
+	return &ProxyLock{}
+}
+
+type ProxyLock struct {
+	locked bool
+	mutex  *zookeeper.Mutex
+}
+
+func (l *ProxyLock) Lock() error {
+	if l.locked {
+		return nil
+	}
+	path := helper.GetBaseLockPath("proxy")
+	l.mutex = zookeeper.NewMutex(Zk.Conn, path)
+	if err := l.mutex.Lock(); err != nil {
+		return err
+	}
+	l.locked = true
+	return nil
+}
+
+func (l *ProxyLock) Unlock() error {
+	if !l.locked {
+		return nil
+	}
+	if err := l.mutex.Unlock(); err != nil {
+		return err
+	}
+	l.locked = false
+	return nil
+}
