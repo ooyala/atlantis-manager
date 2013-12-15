@@ -57,3 +57,9 @@ func ContainerMaintenance(host, containerID string, maint bool) (*SupervisorCont
 	var reply SupervisorContainerMaintenanceReply
 	return &reply, NewSupervisorRPCClient(host+":"+Port).Call("ContainerMaintenance", args, &reply)
 }
+
+func UpdateProxy(host, sha string) (*SupervisorUpdateProxyReply, error) {
+	args := SupervisorUpdateProxyArg{Host: host, Sha: sha}
+	var reply SupervisorUpdateProxyReply
+	return &reply, NewSupervisorRPCClient(host+":"+Port).Call("UpdateProxy", args, &reply)
+}

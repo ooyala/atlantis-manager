@@ -17,6 +17,7 @@ type ZkProxyAppEnv struct {
 }
 
 type ZkProxy struct {
+	Sha     string                   // current version
 	PortMap map[string]ZkProxyAppEnv // port -> app+env
 	AppMap  map[string]string        // app.env -> port
 }
@@ -67,7 +68,9 @@ func (zp *ZkProxy) AddAll(app string, envs []string) error {
 			return errors.New("Not Enough Available Ports")
 		}
 	}
-	// TODO[jigish] add app+env to all proxies
+	if zp.Sha != "" {
+		// TODO[jigish] add app+env to all proxies
+	}
 	return zp.Save()
 }
 
@@ -80,7 +83,9 @@ func (zp *ZkProxy) RemoveAll(app string, envs []string) error {
 		delete(zp.AppMap, app+"."+env)
 		delete(zp.PortMap, currentPort)
 	}
-	// TODO[jigish] remove app+env from all proxies
+	if zp.Sha != "" {
+		// TODO[jigish] remove app+env from all proxies
+	}
 	return zp.Save()
 }
 
@@ -103,7 +108,9 @@ func (zp *ZkProxy) AddAppEnv(app, env string) error {
 		// TODO[jigish] email appsplat. this is a problem lol.
 		return errors.New("No Available Ports")
 	}
-	// TODO[jigish] add app+env to all proxies
+	if zp.Sha != "" {
+		// TODO[jigish] add app+env to all proxies
+	}
 	return zp.Save()
 }
 
@@ -114,7 +121,9 @@ func (zp *ZkProxy) RemoveAppEnv(app, env string) error {
 	}
 	delete(zp.AppMap, app+"."+env)
 	delete(zp.PortMap, currentPort)
-	// TODO[jigish] remove app+env from all proxies
+	if zp.Sha != "" {
+		// TODO[jigish] remove app+env from all proxies
+	}
 	return zp.Save()
 }
 

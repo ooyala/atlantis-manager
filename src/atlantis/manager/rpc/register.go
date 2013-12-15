@@ -499,10 +499,21 @@ func (e *RegisterSupervisorExecutor) Execute(t *Task) error {
 	}
 	err = datamodel.Supervisor(e.arg.Host).Touch()
 	if err != nil {
+		e.reply.Status = StatusError
 		return err
 	}
-	e.reply.Status = StatusOk
-	return nil
+	t.Log("Updating Proxy")
+	lock := datamodel.NewProxyLock()
+	lock.Lock()
+	defer lock.Unlock()
+	proxy := datamodel.GetProxy()
+	_, err = supervisor.UpdateProxy(e.arg.Host, proxy.Sha)
+	if err == nil {
+		e.reply.Status = StatusOk
+	} else {
+		e.reply.Status = StatusError
+	}
+	return err
 }
 
 func (e *RegisterSupervisorExecutor) Authorize() error {
