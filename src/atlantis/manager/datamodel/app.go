@@ -31,7 +31,18 @@ func CreateOrUpdateApp(nonAtlantis bool, typ, name, repo, root, email string, ad
 			Addrs:               addrs,
 			AllowedDependerApps: map[string]bool{},
 		}
+		if err := za.Save(); err != nil {
+			return za, err
+		}
+		// new app. if non-atlantis, add proxyies
+		if nonAtlantis {
+			zp := GetProxy()
+			for env, _ := range addrs {
+				zp.AddAppEnv(name, env)
+			}
+		}
 	} else {
+		oldAddrs := za.Addrs
 		za.Type = typ
 		za.Name = name
 		za.Repo = repo
@@ -39,8 +50,27 @@ func CreateOrUpdateApp(nonAtlantis bool, typ, name, repo, root, email string, ad
 		za.Email = email
 		za.Addrs = addrs
 		za.NonAtlantis = nonAtlantis
+		if err := za.Save(); err != nil {
+			return za, err
+		}
+		// old app. if non-atlantis, remove unused proxyies and add new proxyies
+		if nonAtlantis {
+			zp := GetProxy()
+			for env, _ := range addrs { // add new proxies
+				if err := zp.AddAppEnv(name, env); err != nil {
+					return za, err
+				}
+			}
+			for env, _ := range oldAddrs { // remove old unused proxies
+				if _, ok := addrs[env]; !ok {
+					if err := zp.RemoveAppEnv(name, env); err != nil {
+						return za, err
+					}
+				}
+			}
+		}
 	}
-	return za, za.Save()
+	return za, nil
 }
 
 func (za *ZkApp) Delete() error {

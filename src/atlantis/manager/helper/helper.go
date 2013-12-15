@@ -27,6 +27,12 @@ func JoinWithBase(base string, args ...string) string {
 	return path.Join(base, path.Join(args...))
 }
 
+// get path to /proxy
+func GetBaseProxyPath(args ...string) string {
+	base := fmt.Sprintf("/atlantis/proxy/%s", Region)
+	return JoinWithBase(base, args...)
+}
+
 // get path to node in /apps
 func GetBaseAppPath(args ...string) string {
 	base := fmt.Sprintf("/atlantis/apps/%s", Region)

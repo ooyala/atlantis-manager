@@ -6,13 +6,16 @@ import (
 )
 
 func (s *DatamodelSuite) TestApp(c *C) {
+	MinProxyPort = uint16(40000)
+	MaxProxyPort = uint16(65535)
 	Zk.RecursiveDelete(helper.GetBaseAppPath())
 	apps, err := ListRegisteredApps()
 	c.Assert(err, Not(IsNil)) // the path doesn't exist. this is an error
 	c.Assert(len(apps), Equals, 0)
 	app1, err := GetApp(app)
 	c.Assert(err, Not(IsNil))
-	app1, err = CreateOrUpdateApp(true, "http", app, repo, root, "jigish@ooyala.com", map[string]string{})
+	app1, err = CreateOrUpdateApp(true, "http", app, repo, root, "jigish@ooyala.com",
+		map[string]string{"prod": "google.com:80", "staging": "bing.com:80"})
 	c.Assert(err, IsNil)
 	c.Assert(app1.NonAtlantis, Equals, true)
 	c.Assert(app1.Name, Equals, app)
@@ -20,6 +23,24 @@ func (s *DatamodelSuite) TestApp(c *C) {
 	c.Assert(app1.Root, Equals, root)
 	c.Assert(app1.Email, Equals, "jigish@ooyala.com")
 	c.Assert(app1.AddDepender("oogabooga"), Not(IsNil))
+	// verify that proxy is added
+	zp := GetProxy()
+	prodPort, err := zp.PortForAppEnv(app, "prod")
+	c.Assert(err, IsNil)
+	stagingPort, err := zp.PortForAppEnv(app, "staging")
+	c.Assert(err, IsNil)
+	c.Assert(prodPort, Not(Equals), stagingPort)
+	app1, err = CreateOrUpdateApp(true, "http", app, repo, root, "jigish@ooyala.com",
+		map[string]string{"prod": "google.com:80", "oogabooga": "oogabooga.com:80"})
+	zp = GetProxy()
+	newProdPort, err := zp.PortForAppEnv(app, "prod")
+	c.Assert(err, IsNil)
+	oogaboogaPort, err := zp.PortForAppEnv(app, "oogabooga")
+	c.Assert(err, IsNil)
+	stagingPort, err = zp.PortForAppEnv(app, "staging")
+	c.Assert(err, Not(IsNil))
+	c.Assert(prodPort, Not(Equals), oogaboogaPort)
+	c.Assert(prodPort, Equals, newProdPort)
 	app2, err := CreateOrUpdateApp(false, "http", "oogabooga", repo, root, "jigish@ooyala.com", map[string]string{})
 	c.Assert(app1.AddDepender("oogabooga"), IsNil)
 	c.Assert(app1.HasDepender("oogabooga"), Equals, true)

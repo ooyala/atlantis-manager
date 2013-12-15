@@ -22,4 +22,7 @@ const (
 	DefaultResultDuration           = "30m"
 	DefaultMaintenanceFile          = "/etc/atlantis/manager/maint"
 	DefaultMaintenanceCheckInterval = "5s"
+	DefaultMinProxyPort             = uint16(40000)
+	DefaultMaxProxyPort             = uint16(65535)
+	DefaultProxyIP                  = "172.31.254.254"
 )
