@@ -3,6 +3,7 @@ package api
 import (
 	. "atlantis/common"
 	. "atlantis/manager/rpc/types"
+	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
 	"net/http"
@@ -99,13 +100,24 @@ func RegisterApp(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
 	nonAtlantis, _ := strconv.ParseBool(r.FormValue("NonAtlantis"))
+	var addrs map[string]string
+	if nonAtlantis {
+		addrsStr := r.FormValue("Addrs")
+		err := json.Unmarshal([]byte(addrsStr), &addrs)
+		if err != nil {
+			fmt.Fprintf(w, "%s", Output(map[string]interface{}{}, err))
+			return
+		}
+	}
 	arg := ManagerRegisterAppArg{
 		ManagerAuthArg: auth,
 		NonAtlantis:    nonAtlantis,
+		Type:           r.FormValue("Type"),
 		Name:           vars["App"],
 		Repo:           r.FormValue("Repo"),
 		Root:           r.FormValue("Root"),
 		Email:          r.FormValue("Email"),
+		Addrs:          addrs,
 	}
 	var reply ManagerRegisterAppReply
 	err := manager.RegisterApp(arg, &reply)
@@ -116,13 +128,24 @@ func UpdateApp(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
 	nonAtlantis, _ := strconv.ParseBool(r.FormValue("NonAtlantis"))
+	var addrs map[string]string
+	if nonAtlantis {
+		addrsStr := r.FormValue("Addrs")
+		err := json.Unmarshal([]byte(addrsStr), &addrs)
+		if err != nil {
+			fmt.Fprintf(w, "%s", Output(map[string]interface{}{}, err))
+			return
+		}
+	}
 	arg := ManagerRegisterAppArg{
 		ManagerAuthArg: auth,
 		NonAtlantis:    nonAtlantis,
+		Type:           r.FormValue("Type"),
 		Name:           vars["App"],
 		Repo:           r.FormValue("Repo"),
 		Root:           r.FormValue("Root"),
 		Email:          r.FormValue("Email"),
+		Addrs:          addrs,
 	}
 	var reply ManagerRegisterAppReply
 	err := manager.UpdateApp(arg, &reply)
