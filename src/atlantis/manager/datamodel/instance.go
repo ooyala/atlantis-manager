@@ -2,6 +2,7 @@ package datamodel
 
 import (
 	"atlantis/manager/helper"
+	"atlantis/supervisor/rpc/types"
 	"log"
 )
 
@@ -13,6 +14,7 @@ type ZkInstance struct {
 	Env      string
 	Host     string
 	Port     uint16
+	Manifest *types.Manifest
 }
 
 func InstanceExists(id string) bool {
@@ -33,7 +35,7 @@ func CreateInstance(internal bool, app, sha, env, host string) (*ZkInstance, err
 	for InstanceExists(id) {
 		id = helper.CreateContainerID(app, sha, env)
 	}
-	zi := &ZkInstance{internal, id, app, sha, env, host, 0}
+	zi := &ZkInstance{Internal: internal, ID: id, App: app, Sha: sha, Env: env, Host: host, Port: 0}
 	if _, err := Zk.Touch(zi.path()); err != nil {
 		Zk.RecursiveDelete(zi.path())
 		return zi, err
@@ -97,6 +99,11 @@ func (zi *ZkInstance) Delete() (bool, error) { // true if this was the last inst
 
 func (zi *ZkInstance) SetPort(port uint16) error {
 	zi.Port = port
+	return setJson(zi.dataPath(), zi)
+}
+
+func (zi *ZkInstance) SetManifest(m *types.Manifest) error {
+	zi.Manifest = m
 	return setJson(zi.dataPath(), zi)
 }
 

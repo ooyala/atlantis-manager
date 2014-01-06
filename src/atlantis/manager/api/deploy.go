@@ -71,6 +71,21 @@ func MoveContainer(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"ID": reply.ID}, err))
 }
 
+func CopyOrphaned(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
+	cleanup, err := strconv.ParseBool(r.FormValue("CleanupZk"))
+	if err != nil {
+		fmt.Fprintf(w, "{\"error\": \"%s\"}", err.Error())
+		return
+	}
+	ccArg := ManagerCopyOrphanedArg{ManagerAuthArg: auth, ContainerID: vars["ID"], Host: r.FormValue("Host"),
+		CleanupZk: cleanup}
+	var reply AsyncReply
+	err = manager.CopyOrphaned(ccArg, &reply)
+	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"ID": reply.ID}, err))
+}
+
 func Teardown(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}

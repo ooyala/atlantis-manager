@@ -124,6 +124,7 @@ func Init(listenAddr string) error {
 	gmux.HandleFunc("/instances/apps/{App}/shas", ListShas).Methods("GET")
 	gmux.HandleFunc("/instances/apps/{App}", Teardown).Methods("DELETE")
 	gmux.HandleFunc("/instances/apps", ListApps).Methods("GET")
+	gmux.HandleFunc("/instances/{ID}/copyOrphaned", CopyOrphaned).Methods("POST")
 	gmux.HandleFunc("/instances/{ID}/copy", CopyContainer).Methods("POST")
 	gmux.HandleFunc("/instances/{ID}/move", MoveContainer).Methods("POST")
 	gmux.HandleFunc("/instances/{ID}/maint", ContainerMaintenance).Methods("POST")

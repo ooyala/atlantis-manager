@@ -90,6 +90,7 @@ func ResolveDepValues(app string, zkEnv *datamodel.ZkEnv, names []string, encryp
 }
 
 func validateDeploy(auth *ManagerAuthArg, manifest *Manifest, sha, env string, t *Task) (deps map[string]map[string]string, err error) {
+	t.LogStatus("Validate Deploy")
 	// authorize that we're allowed to use the app
 	if err = AuthorizeApp(auth, manifest.Name); err != nil {
 		return nil, errors.New("Permission Denied: " + err.Error())
@@ -146,6 +147,7 @@ func deployToHost(respCh chan *DeployHostResult, manifest *Manifest, sha, env, h
 	}
 	ihReply.Container.Host = host
 	instance.SetPort(ihReply.Container.PrimaryPort)
+	instance.SetManifest(ihReply.Container.Manifest)
 	AddAppShaToEnv(manifest.Name, sha, env)
 	respCh <- &DeployHostResult{Host: host, Container: ihReply.Container, Error: nil}
 }
@@ -413,6 +415,53 @@ func moveContainer(auth *ManagerAuthArg, cont *Container, t *Task) (*Container, 
 	return deployed[0], nil
 }
 
+func copyOrphaned(auth *ManagerAuthArg, cid, toHost string, purge bool, t *Task) (*Container, error) {
+	// get old instance
+	inst, err := datamodel.GetInstance(cid)
+	if err != nil {
+		return nil, err
+	}
+
+	// get manifest
+	manifest := inst.Manifest
+	if manifest == nil {
+		// if we don't have the manifest in zk, try to get it from the supervisor
+		ihReply, err := supervisor.Get(inst.Host, inst.ID)
+		if err != nil {
+			return nil, err
+		}
+		manifest = ihReply.Container.Manifest
+	}
+	manifest.Instances = 1
+
+	// validate and get deps
+	deps, err := validateDeploy(auth, manifest, inst.Sha, inst.Env, t)
+	if err != nil {
+		return nil, err
+	}
+
+	// get zone of toHost
+	zone, err := supervisor.GetZone(toHost)
+	if err != nil {
+		return nil, err
+	}
+
+	deployed, err := deployToHostsInZones(deps, manifest, inst.Sha, inst.Env,
+		map[string][]string{zone: []string{toHost}}, []string{zone}, t)
+	if err != nil {
+		return nil, err
+	}
+	// should only deploy 1 since we're only moving 1
+	if len(deployed) != 1 {
+		cleanup(true, deployed, t)
+		return nil, errors.New(fmt.Sprintf("Didn't deploy 1 container. Deployed %d", len(deployed)))
+	}
+	if purge {
+		cleanupZk(inst, t) // cleanup the old instance references
+	}
+	return deployed[0], nil
+}
+
 func cleanup(removeContainerFromHost bool, deployedContainers []*Container, t *Task) {
 	// kill all references to deployed containers as well as the container itself
 	for _, container := range deployedContainers {
@@ -427,6 +476,12 @@ func cleanup(removeContainerFromHost bool, deployedContainers []*Container, t *T
 			datamodel.Supervisor(container.Host).RemoveContainer(container.ID)
 		}
 	}
+}
+
+func cleanupZk(inst *datamodel.ZkInstance, t *Task) {
+	// don't teardown from supervisor, this is meant as a pure zk cleanup
+	inst.Delete()
+	DeleteAppShaFromEnv(inst.App, inst.Sha, inst.Env)
 }
 
 //

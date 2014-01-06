@@ -245,6 +245,7 @@ func New() *ManagerClient {
 	o.AddCommand("deploy", "[async] deploy something", "", &DeployCommand{})
 	o.AddCommand("copy-container", "[async] deploy by copying a container", "", &CopyContainerCommand{})
 	o.AddCommand("move-container", "[async] deploy by moving a container", "", &MoveContainerCommand{})
+	o.AddCommand("copy-orphaned", "[async] deploy by copying an orphaned container", "", &CopyOrphanedCommand{})
 	o.AddCommand("teardown", "[async] teardown something", "", &TeardownCommand{})
 	o.AddCommand("get-container", "get a container", "", &GetContainerCommand{})
 

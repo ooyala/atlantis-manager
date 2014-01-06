@@ -289,6 +289,17 @@ type ManagerMoveContainerArg struct {
 
 // MoveContainer uses ManagerDeployReply
 
+// ------------ CopyOrphaned ------------
+// Used to deploy by copying a container
+type ManagerCopyOrphanedArg struct {
+	ManagerAuthArg
+	ContainerID string
+	Host        string
+	CleanupZk   bool
+}
+
+// CopyOrphaned uses ManagerDeployReply
+
 // ------------ ResolveDeps ------------
 // used to resolve deps in an environment to see what the deploy will contain
 type ManagerResolveDepsArg struct {

@@ -103,6 +103,36 @@ func (c *MoveContainerCommand) Execute(args []string) error {
 	return (&WaitCommand{reply.ID}).Execute(args)
 }
 
+type CopyOrphanedCommand struct {
+	ContainerID string `short:"c" long:"container" description:"the id of the container to move"`
+	Host        string `short:"c" long:"container" description:"the id of the container to move"`
+	CleanupZk   bool   `long:"cleanup" description:"the id of the container to move"`
+	Wait        bool   `long:"wait" description:"wait until the deploy is done before exiting"`
+}
+
+func (c *CopyOrphanedCommand) Execute(args []string) error {
+	if err := Init(); err != nil {
+		return OutputError(err)
+	}
+	Log("CopyOrphaned...")
+	user, secret, err := GetSecret()
+	if err != nil {
+		return err
+	}
+	authArg := ManagerAuthArg{user, "", secret}
+	arg := ManagerCopyOrphanedArg{ManagerAuthArg: authArg, ContainerID: c.ContainerID, Host: c.Host,
+		CleanupZk: c.CleanupZk}
+	var reply atlantis.AsyncReply
+	if err := rpcClient.Call("CopyOrphaned", arg, &reply); err != nil {
+		return OutputError(err)
+	}
+	Log("-> ID: %s", reply.ID)
+	if !c.Wait {
+		return Output(map[string]interface{}{"id": reply.ID}, reply.ID, nil)
+	}
+	return (&WaitCommand{reply.ID}).Execute(args)
+}
+
 func OutputDeployReply(reply *ManagerDeployReply) error {
 	Log("-> Status: %s", reply.Status)
 	Log("-> Deployed Containers:")

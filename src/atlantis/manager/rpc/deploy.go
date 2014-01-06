@@ -192,6 +192,47 @@ func (m *ManagerRPC) MoveContainer(arg ManagerMoveContainerArg, reply *AsyncRepl
 	return NewTask("MoveContainer", &MoveContainerExecutor{arg, &ManagerDeployReply{}}).RunAsync(reply)
 }
 
+type CopyOrphanedExecutor struct {
+	arg   ManagerCopyOrphanedArg
+	reply *ManagerDeployReply
+}
+
+func (e *CopyOrphanedExecutor) Request() interface{} {
+	return e.arg
+}
+
+func (e *CopyOrphanedExecutor) Result() interface{} {
+	return e.reply
+}
+
+func (e *CopyOrphanedExecutor) Description() string {
+	return fmt.Sprintf("%s", e.arg.ContainerID)
+}
+
+func (e *CopyOrphanedExecutor) Authorize() error {
+	if err := checkRole("deploys", "write"); err != nil {
+		return err
+	}
+	// app is authorized in deploy()
+	return SimpleAuthorize(&e.arg.ManagerAuthArg)
+}
+
+func (e *CopyOrphanedExecutor) Execute(t *Task) error {
+	if e.arg.ContainerID == "" {
+		return errors.New("Container ID is empty")
+	}
+	if e.arg.Host == "" {
+		return errors.New("Container ID is empty")
+	}
+	cont, err := copyOrphaned(&e.arg.ManagerAuthArg, e.arg.ContainerID, e.arg.Host, e.arg.CleanupZk, t)
+	e.reply.Containers = []*Container{cont}
+	return err
+}
+
+func (m *ManagerRPC) CopyOrphaned(arg ManagerCopyOrphanedArg, reply *AsyncReply) error {
+	return NewTask("CopyOrphaned", &CopyOrphanedExecutor{arg, &ManagerDeployReply{}}).RunAsync(reply)
+}
+
 type ResolveDepsExecutor struct {
 	arg   ManagerResolveDepsArg
 	reply *ManagerResolveDepsReply
