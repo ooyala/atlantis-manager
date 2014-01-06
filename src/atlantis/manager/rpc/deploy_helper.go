@@ -272,6 +272,7 @@ func deployToHostsInZones(deps map[string]map[string]string, manifest *Manifest,
 		zp := datamodel.GetProxy()
 		if err := zp.AddAppEnv(manifest.Name, env); err != nil {
 			// if proxy fails, clean up and fail
+			datamodel.DeleteFromPool(deployedIDs)
 			cleanup(true, deployedContainers, t)
 			pLock.Unlock()
 			return nil, errors.New("Update Proxy Error: " + err.Error())
@@ -280,6 +281,7 @@ func deployToHostsInZones(deps map[string]map[string]string, manifest *Manifest,
 		t.LogStatus("Updating DNS")
 		if err := dns.CreateAppCNames(manifest.Internal, manifest.Name, sha, env); err != nil {
 			// if DNS fails, clean up and fail
+			datamodel.DeleteFromPool(deployedIDs)
 			cleanup(true, deployedContainers, t)
 			return nil, errors.New("Update DNS Error: " + err.Error())
 		}
