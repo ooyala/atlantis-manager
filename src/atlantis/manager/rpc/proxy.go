@@ -86,6 +86,9 @@ func (e *ConfigureProxyExecutor) Authorize() error {
 }
 
 func (e *ConfigureProxyExecutor) Execute(t *Task) error {
+	pLock := datamodel.NewProxyLock()
+	pLock.Lock()
+	defer pLock.Unlock()
 	if err := datamodel.ConfigureProxy(); err != nil {
 		e.reply.Status = StatusError
 		return err

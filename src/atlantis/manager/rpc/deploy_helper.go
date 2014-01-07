@@ -31,6 +31,9 @@ func ResolveDepValuesForZone(app string, zkEnv *datamodel.ZkEnv, zone string, na
 	// if we're using DNS and the app is registered, try to get the app cname (if deployed)
 	if dns.Provider != nil {
 		for _, name := range names {
+			pLock := datamodel.NewProxyLock()
+			pLock.Lock()
+			defer pLock.Unlock()
 			zp := datamodel.GetProxy()
 			if port, err := zp.PortForAppEnv(name, zkEnv.Name); err != nil && zp.IsRunning() {
 				// if proxy is running, use it to determine depenencies
