@@ -1,9 +1,15 @@
 package datamodel
 
 import (
+	. "atlantis/common"
+	. "atlantis/manager/constant"
+	"atlantis/manager/dns"
 	"atlantis/manager/helper"
+	"atlantis/manager/supervisor"
+	"atlantis/proxy/types"
 	"errors"
 	"fmt"
+	"strings"
 )
 
 var (
@@ -47,6 +53,82 @@ func (zp *ZkProxy) PortForAppEnv(app, env string) (string, error) {
 	return portStr, nil
 }
 
+func ConfigureProxy() (err error) {
+	zp := GetProxy()
+	if zp.Sha == "" {
+		return nil // no proxy deployed yet, no need to configure anything
+	}
+	// find all supervisors
+	supers, err := ListSupervisors()
+	if err != nil {
+		return err
+	}
+	// map of zone -> config
+	cfgs := map[string]map[string]*types.ProxyConfig{}
+	for _, zone := range AvailableZones {
+		cfgs[zone], err = GetProxyConfig(zone)
+		if err != nil {
+			return err
+		}
+	}
+	// configure proxy on each supervisor one-by-one
+	for _, super := range supers {
+		zone, err := supervisor.GetZone(super)
+		if err != nil {
+			return err
+		}
+		if cfgs[zone] == nil {
+			return errors.New("Invalid Zone ("+super+"): "+zone)
+		}
+		sReply, err := supervisor.ConfigureProxy(super, cfgs[zone])
+		if err != nil {
+			return err
+		} else if sReply.Status != StatusOk {
+			return errors.New("Configure Proxy Status ("+super+"): "+sReply.Status)
+		}
+	}
+	return nil
+}
+
+func GetProxyConfig(zone string) (map[string]*types.ProxyConfig, error) {
+	zp := GetProxy()
+	cfg := map[string]*types.ProxyConfig{}
+	for port, zkAppEnv := range zp.PortMap {
+		zkApp, err := GetApp(zkAppEnv.App)
+		if err != nil {
+			return nil, err
+		}
+		lAddr := "0.0.0.0:"+port
+		if zkApp.NonAtlantis {
+			// use addrs from app
+			rAddr := zkApp.Addrs[zkAppEnv.Env]
+			if rAddr == "" {
+				return nil, errors.New("app " + zkAppEnv.App + " does not have env " + zkAppEnv.Env)
+			}
+			cfg[lAddr] = &types.ProxyConfig{
+				Type:       types.ProxyTypeTCP,
+				LocalAddr:  lAddr,
+				RemoteAddr: rAddr,
+			}
+			if strings.ToLower(zkApp.Type) == "http" {
+				cfg[lAddr].Type = types.ProxyTypeHTTP
+			}
+		} else if dns.Provider != nil {
+			suffix, err := dns.Provider.Suffix(Region)
+			if err != nil {
+				return nil, err
+			}
+			// use internal app dns stuff
+			cfg[lAddr] = &types.ProxyConfig{
+				Type:       types.ProxyTypeHTTP,
+				LocalAddr:  lAddr,
+				RemoteAddr: helper.GetZoneAppCName(zkAppEnv.App, zkAppEnv.Env, zone, suffix),
+			}
+		}
+	}
+	return cfg, nil
+}
+
 func (zp *ZkProxy) AddAll(app string, envs []string) error {
 	i := MinProxyPort
 	for envCount := 0; envCount < len(envs); envCount++ {
@@ -68,9 +150,7 @@ func (zp *ZkProxy) AddAll(app string, envs []string) error {
 			return errors.New("Not Enough Available Ports")
 		}
 	}
-	if zp.Sha != "" {
-		// TODO[jigish] add app+env to all proxies
-	}
+	ConfigureProxy()
 	return zp.Save()
 }
 
@@ -83,9 +163,7 @@ func (zp *ZkProxy) RemoveAll(app string, envs []string) error {
 		delete(zp.AppMap, app+"."+env)
 		delete(zp.PortMap, currentPort)
 	}
-	if zp.Sha != "" {
-		// TODO[jigish] remove app+env from all proxies
-	}
+	ConfigureProxy()
 	return zp.Save()
 }
 
@@ -108,9 +186,7 @@ func (zp *ZkProxy) AddAppEnv(app, env string) error {
 		// TODO[jigish] email appsplat. this is a problem lol.
 		return errors.New("No Available Ports")
 	}
-	if zp.Sha != "" {
-		// TODO[jigish] add app+env to all proxies
-	}
+	ConfigureProxy()
 	return zp.Save()
 }
 
@@ -121,9 +197,7 @@ func (zp *ZkProxy) RemoveAppEnv(app, env string) error {
 	}
 	delete(zp.AppMap, app+"."+env)
 	delete(zp.PortMap, currentPort)
-	if zp.Sha != "" {
-		// TODO[jigish] remove app+env from all proxies
-	}
+	ConfigureProxy()
 	return zp.Save()
 }
 

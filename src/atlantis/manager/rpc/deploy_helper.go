@@ -6,6 +6,7 @@ import (
 	. "atlantis/manager/constant"
 	"atlantis/manager/datamodel"
 	"atlantis/manager/dns"
+	appdns "atlantis/manager/dns/app"
 	"atlantis/manager/helper"
 	. "atlantis/manager/rpc/types"
 	"atlantis/manager/supervisor"
@@ -281,7 +282,7 @@ func deployToHostsInZones(deps map[string]map[string]string, manifest *Manifest,
 		}
 		pLock.Unlock()
 		t.LogStatus("Updating DNS")
-		if err := dns.CreateAppCNames(manifest.Internal, manifest.Name, sha, env); err != nil {
+		if err := appdns.CreateAppCNames(manifest.Internal, manifest.Name, sha, env); err != nil {
 			// if DNS fails, clean up and fail
 			datamodel.DeleteFromPool(deployedIDs)
 			cleanup(true, deployedContainers, t)
@@ -337,7 +338,7 @@ func devDeployToHosts(deps map[string]map[string]string, manifest *Manifest, sha
 	if manifest.Internal {
 		t.LogStatus("Updating DNS")
 		// if we're internal, handle the DNS stuff
-		err := dns.CreateAppCNames(manifest.Internal, manifest.Name, sha, env)
+		err := appdns.CreateAppCNames(manifest.Internal, manifest.Name, sha, env)
 		if err != nil { // if DNS fails, clean up and fail
 			cleanup(true, deployedContainers, t)
 			return nil, errors.New("Update DNS Error: " + err.Error())

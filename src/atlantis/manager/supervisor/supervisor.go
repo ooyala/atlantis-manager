@@ -1,6 +1,7 @@
 package supervisor
 
 import (
+	"atlantis/proxy/types"
 	. "atlantis/supervisor/rpc/client"
 	. "atlantis/supervisor/rpc/types"
 )
@@ -62,4 +63,10 @@ func UpdateProxy(host, sha string) (*SupervisorUpdateProxyReply, error) {
 	args := SupervisorUpdateProxyArg{Host: host, Sha: sha}
 	var reply SupervisorUpdateProxyReply
 	return &reply, NewSupervisorRPCClient(host+":"+Port).Call("UpdateProxy", args, &reply)
+}
+
+func ConfigureProxy(host string, cfg map[string]*types.ProxyConfig) (*SupervisorConfigureProxyReply, error) {
+	args := SupervisorConfigureProxyArg{ProxyConfig: cfg}
+	var reply SupervisorConfigureProxyReply
+	return &reply, NewSupervisorRPCClient(host+":"+Port).Call("ConfigureProxy", args, &reply)
 }

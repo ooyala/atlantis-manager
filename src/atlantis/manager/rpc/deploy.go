@@ -4,7 +4,7 @@ import (
 	. "atlantis/common"
 	"atlantis/manager/builder"
 	"atlantis/manager/datamodel"
-	"atlantis/manager/dns"
+	appdns "atlantis/manager/dns/app"
 	. "atlantis/manager/rpc/types"
 	"atlantis/manager/supervisor"
 	. "atlantis/supervisor/rpc/types"
@@ -360,7 +360,7 @@ func (e *TeardownExecutor) Execute(t *Task) error {
 			if last {
 				if instance.Internal {
 					t.LogStatus("Updating DNS")
-					dns.DeleteAppCNames(instance.App, instance.Sha, instance.Env)
+					appdns.DeleteAppCNames(instance.App, instance.Sha, instance.Env)
 				}
 				DeleteAppShaFromEnv(instance.App, instance.Sha, instance.Env)
 			}
