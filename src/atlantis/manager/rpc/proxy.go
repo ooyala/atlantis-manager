@@ -34,18 +34,20 @@ func (e *UpdateProxyExecutor) Execute(t *Task) error {
 	if e.arg.Sha == "" {
 		return errors.New("Please specify a sha")
 	}
+	t.LogStatus("Listing Supervisors")
 	supervisors, err := datamodel.ListSupervisors()
 	if err != nil {
 		return err
 	}
 	for _, super := range supervisors {
-		t.Log("Updating %s", super)
+		t.LogStatus("Updating %s", super)
 		_, err := supervisor.UpdateProxy(super, e.arg.Sha)
 		if err != nil {
 			e.reply.Status = StatusError
 			return err
 		}
 	}
+	t.LogStatus("Saving New SHA")
 	lock := datamodel.NewProxyLock()
 	lock.Lock()
 	defer lock.Unlock()
@@ -60,8 +62,36 @@ func (e *UpdateProxyExecutor) Execute(t *Task) error {
 	return err
 }
 
-func (m *ManagerRPC) UpdateProxy(arg ManagerUpdateProxyArg, reply *ManagerUpdateProxyReply) error {
-	return NewTask("UpdateProxy", &UpdateProxyExecutor{arg, reply}).Run()
+func (m *ManagerRPC) UpdateProxy(arg ManagerUpdateProxyArg, reply *AsyncReply) error {
+	return NewTask("UpdateProxy", &UpdateProxyExecutor{arg, &ManagerUpdateProxyReply{}}).RunAsync(reply)
+}
+
+func (m *ManagerRPC) UpdateProxyResult(id string, result *ManagerUpdateProxyReply) error {
+	if id == "" {
+		return errors.New("ID empty")
+	}
+	status, err := Tracker.Status(id)
+	if status.Status == StatusUnknown {
+		return errors.New("Unknown ID.")
+	}
+	if status.Name != "UpdateProxy" {
+		return errors.New("ID is not a UpdateProxy.")
+	}
+	if !status.Done {
+		return errors.New("UpdateProxy isn't done.")
+	}
+	if status.Status == StatusError || err != nil {
+		return err
+	}
+	getResult := Tracker.Result(id)
+	switch r := getResult.(type) {
+	case *ManagerUpdateProxyReply:
+		*result = *r
+	default:
+		// this should never happen
+		return errors.New("Invalid Result Type.")
+	}
+	return nil
 }
 
 type ConfigureProxyExecutor struct {
@@ -97,6 +127,34 @@ func (e *ConfigureProxyExecutor) Execute(t *Task) error {
 	return nil
 }
 
-func (m *ManagerRPC) ConfigureProxy(arg ManagerConfigureProxyArg, reply *ManagerConfigureProxyReply) error {
-	return NewTask("ConfigureProxy", &ConfigureProxyExecutor{arg, reply}).Run()
+func (m *ManagerRPC) ConfigureProxy(arg ManagerConfigureProxyArg, reply *AsyncReply) error {
+	return NewTask("ConfigureProxy", &ConfigureProxyExecutor{arg, &ManagerConfigureProxyReply{}}).RunAsync(reply)
+}
+
+func (m *ManagerRPC) ConfigureProxyResult(id string, result *ManagerConfigureProxyReply) error {
+	if id == "" {
+		return errors.New("ID empty")
+	}
+	status, err := Tracker.Status(id)
+	if status.Status == StatusUnknown {
+		return errors.New("Unknown ID.")
+	}
+	if status.Name != "ConfigureProxy" {
+		return errors.New("ID is not a ConfigureProxy.")
+	}
+	if !status.Done {
+		return errors.New("ConfigureProxy isn't done.")
+	}
+	if status.Status == StatusError || err != nil {
+		return err
+	}
+	getResult := Tracker.Result(id)
+	switch r := getResult.(type) {
+	case *ManagerConfigureProxyReply:
+		*result = *r
+	default:
+		// this should never happen
+		return errors.New("Invalid Result Type.")
+	}
+	return nil
 }
