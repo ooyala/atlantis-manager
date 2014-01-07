@@ -78,13 +78,13 @@ func ConfigureProxy() (err error) {
 			return err
 		}
 		if cfgs[zone] == nil {
-			return errors.New("Invalid Zone ("+super+"): "+zone)
+			return errors.New("Invalid Zone (" + super + "): " + zone)
 		}
 		sReply, err := supervisor.ConfigureProxy(super, cfgs[zone])
 		if err != nil {
 			return err
 		} else if sReply.Status != StatusOk {
-			return errors.New("Configure Proxy Status ("+super+"): "+sReply.Status)
+			return errors.New("Configure Proxy Status (" + super + "): " + sReply.Status)
 		}
 	}
 	return nil
@@ -98,7 +98,7 @@ func GetProxyConfig(zone string) (map[string]*types.ProxyConfig, error) {
 		if err != nil {
 			return nil, err
 		}
-		lAddr := "0.0.0.0:"+port
+		lAddr := "0.0.0.0:" + port
 		if zkApp.NonAtlantis {
 			// use addrs from app
 			rAddr := zkApp.Addrs[zkAppEnv.Env]

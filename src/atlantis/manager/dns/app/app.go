@@ -89,5 +89,3 @@ func DeleteAppCNames(app, sha, env string) error {
 	// remove dns datamodel
 	return zkDNS.Delete()
 }
-
-
