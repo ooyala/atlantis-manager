@@ -31,7 +31,20 @@ func ResolveDepValuesForZone(app string, zkEnv *datamodel.ZkEnv, zone string, na
 	// if we're using DNS and the app is registered, try to get the app cname (if deployed)
 	if dns.Provider != nil {
 		for _, name := range names {
-			if datamodel.InternalAppExistsInEnv(name, zkEnv.Name) {
+			zp := datamodel.GetProxy()
+			if port, err := zp.PortForAppEnv(name, zkEnv.Name); err != nil && zp.IsRunning() {
+				// if proxy is running, use it to determine depenencies
+				// get the app we're depending on and make sure our app is a depender
+				zkApp, err := datamodel.GetApp(name)
+				if err != nil {
+					return nil, errors.New("Could not resolve dependency " + name + ": " + err.Error())
+				}
+				if !zkApp.HasDepender(app) {
+					return nil, errors.New(app + " is not authorized to depend on the app '" + name + "'")
+				}
+				// get proxy port and add dep
+				deps[name] = datamodel.ProxyIP + ":" + port
+			} else if datamodel.InternalAppExistsInEnv(name, zkEnv.Name) {
 				// this is a registered, internal, deployed app, output the cname
 				suffix, err := dns.Provider.Suffix(Region)
 				if err != nil {
@@ -43,7 +56,6 @@ func ResolveDepValuesForZone(app string, zkEnv *datamodel.ZkEnv, zone string, na
 				if err != nil {
 					return nil, errors.New("Could not resolve dependency " + name + ": " + err.Error())
 				}
-				fmt.Printf("GOT APP: %+v\n", zkApp)
 				if !zkApp.HasDepender(app) {
 					return nil, errors.New(app + " is not authorized to depend on the app '" + name + "'")
 				}

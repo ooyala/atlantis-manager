@@ -147,6 +147,7 @@ func (m *ManagerServer) Run(bldr builder.Builder) {
 	datamodel.Init(m.Config.ZookeeperUri)
 	datamodel.MinProxyPort = m.Config.MinProxyPort
 	datamodel.MaxProxyPort = m.Config.MaxProxyPort
+	datamodel.ProxyIP = m.Config.ProxyIP
 	resultDuration, err := time.ParseDuration(m.Config.ResultDuration)
 	if err != nil {
 		panic(fmt.Sprintf("Could not parse Result Duration: %s", err.Error()))

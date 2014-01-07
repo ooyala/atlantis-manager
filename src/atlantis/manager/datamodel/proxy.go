@@ -15,6 +15,7 @@ import (
 var (
 	MinProxyPort uint16
 	MaxProxyPort uint16
+	ProxyIP      string
 )
 
 type ZkProxyAppEnv struct {
@@ -43,6 +44,10 @@ func GetProxy() *ZkProxy {
 		zp.Save()
 	}
 	return zp
+}
+
+func (zp *ZkProxy) IsRunning() bool {
+	return zp.Sha != ""
 }
 
 func (zp *ZkProxy) PortForAppEnv(app, env string) (string, error) {
