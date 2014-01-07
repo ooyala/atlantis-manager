@@ -742,6 +742,16 @@ type ManagerUpdateProxyReply struct {
 	Status string
 }
 
+// ------------ ConfigureProxy ------------
+// Configure Proxy Version
+type ManagerConfigureProxyArg struct {
+	ManagerAuthArg
+}
+
+type ManagerConfigureProxyReply struct {
+	Status string
+}
+
 // ------------ Idle ------------
 // Check if Idle
 type ManagerIdleArg struct {
