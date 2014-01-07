@@ -55,6 +55,10 @@ func (c *ResultCommand) Execute(args []string) error {
 		return (&RegisterRouterResultCommand{c.ID}).Execute(args)
 	case "UnregisterRouter":
 		return (&UnregisterRouterResultCommand{c.ID}).Execute(args)
+	case "RegisterSupervisor":
+		return (&RegisterSupervisorResultCommand{c.ID}).Execute(args)
+	case "UnregisterSupervisor":
+		return (&UnregisterSupervisorResultCommand{c.ID}).Execute(args)
 	case "UpdateProxy":
 		return (&UpdateProxyResultCommand{c.ID}).Execute(args)
 	case "ConfigureProxy":

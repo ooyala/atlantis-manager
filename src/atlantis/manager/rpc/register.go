@@ -520,6 +520,34 @@ func (e *RegisterSupervisorExecutor) Authorize() error {
 	return AuthorizeSuperUser(&e.arg.ManagerAuthArg)
 }
 
+func (m *ManagerRPC) RegisterSupervisorResult(id string, result *ManagerRegisterSupervisorReply) error {
+	if id == "" {
+		return errors.New("ID empty")
+	}
+	status, err := Tracker.Status(id)
+	if status.Status == StatusUnknown {
+		return errors.New("Unknown ID.")
+	}
+	if status.Name != "RegisterSupervisor" {
+		return errors.New("ID is not a RegisterSupervisor.")
+	}
+	if !status.Done {
+		return errors.New("RegisterSupervisor isn't done.")
+	}
+	if status.Status == StatusError || err != nil {
+		return err
+	}
+	getResult := Tracker.Result(id)
+	switch r := getResult.(type) {
+	case *ManagerRegisterSupervisorReply:
+		*result = *r
+	default:
+		// this should never happen
+		return errors.New("Invalid Result Type.")
+	}
+	return nil
+}
+
 type UnregisterSupervisorExecutor struct {
 	arg   ManagerRegisterSupervisorArg
 	reply *ManagerRegisterSupervisorReply
@@ -553,6 +581,34 @@ func (e *UnregisterSupervisorExecutor) Execute(t *Task) error {
 
 func (e *UnregisterSupervisorExecutor) Authorize() error {
 	return AuthorizeSuperUser(&e.arg.ManagerAuthArg)
+}
+
+func (m *ManagerRPC) UnregisterSupervisorResult(id string, result *ManagerRegisterSupervisorReply) error {
+	if id == "" {
+		return errors.New("ID empty")
+	}
+	status, err := Tracker.Status(id)
+	if status.Status == StatusUnknown {
+		return errors.New("Unknown ID.")
+	}
+	if status.Name != "UnregisterSupervisor" {
+		return errors.New("ID is not a UnregisterSupervisor.")
+	}
+	if !status.Done {
+		return errors.New("UnregisterSupervisor isn't done.")
+	}
+	if status.Status == StatusError || err != nil {
+		return err
+	}
+	getResult := Tracker.Result(id)
+	switch r := getResult.(type) {
+	case *ManagerRegisterSupervisorReply:
+		*result = *r
+	default:
+		// this should never happen
+		return errors.New("Invalid Result Type.")
+	}
+	return nil
 }
 
 type ListSupervisorsExecutor struct {
@@ -857,12 +913,12 @@ func (m *ManagerRPC) ListAuthorizedRegisteredApps(arg ManagerListRegisteredAppsA
 	return NewTask("ListAuthorizedRegisteredApps", &ListRegisteredAppsExecutor{arg, reply}).Run()
 }
 
-func (m *ManagerRPC) RegisterSupervisor(arg ManagerRegisterSupervisorArg, reply *ManagerRegisterSupervisorReply) error {
-	return NewTask("RegisterSupervisor", &RegisterSupervisorExecutor{arg, reply}).Run()
+func (m *ManagerRPC) RegisterSupervisor(arg ManagerRegisterSupervisorArg, reply *AsyncReply) error {
+	return NewTask("RegisterSupervisor", &RegisterSupervisorExecutor{arg, &ManagerRegisterSupervisorReply{}}).RunAsync(reply)
 }
 
-func (m *ManagerRPC) UnregisterSupervisor(arg ManagerRegisterSupervisorArg, reply *ManagerRegisterSupervisorReply) error {
-	return NewTask("UnregisterSupervisor", &UnregisterSupervisorExecutor{arg, reply}).Run()
+func (m *ManagerRPC) UnregisterSupervisor(arg ManagerRegisterSupervisorArg, reply *AsyncReply) error {
+	return NewTask("UnregisterSupervisor", &UnregisterSupervisorExecutor{arg, &ManagerRegisterSupervisorReply{}}).RunAsync(reply)
 }
 
 func (m *ManagerRPC) ListSupervisors(arg ManagerListSupervisorsArg, reply *ManagerListSupervisorsReply) error {

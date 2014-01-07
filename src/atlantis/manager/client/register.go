@@ -674,6 +674,47 @@ func (c *UnregisterSupervisorCommand) Execute(args []string) error {
 	return Output(map[string]interface{}{"status": reply.Status}, nil, nil)
 }
 
+func OutputRegisterSupervisorReply(reply *ManagerRegisterSupervisorReply) error {
+	Log("-> Status: %s", reply.Status)
+	return Output(map[string]interface{}{"status": reply.Status}, nil, nil)
+}
+
+type RegisterSupervisorResultCommand struct {
+	ID string `short:"i" long:"id" description:"the task ID to fetch the result for"`
+}
+
+func (c *RegisterSupervisorResultCommand) Execute(args []string) error {
+	if err := Init(); err != nil {
+		return OutputError(err)
+	}
+	args = ExtractArgs([]*string{&c.ID}, args)
+	Log("RegisterSupervisor Result...")
+	arg := c.ID
+	var reply ManagerRegisterSupervisorReply
+	if err := rpcClient.Call("RegisterSupervisorResult", arg, &reply); err != nil {
+		return OutputError(err)
+	}
+	return OutputRegisterSupervisorReply(&reply)
+}
+
+type UnregisterSupervisorResultCommand struct {
+	ID string `short:"i" long:"id" description:"the task ID to fetch the result for"`
+}
+
+func (c *UnregisterSupervisorResultCommand) Execute(args []string) error {
+	if err := Init(); err != nil {
+		return OutputError(err)
+	}
+	args = ExtractArgs([]*string{&c.ID}, args)
+	Log("UnregisterSupervisor Result...")
+	arg := c.ID
+	var reply ManagerRegisterSupervisorReply
+	if err := rpcClient.Call("UnregisterSupervisorResult", arg, &reply); err != nil {
+		return OutputError(err)
+	}
+	return OutputRegisterSupervisorReply(&reply)
+}
+
 type ListSupervisorsCommand struct {
 }
 

@@ -42,6 +42,12 @@ func Wait(w http.ResponseWriter, r *http.Request) {
 	} else if statusReply.Name == "UnregisterManager" {
 		var reply ManagerRegisterManagerReply
 		err = manager.UnregisterManagerResult(r.FormValue("ID"), &reply)
+	} else if statusReply.Name == "RegisterSupervisor" {
+		var reply ManagerRegisterSupervisorReply
+		err = manager.RegisterSupervisorResult(r.FormValue("ID"), &reply)
+	} else if statusReply.Name == "UnregisterSupervisor" {
+		var reply ManagerRegisterSupervisorReply
+		err = manager.UnregisterSupervisorResult(r.FormValue("ID"), &reply)
 	} else if statusReply.Name == "UpdateProxy" {
 		var reply ManagerUpdateProxyReply
 		err = manager.UpdateProxyResult(r.FormValue("ID"), &reply)

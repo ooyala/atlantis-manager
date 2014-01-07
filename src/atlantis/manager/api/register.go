@@ -208,18 +208,18 @@ func RegisterSupervisor(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
 	arg := ManagerRegisterSupervisorArg{auth, vars["Host"]}
-	var reply ManagerRegisterSupervisorReply
+	var reply AsyncReply
 	err := manager.RegisterSupervisor(arg, &reply)
-	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Status": reply.Status}, err))
+	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"ID": reply.ID}, err))
 }
 
 func UnregisterSupervisor(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
 	arg := ManagerRegisterSupervisorArg{auth, vars["Host"]}
-	var reply ManagerRegisterSupervisorReply
+	var reply AsyncReply
 	err := manager.UnregisterSupervisor(arg, &reply)
-	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Status": reply.Status}, err))
+	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"ID": reply.ID}, err))
 }
 
 func ListManagers(w http.ResponseWriter, r *http.Request) {
