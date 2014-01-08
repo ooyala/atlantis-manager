@@ -1,6 +1,7 @@
 package datamodel
 
 import (
+	. "atlantis/manager/constant"
 	"atlantis/manager/helper"
 	"atlantis/manager/rpc/types"
 	"atlantis/router/config"
@@ -8,6 +9,13 @@ import (
 	"fmt"
 	"log"
 )
+
+var (
+	MinRouterPort = DefaultMinRouterPort
+	MaxRouterPort = DefaultMaxRouterPort
+)
+
+// Router Port Reservation
 
 // Router Registration
 

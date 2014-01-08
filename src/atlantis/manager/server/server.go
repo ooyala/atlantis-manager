@@ -55,6 +55,8 @@ type ServerConfig struct {
 	AvailableZones           string `toml:"available_zones"`
 	MaintenanceFile          string `toml:"maintenance_file"`
 	MaintenanceCheckInterval string `toml:"maintenance_check_interval"`
+	MinRouterPort            uint16 `toml:"min_router_port"`
+	MaxRouterPort            uint16 `toml:"max_router_port"`
 }
 
 type ServerOpts struct {
@@ -76,6 +78,8 @@ type ServerOpts struct {
 	AvailableZones           string `long:"available-zones" description:"the available availability zones"`
 	MaintenanceFile          string `long:"maintenance-file" description:"the maintenance file to check"`
 	MaintenanceCheckInterval string `long:"maintenance-check-interval" description:"the interval to check the maintenance file"`
+	MinRouterPort            uint16 `long:"min-router-port"`
+	MaxRouterPort            uint16 `long:"max-router-port"`
 }
 
 type ManagerServer struct {
@@ -105,6 +109,8 @@ func New() *ManagerServer {
 			AvailableZones:           DefaultZone,
 			MaintenanceFile:          DefaultMaintenanceFile,
 			MaintenanceCheckInterval: DefaultMaintenanceCheckInterval,
+			MinRouterPort:            DefaultMinRouterPort,
+			MaxRouterPort:            DefaultMaxRouterPort,
 		},
 	}
 	manager.parser.Parse()
@@ -136,6 +142,8 @@ func (m *ManagerServer) Run(bldr builder.Builder) {
 	AvailableZones = strings.Split(m.Config.AvailableZones, ",")
 	log.Printf("Initializing Manager [%s] [%s] [%s]", Region, Zone, Host)
 	datamodel.Init(m.Config.ZookeeperUri)
+	datamodel.MinRouterPort = m.Config.MinRouterPort
+	datamodel.MaxRouterPort = m.Config.MaxRouterPort
 	resultDuration, err := time.ParseDuration(m.Config.ResultDuration)
 	if err != nil {
 		panic(fmt.Sprintf("Could not parse Result Duration: %s", err.Error()))
@@ -218,6 +226,12 @@ func (m *ManagerServer) overlayConfig() {
 	}
 	if m.Opts.MaintenanceCheckInterval != "" {
 		m.Config.MaintenanceCheckInterval = m.Opts.MaintenanceCheckInterval
+	}
+	if m.Opts.MinRouterPort != 0 {
+		m.Config.MinRouterPort = m.Opts.MinRouterPort
+	}
+	if m.Opts.MaxRouterPort != 0 {
+		m.Config.MaxRouterPort = m.Opts.MaxRouterPort
 	}
 }
 

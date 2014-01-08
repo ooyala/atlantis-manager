@@ -22,4 +22,6 @@ const (
 	DefaultResultDuration           = "30m"
 	DefaultMaintenanceFile          = "/etc/atlantis/manager/maint"
 	DefaultMaintenanceCheckInterval = "5s"
+	DefaultMinRouterPort            = uint16(49152)
+	DefaultMaxRouterPort            = uint16(65535)
 )
