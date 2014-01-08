@@ -731,27 +731,6 @@ type ManagerContainerMaintenanceReply struct {
 	Status string
 }
 
-// ------------ UpdateProxy ------------
-// Update Proxy Version
-type ManagerUpdateProxyArg struct {
-	ManagerAuthArg
-	Sha string
-}
-
-type ManagerUpdateProxyReply struct {
-	Status string
-}
-
-// ------------ ConfigureProxy ------------
-// Configure Proxy Version
-type ManagerConfigureProxyArg struct {
-	ManagerAuthArg
-}
-
-type ManagerConfigureProxyReply struct {
-	Status string
-}
-
 // ------------ Idle ------------
 // Check if Idle
 type ManagerIdleArg struct {
