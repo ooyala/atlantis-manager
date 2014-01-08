@@ -9,6 +9,11 @@ import (
 
 var Zk *zookeeper.ZkConn
 
+func CreateRouterPortsPaths() {
+	Zk.Touch(helper.GetBaseRouterPortsPath(true))
+	Zk.Touch(helper.GetBaseRouterPortsPath(false))
+}
+
 func CreateRouterPaths() {
 	helper.SetRouterRoot(true)
 	for _, path := range routerzk.ZkPaths {
@@ -24,8 +29,10 @@ func CreateRouterPaths() {
 	}
 }
 
-func CreateDeployLockPath() {
+func CreateLockPaths() {
 	Zk.Touch(helper.GetBaseLockPath("deploy"))
+	Zk.Touch(helper.GetBaseLockPath("router_ports_internal"))
+	Zk.Touch(helper.GetBaseLockPath("router_ports_external"))
 }
 
 func CreateAppPath() {
@@ -50,8 +57,9 @@ func CreateEnvPath() {
 }
 
 func CreatePaths() {
+	CreateRouterPortsPaths()
 	CreateRouterPaths()
-	CreateDeployLockPath()
+	CreateLockPaths()
 	CreateInstancePaths()
 	CreateAppPath()
 	CreateSupervisorPath()

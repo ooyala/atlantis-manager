@@ -24,6 +24,21 @@ type Router struct {
 	RecordIDs []string
 }
 
+type AppEnv struct {
+	App string
+	Env string
+}
+
+func (a AppEnv) String() string {
+	return a.App + "." + a.Env
+}
+
+type RouterPorts struct {
+	Internal  bool
+	PortMap   map[string]AppEnv
+	AppEnvMap map[string]string
+}
+
 type Manager struct {
 	Region           string
 	Host             string

@@ -163,3 +163,42 @@ func (l *TeardownLock) Unlock() error {
 	l.locked = false
 	return nil
 }
+
+func NewRouterPortsLock(internal bool) *RouterPortsLock {
+	return &RouterPortsLock{internal: internal}
+}
+
+type RouterPortsLock struct {
+	internal bool
+	locked   bool
+	mutex    *zookeeper.Mutex
+}
+
+func (l *RouterPortsLock) Lock() error {
+	var path string
+	if l.locked {
+		return nil
+	}
+	if l.internal {
+		path = helper.GetBaseLockPath("router_ports_internal")
+	} else {
+		path = helper.GetBaseLockPath("router_ports_external")
+	}
+	l.mutex = zookeeper.NewMutex(Zk.Conn, path)
+	if err := l.mutex.Lock(); err != nil {
+		return err
+	}
+	l.locked = true
+	return nil
+}
+
+func (l *RouterPortsLock) Unlock() error {
+	if !l.locked {
+		return nil
+	}
+	if err := l.mutex.Unlock(); err != nil {
+		return err
+	}
+	l.locked = false
+	return nil
+}

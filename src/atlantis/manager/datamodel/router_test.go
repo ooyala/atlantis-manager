@@ -9,6 +9,108 @@ import (
 	"sort"
 )
 
+func (s *DatamodelSuite) TestRouterPorts(c *C) {
+	// test internal
+	Zk.RecursiveDelete(helper.GetBaseRouterPortsPath(true))
+	Zk.RecursiveDelete(helper.GetBaseRouterPortsPath(false))
+	Zk.RecursiveDelete(helper.GetBaseLockPath())
+	CreateRouterPortsPaths()
+	CreateLockPaths()
+
+	MinRouterPort = uint16(65533)
+	MaxRouterPort = uint16(65535)
+
+	c.Assert(HasRouterPortForAppEnv(true, "app", "env"), Equals, false)
+	c.Assert(HasRouterPortForAppEnv(false, "app", "env"), Equals, false)
+
+	appPort, err := ReserveRouterPort(true, "app", "env")
+	c.Assert(err, IsNil)
+	appPort2, err := ReserveRouterPort(true, "app", "env")
+	c.Assert(err, IsNil)
+	c.Assert(appPort, Equals, appPort2)
+	c.Assert(HasRouterPortForAppEnv(true, "app", "env"), Equals, true)
+	c.Assert(HasRouterPortForAppEnv(false, "app", "env"), Equals, false)
+
+	app2Port, err := ReserveRouterPort(true, "app2", "env")
+	c.Assert(err, IsNil)
+	c.Assert(appPort, Not(Equals), app2Port)
+	c.Assert(HasRouterPortForAppEnv(true, "app2", "env"), Equals, true)
+	c.Assert(HasRouterPortForAppEnv(false, "app2", "env"), Equals, false)
+
+	_, err = ReserveRouterPort(true, "app3", "env2")
+	c.Assert(err, IsNil)
+	c.Assert(HasRouterPortForAppEnv(true, "app3", "env2"), Equals, true)
+	c.Assert(HasRouterPortForAppEnv(false, "app3", "env2"), Equals, false)
+
+	_, err = ReserveRouterPort(true, "app4", "env3")
+	c.Assert(err, Not(IsNil))
+
+	err = ReclaimRouterPortsForEnv(true, "env")
+	c.Assert(err, IsNil)
+	c.Assert(HasRouterPortForAppEnv(true, "app", "env"), Equals, false)
+	c.Assert(HasRouterPortForAppEnv(true, "app2", "env"), Equals, false)
+	c.Assert(HasRouterPortForAppEnv(true, "app3", "env2"), Equals, true)
+	err = ReclaimRouterPortsForApp(true, "app3")
+	c.Assert(err, IsNil)
+	c.Assert(HasRouterPortForAppEnv(true, "app", "env"), Equals, false)
+	c.Assert(HasRouterPortForAppEnv(true, "app2", "env"), Equals, false)
+	c.Assert(HasRouterPortForAppEnv(true, "app3", "env2"), Equals, false)
+	_, err = ReserveRouterPort(true, "app4", "env2")
+	c.Assert(err, IsNil)
+	c.Assert(HasRouterPortForAppEnv(true, "app4", "env2"), Equals, true)
+	c.Assert(HasRouterPortForAppEnv(false, "app4", "env2"), Equals, false)
+
+	// test external
+	Zk.RecursiveDelete(helper.GetBaseRouterPortsPath(true))
+	Zk.RecursiveDelete(helper.GetBaseRouterPortsPath(false))
+	Zk.RecursiveDelete(helper.GetBaseLockPath())
+	CreateRouterPortsPaths()
+	CreateLockPaths()
+
+	MinRouterPort = uint16(65533)
+	MaxRouterPort = uint16(65535)
+
+	c.Assert(HasRouterPortForAppEnv(true, "app", "env"), Equals, false)
+	c.Assert(HasRouterPortForAppEnv(false, "app", "env"), Equals, false)
+
+	appPort, err = ReserveRouterPort(false, "app", "env")
+	c.Assert(err, IsNil)
+	appPort2, err = ReserveRouterPort(false, "app", "env")
+	c.Assert(err, IsNil)
+	c.Assert(appPort, Equals, appPort2)
+	c.Assert(HasRouterPortForAppEnv(false, "app", "env"), Equals, true)
+	c.Assert(HasRouterPortForAppEnv(true, "app", "env"), Equals, false)
+
+	app2Port, err = ReserveRouterPort(false, "app2", "env")
+	c.Assert(err, IsNil)
+	c.Assert(appPort, Not(Equals), app2Port)
+	c.Assert(HasRouterPortForAppEnv(false, "app2", "env"), Equals, true)
+	c.Assert(HasRouterPortForAppEnv(true, "app2", "env"), Equals, false)
+
+	_, err = ReserveRouterPort(false, "app3", "env2")
+	c.Assert(err, IsNil)
+	c.Assert(HasRouterPortForAppEnv(false, "app3", "env2"), Equals, true)
+	c.Assert(HasRouterPortForAppEnv(true, "app3", "env2"), Equals, false)
+
+	_, err = ReserveRouterPort(false, "app4", "env3")
+	c.Assert(err, Not(IsNil))
+
+	err = ReclaimRouterPortsForEnv(false, "env")
+	c.Assert(err, IsNil)
+	c.Assert(HasRouterPortForAppEnv(false, "app", "env"), Equals, false)
+	c.Assert(HasRouterPortForAppEnv(false, "app2", "env"), Equals, false)
+	c.Assert(HasRouterPortForAppEnv(false, "app3", "env2"), Equals, true)
+	err = ReclaimRouterPortsForApp(false, "app3")
+	c.Assert(err, IsNil)
+	c.Assert(HasRouterPortForAppEnv(false, "app", "env"), Equals, false)
+	c.Assert(HasRouterPortForAppEnv(false, "app2", "env"), Equals, false)
+	c.Assert(HasRouterPortForAppEnv(false, "app3", "env2"), Equals, false)
+	_, err = ReserveRouterPort(false, "app4", "env2")
+	c.Assert(err, IsNil)
+	c.Assert(HasRouterPortForAppEnv(false, "app4", "env2"), Equals, true)
+	c.Assert(HasRouterPortForAppEnv(true, "app4", "env2"), Equals, false)
+}
+
 func (s *DatamodelSuite) TestRouterModel(c *C) {
 	Zk.RecursiveDelete(helper.GetBaseRouterPath(true))
 	Zk.RecursiveDelete(helper.GetBaseRouterPath(false))

@@ -76,6 +76,15 @@ func GetBaseRouterPath(internal bool, args ...string) string {
 	return JoinWithBase(base, args...)
 }
 
+func GetBaseRouterPortsPath(internal bool, args ...string) string {
+	internalStr := "external"
+	if internal {
+		internalStr = "internal"
+	}
+	base := fmt.Sprintf("/atlantis/router_ports/%s/%s", Region, internalStr)
+	return JoinWithBase(base, args...)
+}
+
 func GetBaseManagerPath(args ...string) string {
 	base := "/atlantis/managers"
 	return JoinWithBase(base, args...)

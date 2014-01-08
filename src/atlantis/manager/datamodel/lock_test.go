@@ -7,7 +7,7 @@ import (
 
 func (s *DatamodelSuite) TestDeployAndTeardownLocking(c *C) {
 	Zk.RecursiveDelete(helper.GetBaseLockPath("deploy"))
-	CreateDeployLockPath()
+	CreateLockPaths()
 
 	// Fire off a bunch of deploys
 	dl0 := NewDeployLock("dl0", "app0", "sha0", "env0")
