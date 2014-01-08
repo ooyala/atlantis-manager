@@ -33,18 +33,19 @@ func (e *GetContainerExecutor) Execute(t *Task) (err error) {
 	}
 	instance, err := datamodel.GetInstance(e.arg.ContainerID)
 	if err != nil {
+		e.reply.Status = StatusError
 		return err
 	}
 	var ihReply *SupervisorGetReply
 	ihReply, err = supervisor.Get(instance.Host, e.arg.ContainerID)
+	if err != nil {
+		e.reply.Status = StatusError
+		return err
+	}
 	e.reply.Status = ihReply.Status
 	ihReply.Container.Host = instance.Host
 	e.reply.Container = ihReply.Container
-	if err != nil {
-		e.reply.Status = StatusError
-	} else {
-		e.reply.Status = StatusOk
-	}
+	e.reply.Status = StatusOk
 	return err
 }
 
