@@ -31,23 +31,8 @@ func ResolveDepValuesForZone(app string, zkEnv *datamodel.ZkEnv, zone string, na
 	// if we're using DNS and the app is registered, try to get the app cname (if deployed)
 	if dns.Provider != nil {
 		for _, name := range names {
-			pLock := datamodel.NewProxyLock()
-			pLock.Lock()
-			defer pLock.Unlock()
-			zp := datamodel.GetProxy()
-			if port, err := zp.PortForAppEnv(name, zkEnv.Name); err != nil && zp.IsRunning() {
-				// if proxy is running, use it to determine depenencies
-				// get the app we're depending on and make sure our app is a depender
-				zkApp, err := datamodel.GetApp(name)
-				if err != nil {
-					return nil, errors.New("Could not resolve dependency " + name + ": " + err.Error())
-				}
-				if !zkApp.HasDepender(app) {
-					return nil, errors.New(app + " is not authorized to depend on the app '" + name + "'")
-				}
-				// get proxy port and add dep
-				deps[name] = datamodel.ProxyIP + ":" + port
-			} else if datamodel.InternalAppExistsInEnv(name, zkEnv.Name) {
+			// TODO use new router ports here
+			if datamodel.InternalAppExistsInEnv(name, zkEnv.Name) {
 				// this is a registered, internal, deployed app, output the cname
 				suffix, err := dns.Provider.Suffix(Region)
 				if err != nil {
@@ -283,19 +268,7 @@ func deployToHostsInZones(deps map[string]map[string]string, manifest *Manifest,
 		return nil, errors.New("Update Pool Error: " + err.Error())
 	}
 	if manifest.Internal {
-		// if we're internal, handle the proxy and DNS stuff
-		t.LogStatus("Updating Proxy")
-		pLock := datamodel.NewProxyLock()
-		pLock.Lock()
-		zp := datamodel.GetProxy()
-		if err := zp.AddAppEnv(manifest.Name, env); err != nil {
-			// if proxy fails, clean up and fail
-			datamodel.DeleteFromPool(deployedIDs)
-			cleanup(true, deployedContainers, t)
-			pLock.Unlock()
-			return nil, errors.New("Update Proxy Error: " + err.Error())
-		}
-		pLock.Unlock()
+		// TODO reserve router port if needed and add app+env
 		t.LogStatus("Updating DNS")
 		if err := appdns.CreateAppCNames(manifest.Internal, manifest.Name, sha, env); err != nil {
 			// if DNS fails, clean up and fail

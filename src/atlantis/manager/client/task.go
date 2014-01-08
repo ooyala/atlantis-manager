@@ -59,10 +59,6 @@ func (c *ResultCommand) Execute(args []string) error {
 		return (&RegisterSupervisorResultCommand{c.ID}).Execute(args)
 	case "UnregisterSupervisor":
 		return (&UnregisterSupervisorResultCommand{c.ID}).Execute(args)
-	case "UpdateProxy":
-		return (&UpdateProxyResultCommand{c.ID}).Execute(args)
-	case "ConfigureProxy":
-		return (&ConfigureProxyResultCommand{c.ID}).Execute(args)
 	default:
 		return OutputError(errors.New("Invalid Task Name: " + reply.Name))
 	}

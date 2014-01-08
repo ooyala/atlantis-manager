@@ -502,12 +502,6 @@ func (e *RegisterSupervisorExecutor) Execute(t *Task) error {
 		e.reply.Status = StatusError
 		return err
 	}
-	t.Log("Updating Proxy")
-	lock := datamodel.NewProxyLock()
-	lock.Lock()
-	defer lock.Unlock()
-	proxy := datamodel.GetProxy()
-	_, err = supervisor.UpdateProxy(e.arg.Host, proxy.Sha)
 	if err == nil {
 		e.reply.Status = StatusOk
 	} else {

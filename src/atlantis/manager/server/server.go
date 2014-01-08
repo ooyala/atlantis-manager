@@ -55,9 +55,6 @@ type ServerConfig struct {
 	AvailableZones           string `toml:"available_zones"`
 	MaintenanceFile          string `toml:"maintenance_file"`
 	MaintenanceCheckInterval string `toml:"maintenance_check_interval"`
-	MinProxyPort             uint16 `toml:"min_proxy_port"`
-	MaxProxyPort             uint16 `toml:"max_proxy_port"`
-	ProxyIP                  string `toml:"proxy_ip"`
 }
 
 type ServerOpts struct {
@@ -79,9 +76,6 @@ type ServerOpts struct {
 	AvailableZones           string `long:"available-zones" description:"the available availability zones"`
 	MaintenanceFile          string `long:"maintenance-file" description:"the maintenance file to check"`
 	MaintenanceCheckInterval string `long:"maintenance-check-interval" description:"the interval to check the maintenance file"`
-	MinProxyPort             uint16 `long:"min-proxy-port" description:"the minimum port to assign to a proxy"`
-	MaxProxyPort             uint16 `long:"max-proxy-port" description:"the maximum port to assign to a proxy"`
-	ProxyIP                  string `long:"proxy-ip" description:"the ip that supervisors assign to the proxy"`
 }
 
 type ManagerServer struct {
@@ -111,9 +105,6 @@ func New() *ManagerServer {
 			AvailableZones:           DefaultZone,
 			MaintenanceFile:          DefaultMaintenanceFile,
 			MaintenanceCheckInterval: DefaultMaintenanceCheckInterval,
-			MinProxyPort:             DefaultMinProxyPort,
-			MaxProxyPort:             DefaultMaxProxyPort,
-			ProxyIP:                  DefaultProxyIP,
 		},
 	}
 	manager.parser.Parse()
@@ -145,9 +136,6 @@ func (m *ManagerServer) Run(bldr builder.Builder) {
 	AvailableZones = strings.Split(m.Config.AvailableZones, ",")
 	log.Printf("Initializing Manager [%s] [%s] [%s]", Region, Zone, Host)
 	datamodel.Init(m.Config.ZookeeperUri)
-	datamodel.MinProxyPort = m.Config.MinProxyPort
-	datamodel.MaxProxyPort = m.Config.MaxProxyPort
-	datamodel.ProxyIP = m.Config.ProxyIP
 	resultDuration, err := time.ParseDuration(m.Config.ResultDuration)
 	if err != nil {
 		panic(fmt.Sprintf("Could not parse Result Duration: %s", err.Error()))
@@ -230,15 +218,6 @@ func (m *ManagerServer) overlayConfig() {
 	}
 	if m.Opts.MaintenanceCheckInterval != "" {
 		m.Config.MaintenanceCheckInterval = m.Opts.MaintenanceCheckInterval
-	}
-	if m.Opts.MinProxyPort != 0 {
-		m.Config.MinProxyPort = m.Opts.MinProxyPort
-	}
-	if m.Opts.MaxProxyPort != 0 {
-		m.Config.MaxProxyPort = m.Opts.MaxProxyPort
-	}
-	if m.Opts.ProxyIP != "" {
-		m.Config.ProxyIP = m.Opts.ProxyIP
 	}
 }
 

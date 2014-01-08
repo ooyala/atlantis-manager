@@ -296,10 +296,6 @@ func New() *ManagerClient {
 	o.AddCommand("deploy-result", "get the result of an async deploy", "", &DeployResultCommand{})
 	o.AddCommand("teardown-result", "get the result of an async teardown", "", &TeardownResultCommand{})
 
-	// Proxy Management
-	o.AddCommand("update-proxy", "update the proxy on all supervisors", "", &UpdateProxyCommand{})
-	o.AddCommand("configure-proxy", "reconfigure the proxy on all supervisors", "", &ConfigureProxyCommand{})
-
 	return o
 }
 

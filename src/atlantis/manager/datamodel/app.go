@@ -34,22 +34,8 @@ func CreateOrUpdateApp(nonAtlantis bool, typ, name, repo, root, email string, ad
 		if err := za.Save(); err != nil {
 			return za, err
 		}
-		// new app. if non-atlantis, add proxyies
-		if nonAtlantis {
-			lock := NewProxyLock()
-			lock.Lock()
-			zp := GetProxy()
-			envs := make([]string, len(addrs))
-			i := 0
-			for env, _ := range addrs {
-				envs[i] = env
-				i++
-			}
-			zp.AddAll(name, envs)
-			lock.Unlock()
-		}
+		// TODO reserve ports for router if non-atlantis
 	} else {
-		oldAddrs := za.Addrs
 		za.Type = typ
 		za.Name = name
 		za.Repo = repo
@@ -60,35 +46,13 @@ func CreateOrUpdateApp(nonAtlantis bool, typ, name, repo, root, email string, ad
 		if err := za.Save(); err != nil {
 			return za, err
 		}
-		// old app. if non-atlantis, remove unused proxyies and add new proxyies
-		if nonAtlantis {
-			lock := NewProxyLock()
-			lock.Lock()
-			zp := GetProxy()
-			envs := make([]string, len(addrs))
-			i := 0
-			for env, _ := range addrs {
-				envs[i] = env
-				i++
-			}
-			zp.AddAll(name, envs)
-			// remove unused proxies
-			oldEnvs := make([]string, len(addrs))
-			i = 0
-			for env, _ := range oldAddrs {
-				if _, ok := addrs[env]; !ok {
-					oldEnvs[i] = env
-				}
-				i++
-			}
-			zp.RemoveAll(name, oldEnvs)
-			lock.Unlock()
-		}
+		// TODO re-reserve ports for router if non-atlantis
 	}
 	return za, nil
 }
 
 func (za *ZkApp) Delete() error {
+	// TODO reclaim ports for router
 	// this just deletes the registration. no need to clean up already deployed instances
 	return Zk.RecursiveDelete(za.path())
 }
