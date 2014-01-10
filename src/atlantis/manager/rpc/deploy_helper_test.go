@@ -1,11 +1,13 @@
 package rpc
 
 import (
+	. "atlantis/common"
 	"atlantis/crypto"
 	. "atlantis/manager/constant"
 	"atlantis/manager/datamodel"
 	"atlantis/manager/dns"
 	"atlantis/manager/helper"
+	"fmt"
 	zookeeper "github.com/jigish/gozk-recipes"
 	. "launchpad.net/gocheck"
 )
@@ -67,23 +69,23 @@ func (s *DeployHelperSuite) TestResolveDepValues(c *C) {
 	zkEnv := datamodel.Env("root", "")
 	err := zkEnv.Save()
 	c.Assert(err, IsNil)
-	deps, err := ResolveDepValues("app", zkEnv, []string{"somedep"}, false)
+	deps, err := ResolveDepValues("app", zkEnv, []string{"somedep"}, false, &Task{})
 	c.Assert(err, Not(IsNil))
 	zkEnv.UpdateDep("somedep", string(crypto.Encrypt([]byte("somevalue"))))
-	deps, err = ResolveDepValues("app", zkEnv, []string{"somedep"}, false)
+	deps, err = ResolveDepValues("app", zkEnv, []string{"somedep"}, false, &Task{})
 	c.Assert(err, IsNil)
 	c.Assert(deps["dev1"]["somedep"], Equals, "somevalue")
-	deps, err = ResolveDepValues("app", zkEnv, []string{"somedep", "hello-go"}, false)
+	deps, err = ResolveDepValues("app", zkEnv, []string{"somedep", "hello-go"}, false, &Task{})
 	c.Assert(err, Not(IsNil))
-	_, err = datamodel.CreateInstance(true, "hello-go", "1234567890", "root", "myhost")
+	_, err = datamodel.CreateInstance("hello-go", "1234567890", "root", "myhost")
 	c.Assert(err, IsNil)
-	_, err = datamodel.CreateOrUpdateApp(false, "http", "app", "ssh://github.com/ooyala/app", "/", "jigish@ooyala.com", map[string]string{})
+	_, err = datamodel.CreateOrUpdateApp(false, true, "http", "app", "ssh://github.com/ooyala/app", "/", "jigish@ooyala.com", map[string]string{})
 	c.Assert(err, IsNil)
-	zkApp, err := datamodel.CreateOrUpdateApp(false, "http", "hello-go", "ssh://github.com/ooyala/hello-go", "/", "jigish@ooyala.com", map[string]string{})
+	zkApp, err := datamodel.CreateOrUpdateApp(false, true, "http", "hello-go", "ssh://github.com/ooyala/hello-go", "/", "jigish@ooyala.com", map[string]string{})
 	c.Assert(err, IsNil)
 	c.Assert(zkApp.AddDepender("app"), IsNil)
-	deps, err = ResolveDepValues("app", zkEnv, []string{"somedep", "hello-go"}, false)
+	deps, err = ResolveDepValues("app", zkEnv, []string{"somedep", "hello-go"}, false, &Task{})
 	c.Assert(err, IsNil)
 	c.Assert(deps["dev1"]["somedep"], Equals, "somevalue")
-	c.Assert(deps["dev1"]["hello-go"], Equals, "hello-go.root.1."+Region+".suffix.com")
+	c.Assert(deps["dev1"]["hello-go"], Equals, fmt.Sprintf("hello-go.root.1.%s.suffix.com:%d", Region, datamodel.MinRouterPort))
 }

@@ -259,7 +259,7 @@ func (e *ResolveDepsExecutor) Execute(t *Task) error {
 	if err != nil {
 		return errors.New("Environment Error: " + err.Error())
 	}
-	e.reply.Deps, err = ResolveDepValues(e.arg.App, zkEnv, e.arg.DepNames, false)
+	e.reply.Deps, err = ResolveDepValues(e.arg.App, zkEnv, e.arg.DepNames, false, t)
 	if err != nil {
 		return err
 	}
@@ -358,7 +358,11 @@ func (e *TeardownExecutor) Execute(t *Task) error {
 			}
 			last, _ := instance.Delete()
 			if last {
-				if instance.Internal {
+				zkApp, err := datamodel.GetApp(instance.App)
+				if err != nil {
+					return err
+				}
+				if zkApp.Internal {
 					t.LogStatus("Updating DNS")
 					appdns.DeleteAppCNames(instance.App, instance.Sha, instance.Env)
 				}

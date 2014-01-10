@@ -3,6 +3,7 @@ package datamodel
 import (
 	"atlantis/manager/helper"
 	"atlantis/manager/rpc/types"
+	"errors"
 	"log"
 )
 
@@ -18,11 +19,12 @@ func GetApp(name string) (za *ZkApp, err error) {
 	return
 }
 
-func CreateOrUpdateApp(nonAtlantis bool, typ, name, repo, root, email string, addrs map[string]string) (*ZkApp, error) {
+func CreateOrUpdateApp(nonAtlantis, internal bool, typ, name, repo, root, email string, addrs map[string]string) (*ZkApp, error) {
 	za, err := GetApp(name)
 	if err != nil {
 		za = &ZkApp{
 			NonAtlantis:         nonAtlantis,
+			Internal:            internal,
 			Type:                typ,
 			Name:                name,
 			Repo:                repo,
@@ -34,7 +36,6 @@ func CreateOrUpdateApp(nonAtlantis bool, typ, name, repo, root, email string, ad
 		if err := za.Save(); err != nil {
 			return za, err
 		}
-		// TODO reserve ports for router if non-atlantis
 	} else {
 		za.Type = typ
 		za.Name = name
@@ -42,11 +43,13 @@ func CreateOrUpdateApp(nonAtlantis bool, typ, name, repo, root, email string, ad
 		za.Root = root
 		za.Email = email
 		za.Addrs = addrs
+		if za.Internal != internal {
+			return za, errors.New("apps may not change from internal to external. please unregister and reregister.")
+		}
 		za.NonAtlantis = nonAtlantis
 		if err := za.Save(); err != nil {
 			return za, err
 		}
-		// TODO re-reserve ports for router if non-atlantis
 	}
 	return za, nil
 }

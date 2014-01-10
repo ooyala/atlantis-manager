@@ -100,6 +100,7 @@ func RegisterApp(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
 	nonAtlantis, _ := strconv.ParseBool(r.FormValue("NonAtlantis"))
+	internal, _ := strconv.ParseBool(r.FormValue("Internal"))
 	var addrs map[string]string
 	if nonAtlantis {
 		addrsStr := r.FormValue("Addrs")
@@ -112,6 +113,7 @@ func RegisterApp(w http.ResponseWriter, r *http.Request) {
 	arg := ManagerRegisterAppArg{
 		ManagerAuthArg: auth,
 		NonAtlantis:    nonAtlantis,
+		Internal:       internal,
 		Type:           r.FormValue("Type"),
 		Name:           vars["App"],
 		Repo:           r.FormValue("Repo"),
@@ -128,6 +130,7 @@ func UpdateApp(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
 	nonAtlantis, _ := strconv.ParseBool(r.FormValue("NonAtlantis"))
+	internal, _ := strconv.ParseBool(r.FormValue("Internal"))
 	var addrs map[string]string
 	if nonAtlantis {
 		addrsStr := r.FormValue("Addrs")
@@ -140,6 +143,7 @@ func UpdateApp(w http.ResponseWriter, r *http.Request) {
 	arg := ManagerRegisterAppArg{
 		ManagerAuthArg: auth,
 		NonAtlantis:    nonAtlantis,
+		Internal:       internal,
 		Type:           r.FormValue("Type"),
 		Name:           vars["App"],
 		Repo:           r.FormValue("Repo"),

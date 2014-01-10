@@ -7,7 +7,6 @@ import (
 )
 
 type ZkInstance struct {
-	Internal bool
 	ID       string
 	App      string
 	Sha      string
@@ -30,12 +29,12 @@ func GetInstance(id string) (zi *ZkInstance, err error) {
 	return
 }
 
-func CreateInstance(internal bool, app, sha, env, host string) (*ZkInstance, error) {
+func CreateInstance(app, sha, env, host string) (*ZkInstance, error) {
 	id := helper.CreateContainerID(app, sha, env)
 	for InstanceExists(id) {
 		id = helper.CreateContainerID(app, sha, env)
 	}
-	zi := &ZkInstance{Internal: internal, ID: id, App: app, Sha: sha, Env: env, Host: host, Port: 0}
+	zi := &ZkInstance{ID: id, App: app, Sha: sha, Env: env, Host: host, Port: 0}
 	if _, err := Zk.Touch(zi.path()); err != nil {
 		Zk.RecursiveDelete(zi.path())
 		return zi, err
@@ -113,36 +112,6 @@ func (zi *ZkInstance) path() string {
 
 func (zi *ZkInstance) dataPath() string {
 	return helper.GetBaseInstanceDataPath(zi.ID)
-}
-
-func InternalAppExistsInEnv(app, env string) bool {
-	shas, err := ListShas(app)
-	if err != nil {
-		return false
-	}
-	for _, sha := range shas {
-		envs, err := ListAppEnvs(app, sha)
-		if err != nil {
-			continue
-		}
-		for _, checkEnv := range envs {
-			if checkEnv == env {
-				instances, err := ListInstances(app, sha, env)
-				if err != nil || len(instances) == 0 {
-					continue
-				}
-				// check first instance if it is internal
-				instance, err := GetInstance(instances[0])
-				if err != nil {
-					continue
-				}
-				if instance.Internal {
-					return true
-				}
-			}
-		}
-	}
-	return false
 }
 
 func ListApps() (apps []string, err error) {

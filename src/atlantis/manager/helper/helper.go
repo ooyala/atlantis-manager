@@ -3,6 +3,7 @@ package helper
 import (
 	atlantis "atlantis/common"
 	. "atlantis/manager/constant"
+	"atlantis/manager/rpc/types"
 	routerzk "atlantis/router/zk"
 	"fmt"
 	"path"
@@ -83,6 +84,14 @@ func GetBaseRouterPortsPath(internal bool, args ...string) string {
 	}
 	base := fmt.Sprintf("/atlantis/router_ports/%s/%s", Region, internalStr)
 	return JoinWithBase(base, args...)
+}
+
+func GetAppEnvTrieName(app, env string) string {
+	return types.AppEnv{App: app, Env: env}.String()
+}
+
+func GetAppShaEnvStaticRuleName(app, sha, env string) string {
+	return fmt.Sprintf("static-%s-%s-%s", app, sha, env)
 }
 
 func GetBaseManagerPath(args ...string) string {

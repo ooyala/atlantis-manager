@@ -4,7 +4,7 @@ import (
 	. "atlantis/manager/constant"
 	"atlantis/manager/helper"
 	"atlantis/manager/rpc/types"
-	"atlantis/router/config"
+	routercfg "atlantis/router/config"
 	routerzk "atlantis/router/zk"
 	"errors"
 	"fmt"
@@ -69,6 +69,65 @@ func ReclaimRouterPortsForEnv(internal bool, env string) error {
 	defer lock.Unlock()
 	zrp := GetRouterPorts(internal)
 	return zrp.reclaimEnv(env)
+}
+
+func ReserveRouterPortAndUpdateTrie(app, sha, env string) (string, bool, error) {
+	var (
+		err     error
+		created = false
+		port    = ""
+	)
+	// reserve port for app env
+	if !HasRouterPortForAppEnv(true, app, env) {
+		created = true
+	}
+	if port, err = ReserveRouterPort(true, app, env); err != nil {
+		return port, created, err
+	}
+	// create trie (if it doesn't exist)
+	trieName := helper.GetAppEnvTrieName(app, env)
+	if exists, err := routerzk.TrieExists(Zk.Conn, trieName); !exists || err != nil {
+		err = routerzk.SetTrie(Zk.Conn, routercfg.Trie{
+			Name:     trieName,
+			Rules:    []string{},
+			Internal: true,
+		})
+		if err != nil {
+			return port, created, err
+		}
+	}
+	// if sha != "" attach pool as static rule (if trie is empty)
+	if sha != "" {
+		// if static rule does not exist, create it
+		ruleName := helper.GetAppShaEnvStaticRuleName(app, sha, env)
+		poolName := helper.CreatePoolName(app, sha, env)
+		if exists, err := routerzk.RuleExists(Zk.Conn, ruleName); !exists || err != nil {
+			err = routerzk.SetRule(Zk.Conn, routercfg.Rule{
+				Name:     ruleName,
+				Type:     "static",
+				Value:    "true",
+				Pool:     poolName,
+				Internal: true,
+			})
+			if err != nil {
+				return port, created, err
+			}
+		}
+		trie, err := routerzk.GetTrie(Zk.Conn, trieName)
+		if err != nil {
+			return port, created, err
+		}
+		if len(trie.Rules) == 0 {
+			trie.Rules = []string{ruleName}
+		} else {
+			trie.Rules = append(trie.Rules, ruleName)
+		}
+		if err = routerzk.SetTrie(Zk.Conn, trie); err != nil {
+			return port, created, err
+		}
+	}
+	// return true if port was created
+	return port, created, err
 }
 
 func (r *ZkRouterPorts) hasPortForAppEnv(app, env string) bool {
@@ -193,11 +252,11 @@ func (r *ZkRouter) path() string {
 
 // Routing Datamodel
 
-func defaultPool(name string, internal bool) config.Pool {
-	return config.Pool{
+func defaultPool(name string, internal bool) routercfg.Pool {
+	return routercfg.Pool{
 		Name:     name,
-		Config:   config.PoolConfig{HealthzEvery: "5s", HealthzTimeout: "5s", RequestTimeout: "120s", Status: "OK"},
-		Hosts:    map[string]config.Host{},
+		Config:   routercfg.PoolConfig{HealthzEvery: "5s", HealthzTimeout: "5s", RequestTimeout: "120s", Status: "OK"},
+		Hosts:    map[string]routercfg.Host{},
 		Internal: internal,
 	}
 }
@@ -213,11 +272,15 @@ func AddToPool(containers []string) error {
 			continue
 		}
 		name := helper.CreatePoolName(inst.App, inst.Sha, inst.Env)
-		currInsts := pools[inst.Internal][name]
+		zkApp, err := GetApp(inst.App)
+		if err != nil {
+			return err
+		}
+		currInsts := pools[zkApp.Internal][name]
 		if currInsts == nil {
 			currInsts = []*ZkInstance{}
 		}
-		pools[inst.Internal][name] = append(currInsts, inst)
+		pools[zkApp.Internal][name] = append(currInsts, inst)
 	}
 	for internal, allPools := range pools {
 		helper.SetRouterRoot(internal)
@@ -229,10 +292,10 @@ func AddToPool(containers []string) error {
 				}
 			}
 			// add hosts
-			hosts := map[string]config.Host{}
+			hosts := map[string]routercfg.Host{}
 			for _, inst := range insts {
 				address := fmt.Sprintf("%s:%d", inst.Host, inst.Port)
-				hosts[address] = config.Host{Address: address}
+				hosts[address] = routercfg.Host{Address: address}
 			}
 			if err := routerzk.AddHosts(Zk.Conn, name, hosts); err != nil {
 				return err
@@ -242,10 +305,17 @@ func AddToPool(containers []string) error {
 	return nil
 }
 
+type poolDefinition struct {
+	app   string
+	sha   string
+	env   string
+	insts []*ZkInstance
+}
+
 func DeleteFromPool(containers []string) error {
-	pools := map[bool]map[string][]*ZkInstance{}
-	pools[true] = map[string][]*ZkInstance{}
-	pools[false] = map[string][]*ZkInstance{}
+	pools := map[bool]map[string]*poolDefinition{}
+	pools[true] = map[string]*poolDefinition{}
+	pools[false] = map[string]*poolDefinition{}
 	for _, cont := range containers {
 		inst, err := GetInstance(cont)
 		if err != nil {
@@ -253,18 +323,28 @@ func DeleteFromPool(containers []string) error {
 			continue
 		}
 		name := helper.CreatePoolName(inst.App, inst.Sha, inst.Env)
-		currInsts := pools[inst.Internal][name]
-		if currInsts == nil {
-			currInsts = []*ZkInstance{}
+		zkApp, err := GetApp(inst.App)
+		if err != nil {
+			return err
 		}
-		pools[inst.Internal][name] = append(currInsts, inst)
+		poolDef := pools[zkApp.Internal][name]
+		if poolDef == nil {
+			poolDef = &poolDefinition{
+				app:   inst.App,
+				sha:   inst.Sha,
+				env:   inst.Env,
+				insts: []*ZkInstance{},
+			}
+			pools[zkApp.Internal][name] = poolDef
+		}
+		pools[zkApp.Internal][name].insts = append(poolDef.insts, inst)
 	}
 	for internal, allPools := range pools {
 		helper.SetRouterRoot(internal)
-		for name, insts := range allPools {
+		for name, poolDef := range allPools {
 			// remove hosts
 			hosts := []string{}
-			for _, inst := range insts {
+			for _, inst := range poolDef.insts {
 				hosts = append(hosts, fmt.Sprintf("%s:%d", inst.Host, inst.Port))
 			}
 			routerzk.DelHosts(Zk.Conn, name, hosts)
@@ -275,8 +355,45 @@ func DeleteFromPool(containers []string) error {
 				if err != nil {
 					log.Println("Error trying to clean up pool:", err)
 				}
+				err = CleanupCreatedPoolRefs(internal, poolDef.app, poolDef.sha, poolDef.env)
+				if err != nil {
+					log.Println("Error trying to clean up pool:", err)
+				}
 			}
 		}
+	}
+	return nil
+}
+
+func CleanupCreatedPoolRefs(internal bool, app, sha, env string) error {
+	if !internal {
+		return nil
+	}
+	// remove static rule, cleanup rule from trie if needed
+	ruleName := helper.GetAppShaEnvStaticRuleName(app, sha, env)
+	trieName := helper.GetAppEnvTrieName(app, env)
+	// remove static rule from trie
+	trie, err := routerzk.GetTrie(Zk.Conn, trieName)
+	if err != nil {
+		return err
+	}
+	newRules := []string{}
+	for _, rule := range trie.Rules {
+		if rule != ruleName {
+			newRules = append(newRules, ruleName)
+		}
+	}
+	if len(trie.Rules) != len(newRules) {
+		trie.Rules = newRules
+		err = routerzk.SetTrie(Zk.Conn, trie)
+		if err != nil {
+			return err
+		}
+	}
+	// delete static rule
+	err = routerzk.DelRule(Zk.Conn, ruleName)
+	if err != nil {
+		return err
 	}
 	return nil
 }

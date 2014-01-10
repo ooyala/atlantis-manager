@@ -226,7 +226,8 @@ func (e *RegisterAppExecutor) Result() interface{} {
 }
 
 func (e *RegisterAppExecutor) Description() string {
-	return fmt.Sprintf("%s -> %s:%s, non-atlantis: %t", e.arg.Name, e.arg.Repo, e.arg.Root, e.arg.NonAtlantis)
+	return fmt.Sprintf("%s -> %s:%s, non-atlantis: %t, internal: %t", e.arg.Name, e.arg.Repo, e.arg.Root,
+		e.arg.NonAtlantis, e.arg.Internal)
 }
 
 func (e *RegisterAppExecutor) Authorize() error {
@@ -256,7 +257,7 @@ func (e *RegisterAppExecutor) Execute(t *Task) error {
 	if _, err := datamodel.GetApp(e.arg.Name); err == nil {
 		return errors.New("Already Registered.")
 	}
-	_, err := datamodel.CreateOrUpdateApp(e.arg.NonAtlantis, typ, e.arg.Name, e.arg.Repo, e.arg.Root,
+	_, err := datamodel.CreateOrUpdateApp(e.arg.NonAtlantis, e.arg.Internal, typ, e.arg.Name, e.arg.Repo, e.arg.Root,
 		e.arg.Email, e.arg.Addrs)
 	if err != nil {
 		e.reply.Status = StatusError
@@ -306,8 +307,8 @@ func (e *UpdateAppExecutor) Execute(t *Task) error {
 	if e.arg.Type != "" {
 		typ = e.arg.Type
 	}
-	_, err := datamodel.CreateOrUpdateApp(e.arg.NonAtlantis, typ, e.arg.Name, e.arg.Repo, e.arg.Root,
-		e.arg.Email, e.arg.Addrs)
+	_, err := datamodel.CreateOrUpdateApp(e.arg.NonAtlantis, e.arg.Internal, typ, e.arg.Name, e.arg.Repo,
+		e.arg.Root, e.arg.Email, e.arg.Addrs)
 	if err != nil {
 		e.reply.Status = StatusError
 	}

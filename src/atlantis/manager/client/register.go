@@ -196,6 +196,7 @@ func (c *ListRoutersCommand) Execute(args []string) error {
 type RegisterAppCommand struct {
 	App         string            `short:"a" long:"app" description:"the app to register"`
 	NonAtlantis bool              `short:"n" long:"non-atlantis" description:"true if this is a non-atlantis app"`
+	Internal    bool              `short:"i" long:"internal" description:"true if this is an internal app"`
 	Type        string            `short:"t" long:"type" description:"the proxy type (http for atlantis, tcp or http for non-atlantis)"`
 	Repo        string            `short:"g" long:"git" description:"the app's git repository"`
 	Root        string            `short:"r" long:"root" description:"the app's root within the repo"`
@@ -218,6 +219,7 @@ func (c *RegisterAppCommand) Execute(args []string) error {
 	arg := ManagerRegisterAppArg{
 		ManagerAuthArg: authArg,
 		NonAtlantis:    c.NonAtlantis,
+		Internal:       c.Internal,
 		Type:           c.Type,
 		Name:           c.App,
 		Repo:           c.Repo,
@@ -237,6 +239,7 @@ func (c *RegisterAppCommand) Execute(args []string) error {
 type UpdateAppCommand struct {
 	App         string            `short:"a" long:"app" description:"the app to update"`
 	NonAtlantis bool              `short:"n" long:"non-atlantis" description:"true if this is a non-atlantis app"`
+	Internal    bool              `short:"i" long:"internal" description:"true if this is an internal app"`
 	Type        string            `short:"t" long:"type" description:"the proxy type (http for atlantis, tcp or http for non-atlantis)"`
 	Repo        string            `short:"g" long:"git" description:"the app's git repository (or host:port for non-atlantis apps)"`
 	Root        string            `short:"r" long:"root" description:"the app's root within the repo"`
@@ -259,6 +262,7 @@ func (c *UpdateAppCommand) Execute(args []string) error {
 	arg := ManagerRegisterAppArg{
 		ManagerAuthArg: authArg,
 		NonAtlantis:    c.NonAtlantis,
+		Internal:       c.Internal,
 		Type:           c.Type,
 		Name:           c.App,
 		Repo:           c.Repo,

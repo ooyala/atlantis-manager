@@ -13,7 +13,7 @@ func (s *DatamodelSuite) TestSupervisor(c *C) {
 	// create a host
 	c.Assert(h.Touch(), IsNil)
 	// set the container and port
-	inst, err := CreateInstance(false, app, sha, env, host)
+	inst, err := CreateInstance(app, sha, env, host)
 	c.Assert(err, IsNil)
 	c.Assert(h.SetContainerAndPort(inst.ID, 1337), IsNil)
 	// test Info()
@@ -21,7 +21,7 @@ func (s *DatamodelSuite) TestSupervisor(c *C) {
 	c.Assert(err, IsNil)
 	c.Assert(data.HasAppShaEnv(app, sha, env), Equals, true)
 	c.Assert(data.CountAppShaEnv(app, sha, env), Equals, 1)
-	dupinst, err := CreateInstance(false, app, sha, env, host)
+	dupinst, err := CreateInstance(app, sha, env, host)
 	c.Assert(err, IsNil)
 	c.Assert(h.SetContainerAndPort(dupinst.ID, 1338), IsNil)
 	data, err = h.Info()

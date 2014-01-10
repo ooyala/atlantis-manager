@@ -9,29 +9,16 @@ import (
 
 func (s *DatamodelSuite) TestInstance(c *C) {
 	Zk.RecursiveDelete(helper.GetBaseInstancePath())
-	externalInst, err := CreateInstance(false, app, sha, env, host)
+	externalInst, err := CreateInstance(app, sha, env, host)
 	c.Assert(err, IsNil)
 	c.Assert(externalInst.ID, Not(Equals), "")
 	c.Assert(externalInst.App, Equals, app)
 	c.Assert(externalInst.Sha, Equals, sha)
 	c.Assert(externalInst.Host, Equals, host)
-	c.Assert(externalInst.Internal, Equals, false)
 	c.Assert(externalInst.SetPort(uint16(1337)), IsNil)
 	otherExtInst, err := GetInstance(externalInst.ID)
 	c.Assert(*otherExtInst, Equals, *externalInst)
 	last, err := externalInst.Delete()
-	c.Assert(last, Equals, true)
-	c.Assert(err, IsNil)
-	internalInst, err := CreateInstance(true, app, sha, env, host)
-	c.Assert(err, IsNil)
-	c.Assert(internalInst.ID, Not(Equals), "")
-	c.Assert(internalInst.App, Equals, app)
-	c.Assert(internalInst.Sha, Equals, sha)
-	c.Assert(internalInst.Host, Equals, host)
-	c.Assert(internalInst.Internal, Equals, true)
-	otherInttInst, err := GetInstance(internalInst.ID)
-	c.Assert(*otherInttInst, Equals, *internalInst)
-	last, err = internalInst.Delete()
 	c.Assert(last, Equals, true)
 	c.Assert(err, IsNil)
 }
@@ -60,7 +47,7 @@ func (s *DatamodelSuite) TestInstanceListers(c *C) {
 		for _, sha := range appsMap[app] {
 			for env, hosts := range shas[sha] {
 				for i, _ := range hosts {
-					inst, err := CreateInstance(false, app, sha, env, fmt.Sprintf("%s-%d", host, i))
+					inst, err := CreateInstance(app, sha, env, fmt.Sprintf("%s-%d", host, i))
 					c.Assert(err, IsNil)
 					shas[sha][env][i] = inst.ID
 					instances = append(instances, inst)

@@ -111,6 +111,34 @@ func (s *DatamodelSuite) TestRouterPorts(c *C) {
 	c.Assert(HasRouterPortForAppEnv(true, "app4", "env2"), Equals, false)
 }
 
+func (s *DatamodelSuite) TestReserveRouterPortAndUpdateTrie(c *C) {
+	Zk.RecursiveDelete(helper.GetBaseRouterPortsPath(true))
+	Zk.RecursiveDelete(helper.GetBaseRouterPortsPath(false))
+	Zk.RecursiveDelete(helper.GetBaseLockPath())
+	Zk.RecursiveDelete("/atlantis/router")
+	CreateRouterPaths()
+	CreateRouterPortsPaths()
+	CreateLockPaths()
+
+	MinRouterPort = uint16(65533)
+	MaxRouterPort = uint16(65535)
+
+	port, created, err := ReserveRouterPortAndUpdateTrie("app", "sha", "env")
+	c.Assert(err, IsNil)
+	c.Assert(created, Equals, true)
+	c.Assert(port, Equals, "65533")
+	trie, err := routerzk.GetTrie(Zk.Conn, helper.GetAppEnvTrieName("app", "env"))
+	c.Assert(err, IsNil)
+	c.Assert(len(trie.Rules), Equals, 1)
+	port, created, err = ReserveRouterPortAndUpdateTrie("app", "sha2", "env")
+	c.Assert(err, IsNil)
+	c.Assert(created, Equals, false)
+	c.Assert(port, Equals, "65533")
+	trie, err = routerzk.GetTrie(Zk.Conn, helper.GetAppEnvTrieName("app", "env"))
+	c.Assert(err, IsNil)
+	c.Assert(len(trie.Rules), Equals, 2)
+}
+
 func (s *DatamodelSuite) TestRouterModel(c *C) {
 	Zk.RecursiveDelete(helper.GetBaseRouterPath(true))
 	Zk.RecursiveDelete(helper.GetBaseRouterPath(false))
@@ -146,12 +174,18 @@ func (s *DatamodelSuite) TestRouterPoolNaming(c *C) {
 
 func (s *DatamodelSuite) TestRouterInternalPool(c *C) {
 	Zk.RecursiveDelete("/atlantis/router")
+	Zk.RecursiveDelete("/atlantis/apps")
 	Zk.RecursiveDelete(helper.GetBaseInstancePath())
 	CreateRouterPaths()
-	instance, err := CreateInstance(true, app, sha, env, host+"-1")
+	CreateAppPath()
+	// fake register app
+	CreateOrUpdateApp(false, true, "http", app, "ssh://git@omg.com/app", "/", "omg@omg.com", nil)
+	CreateOrUpdateApp(false, true, "http", "app2", "ssh://git@omg.com/app", "/", "omg@omg.com", nil)
+	// do tests
+	instance, err := CreateInstance(app, sha, env, host+"-1")
 	c.Assert(err, IsNil)
 	instance.SetPort(uint16(1337))
-	instance2, err := CreateInstance(true, app, sha, env, host+"-2")
+	instance2, err := CreateInstance(app, sha, env, host+"-2")
 	c.Assert(err, IsNil)
 	instance2.SetPort(uint16(1338))
 	c.Assert(AddToPool([]string{instance.ID, instance2.ID}), IsNil)
@@ -164,10 +198,10 @@ func (s *DatamodelSuite) TestRouterInternalPool(c *C) {
 	c.Assert(thePool.Config.HealthzTimeout, Not(Equals), "")
 	c.Assert(thePool.Config.RequestTimeout, Not(Equals), "")
 	c.Assert(thePool.Hosts, DeepEquals, map[string]config.Host{host + "-1:1337": config.Host{Address: host + "-1:1337"}, host + "-2:1338": config.Host{Address: host + "-2:1338"}})
-	newInstance, err := CreateInstance(true, "app2", "sha1", "env1", host+"-1")
+	newInstance, err := CreateInstance("app2", "sha1", "env1", host+"-1")
 	c.Assert(err, IsNil)
 	newInstance.SetPort(uint16(1339))
-	newInstance2, err := CreateInstance(true, app, sha, env, host+"-3")
+	newInstance2, err := CreateInstance(app, sha, env, host+"-3")
 	c.Assert(err, IsNil)
 	newInstance2.SetPort(uint16(1340))
 	c.Assert(DeleteFromPool([]string{instance2.ID}), IsNil)
@@ -205,12 +239,18 @@ func (s *DatamodelSuite) TestRouterInternalPool(c *C) {
 
 func (s *DatamodelSuite) TestRouterExternalPool(c *C) {
 	Zk.RecursiveDelete("/atlantis/router")
+	Zk.RecursiveDelete("/atlantis/apps")
 	Zk.RecursiveDelete(helper.GetBaseInstancePath())
 	CreateRouterPaths()
-	instance, err := CreateInstance(false, app, sha, env, host+"-1")
+	CreateAppPath()
+	// fake register app
+	CreateOrUpdateApp(false, false, "http", app, "ssh://git@omg.com/app", "/", "omg@omg.com", nil)
+	CreateOrUpdateApp(false, false, "http", "app2", "ssh://git@omg.com/app", "/", "omg@omg.com", nil)
+	// do tests
+	instance, err := CreateInstance(app, sha, env, host+"-1")
 	c.Assert(err, IsNil)
 	instance.SetPort(uint16(1337))
-	instance2, err := CreateInstance(false, app, sha, env, host+"-2")
+	instance2, err := CreateInstance(app, sha, env, host+"-2")
 	c.Assert(err, IsNil)
 	instance2.SetPort(uint16(1338))
 	c.Assert(AddToPool([]string{instance.ID, instance2.ID}), IsNil)
@@ -223,10 +263,10 @@ func (s *DatamodelSuite) TestRouterExternalPool(c *C) {
 	c.Assert(thePool.Config.HealthzTimeout, Not(Equals), "")
 	c.Assert(thePool.Config.RequestTimeout, Not(Equals), "")
 	c.Assert(thePool.Hosts, DeepEquals, map[string]config.Host{host + "-1:1337": config.Host{Address: host + "-1:1337"}, host + "-2:1338": config.Host{Address: host + "-2:1338"}})
-	newInstance, err := CreateInstance(false, "app2", "sha1", "env1", host+"-1")
+	newInstance, err := CreateInstance("app2", "sha1", "env1", host+"-1")
 	c.Assert(err, IsNil)
 	newInstance.SetPort(uint16(1339))
-	newInstance2, err := CreateInstance(false, app, sha, env, host+"-3")
+	newInstance2, err := CreateInstance(app, sha, env, host+"-3")
 	c.Assert(err, IsNil)
 	newInstance2.SetPort(uint16(1340))
 	c.Assert(DeleteFromPool([]string{instance2.ID}), IsNil)

@@ -7,6 +7,7 @@ import (
 
 type App struct {
 	NonAtlantis         bool
+	Internal            bool
 	Type                string // proxy type. http for atlantis apps, tcp or http for non-atlantis apps
 	Name                string
 	Repo                string            // atlantis apps only
@@ -128,6 +129,7 @@ type ManagerHasRoleReply struct {
 type ManagerRegisterAppArg struct {
 	ManagerAuthArg
 	NonAtlantis bool
+	Internal    bool
 	Type        string
 	Name        string
 	Repo        string

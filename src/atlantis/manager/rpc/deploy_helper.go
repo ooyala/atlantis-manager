@@ -25,29 +25,32 @@ func deployContainer(auth *ManagerAuthArg, cont *Container, instances uint, t *T
 	return deploy(auth, manifest, cont.Sha, cont.Env, t)
 }
 
-func ResolveDepValuesForZone(app string, zkEnv *datamodel.ZkEnv, zone string, names []string, encrypt bool) (map[string]string, error) {
+func ResolveDepValuesForZone(app string, zkEnv *datamodel.ZkEnv, zone string, names []string, encrypt bool, t *Task) (map[string]string, error) {
 	deps := map[string]string{}
 	leftoverNames := []string{}
 	// if we're using DNS and the app is registered, try to get the app cname (if deployed)
 	if dns.Provider != nil {
 		for _, name := range names {
-			// TODO use new router ports here
-			if datamodel.InternalAppExistsInEnv(name, zkEnv.Name) {
-				// this is a registered, internal, deployed app, output the cname
+			// if app is registered for this dependency name
+			zkApp, err := datamodel.GetApp(name)
+			if err == nil && zkApp.NonAtlantis {
+				// TODO non-atlantis app dependencies
+			} else if err == nil && zkApp.Internal {
+				// atlantis internal app dependency.
+				if !zkApp.HasDepender(app) {
+					return nil, errors.New(app + " is not authorized to depend on the app '" + name + "'")
+				}
 				suffix, err := dns.Provider.Suffix(Region)
 				if err != nil {
 					leftoverNames = append(leftoverNames, name)
 					continue
 				}
-				// get the app we're depending on and make sure our app is a depender
-				zkApp, err := datamodel.GetApp(name)
-				if err != nil {
-					return nil, errors.New("Could not resolve dependency " + name + ": " + err.Error())
+				port, created, err := datamodel.ReserveRouterPortAndUpdateTrie(name, "", zkEnv.Name)
+				if created {
+					// add warning since this means that the app has not been deployed in this env yet
+					t.AddWarning("App dependency " + name + " has not yet been deployed in environment " + zkEnv.Name)
 				}
-				if !zkApp.HasDepender(app) {
-					return nil, errors.New(app + " is not authorized to depend on the app '" + name + "'")
-				}
-				deps[name] = helper.GetZoneAppCName(name, zkEnv.Name, zone, suffix)
+				deps[name] = helper.GetZoneAppCName(name, zkEnv.Name, zone, suffix) + ":" + port
 			} else {
 				leftoverNames = append(leftoverNames, name)
 			}
@@ -79,10 +82,10 @@ func ResolveDepValuesForZone(app string, zkEnv *datamodel.ZkEnv, zone string, na
 	return retDeps, nil
 }
 
-func ResolveDepValues(app string, zkEnv *datamodel.ZkEnv, names []string, encrypt bool) (deps map[string]map[string]string, err error) {
+func ResolveDepValues(app string, zkEnv *datamodel.ZkEnv, names []string, encrypt bool, t *Task) (deps map[string]map[string]string, err error) {
 	deps = map[string]map[string]string{}
 	for _, zone := range AvailableZones {
-		deps[zone], err = ResolveDepValuesForZone(app, zkEnv, zone, names, encrypt)
+		deps[zone], err = ResolveDepValuesForZone(app, zkEnv, zone, names, encrypt, t)
 		if err != nil {
 			return nil, errors.New("Dependency Error: " + err.Error())
 		}
@@ -120,7 +123,7 @@ func validateDeploy(auth *ManagerAuthArg, manifest *Manifest, sha, env string, t
 		return nil, errors.New(fmt.Sprintf("Memory Limit should be a multiple of %d", MemoryLimitIncrement))
 	}
 	t.LogStatus("Resolving Dependencies")
-	return ResolveDepValues(manifest.Name, zkEnv, manifest.DepNames(), true)
+	return ResolveDepValues(manifest.Name, zkEnv, manifest.DepNames(), true, t)
 }
 
 type DeployHostResult struct {
@@ -130,7 +133,7 @@ type DeployHostResult struct {
 }
 
 func deployToHost(respCh chan *DeployHostResult, manifest *Manifest, sha, env, host string) {
-	instance, err := datamodel.CreateInstance(manifest.Internal, manifest.Name, sha, env, host)
+	instance, err := datamodel.CreateInstance(manifest.Name, sha, env, host)
 	if err != nil {
 		respCh <- &DeployHostResult{Host: host, Container: nil, Error: err}
 		return
@@ -209,6 +212,11 @@ func deployToZone(respCh chan *DeployZoneResult, manifest *Manifest, sha, env st
 func deployToHostsInZones(deps map[string]map[string]string, manifest *Manifest, sha, env string,
 	hosts map[string][]string, zones []string, t *Task) ([]*Container, error) {
 	deployedContainers := []*Container{}
+	// fetch the app
+	zkApp, err := datamodel.GetApp(manifest.Name)
+	if err != nil {
+		return nil, err
+	}
 	// first check if zones have enough hosts
 	for _, zone := range zones {
 		// fail if zone has no hosts
@@ -224,7 +232,6 @@ func deployToHostsInZones(deps map[string]map[string]string, manifest *Manifest,
 		zoneManifest.Deps = deps[zone]
 		go deployToZone(respCh, zoneManifest, sha, env, hosts[zone], zone)
 	}
-	var err error
 	numResults := 0
 	status := "Deployed to: "
 	for result := range respCh {
@@ -267,10 +274,16 @@ func deployToHostsInZones(deps map[string]map[string]string, manifest *Manifest,
 		cleanup(true, deployedContainers, t)
 		return nil, errors.New("Update Pool Error: " + err.Error())
 	}
-	if manifest.Internal {
-		// TODO reserve router port if needed and add app+env
+	if zkApp.Internal {
+		// reserve router port if needed and add app+env
+		_, _, err = datamodel.ReserveRouterPortAndUpdateTrie(manifest.Name, sha, env)
+		if err != nil {
+			datamodel.DeleteFromPool(deployedIDs)
+			cleanup(true, deployedContainers, t)
+			return nil, errors.New("Reserve Router Port Error: " + err.Error())
+		}
 		t.LogStatus("Updating DNS")
-		if err := appdns.CreateAppCNames(manifest.Internal, manifest.Name, sha, env); err != nil {
+		if err := appdns.CreateAppCNames(zkApp.Internal, manifest.Name, sha, env); err != nil {
 			// if DNS fails, clean up and fail
 			datamodel.DeleteFromPool(deployedIDs)
 			cleanup(true, deployedContainers, t)
@@ -284,13 +297,18 @@ func devDeployToHosts(deps map[string]map[string]string, manifest *Manifest, sha
 	// deploy to hosts
 	deployedContainers := []*Container{}
 	deployedIDs := []string{}
+	// fetch the app
+	zkApp, err := datamodel.GetApp(manifest.Name)
+	if err != nil {
+		return nil, err
+	}
 	for _, host := range hosts {
 		health, err := supervisor.HealthCheck(host)
 		if err != nil {
 			continue
 		}
 		manifest.Deps = deps[health.Zone]
-		instance, err := datamodel.CreateInstance(manifest.Internal, manifest.Name, sha, env, host)
+		instance, err := datamodel.CreateInstance(manifest.Name, sha, env, host)
 		if err != nil {
 			continue
 		}
@@ -318,15 +336,22 @@ func devDeployToHosts(deps map[string]map[string]string, manifest *Manifest, sha
 		return nil, errors.New("Could not deploy to any hosts")
 	}
 	t.LogStatus("Updating Router")
-	err := datamodel.AddToPool(deployedIDs)
+	err = datamodel.AddToPool(deployedIDs)
 	if err != nil { // if we can't add the pool, clean up and fail
 		cleanup(true, deployedContainers, t)
 		return nil, errors.New("Update Pool Error: " + err.Error())
 	}
-	if manifest.Internal {
+	if zkApp.Internal {
+		// reserve router port if needed and add app+env
+		_, _, err = datamodel.ReserveRouterPortAndUpdateTrie(manifest.Name, sha, env)
+		if err != nil {
+			datamodel.DeleteFromPool(deployedIDs)
+			cleanup(true, deployedContainers, t)
+			return nil, errors.New("Reserve Router Port Error: " + err.Error())
+		}
 		t.LogStatus("Updating DNS")
 		// if we're internal, handle the DNS stuff
-		err := appdns.CreateAppCNames(manifest.Internal, manifest.Name, sha, env)
+		err := appdns.CreateAppCNames(zkApp.Internal, manifest.Name, sha, env)
 		if err != nil { // if DNS fails, clean up and fail
 			cleanup(true, deployedContainers, t)
 			return nil, errors.New("Update DNS Error: " + err.Error())
