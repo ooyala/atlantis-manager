@@ -13,6 +13,7 @@ func Wait(w http.ResponseWriter, r *http.Request) {
 	output := map[string]interface{}{
 		"Name":        statusReply.Name,
 		"Status":      statusReply.Status,
+		"Warnings":    statusReply.Warnings,
 		"Description": statusReply.Description,
 		"Done":        statusReply.Done,
 	}
