@@ -1,10 +1,10 @@
 PROJECT_ROOT := $(shell pwd)
 ifeq ($(shell pwd | xargs dirname | xargs basename),"lib")
-	LIB_PATH := $(PROJECT_ROOT)/lib
-	VENDOR_PATH := $(PROJECT_ROOT)/vendor
-else
 	LIB_PATH := $(shell pwd | xargs dirname)
 	VENDOR_PATH := $(shell pwd | xargs dirname | xargs dirname)/vendor
+else
+	LIB_PATH := $(PROJECT_ROOT)/lib
+	VENDOR_PATH := $(PROJECT_ROOT)/vendor
 endif
 ATLANTIS_PATH := $(LIB_PATH)/atlantis
 SUPERVISOR_PATH := $(LIB_PATH)/atlantis-supervisor
