@@ -4,6 +4,7 @@ import (
 	. "atlantis/manager/constant"
 	routerzk "atlantis/router/zk"
 	. "launchpad.net/gocheck"
+	"sort"
 	"testing"
 )
 
@@ -131,6 +132,15 @@ func (s *HelperSuite) TestGetZoneRouterCName(c *C) {
 func (s *HelperSuite) TestGetRouterCName(c *C) {
 	c.Assert(GetRouterCName(true, 1, Region+"1", Region+".atlantis.com"), Equals, "internal-router1.1."+Region+".atlantis.com")
 	c.Assert(GetRouterCName(false, 1, Region+"1", Region+".atlantis.com"), Equals, "router1.1."+Region+".atlantis.com")
+}
+
+func (s *HelperSuite) TestGetAppCNameSuffixes(c *C) {
+	obtain := GetAppCNameSuffixes("us-east-1.atlantis.com")
+	sort.Strings(obtain)
+	expect := []string{"1.us-east-1.atlantis.com", "us-east-1.atlantis.com"}
+	sort.Strings(expect)
+	c.Assert(obtain[0], Equals, expect[0])
+	c.Assert(obtain[1], Equals, expect[1])
 }
 
 func (s *HelperSuite) TestGetRegionAppCName(c *C) {

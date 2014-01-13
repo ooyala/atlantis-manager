@@ -152,6 +152,14 @@ func GetRouterCName(internal bool, num int, zone, suffix string) string {
 	return fmt.Sprintf("%srouter%d.%s.%s", internalStr, num, ZoneMinusRegion(zone), suffix)
 }
 
+func GetAppCNameSuffixes(suffix string) []string {
+	suffixes := []string{suffix}
+	for _, zone := range AvailableZones {
+		suffixes = append(suffixes, fmt.Sprintf("%s.%s", ZoneMinusRegion(zone), suffix))
+	}
+	return suffixes
+}
+
 func GetRegionAppCName(app, env, suffix string) string {
 	return fmt.Sprintf("%s%s.%s", app, EmptyIfProdPrefix(env), suffix)
 }

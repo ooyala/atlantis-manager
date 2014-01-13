@@ -2,12 +2,15 @@ package rpc
 
 import (
 	. "atlantis/common"
+	. "atlantis/manager/constant"
 	"atlantis/manager/datamodel"
+	"atlantis/manager/dns"
 	"atlantis/manager/helper"
 	. "atlantis/manager/rpc/types"
 	routerzk "atlantis/router/zk"
 	"errors"
 	"fmt"
+	"strings"
 )
 
 // ----------------------------------------------------------------------------------------------------------
@@ -420,6 +423,16 @@ func (e *UpdateRuleExecutor) Execute(t *Task) (err error) {
 	} else if e.arg.Rule.Next == "" && e.arg.Rule.Pool == "" {
 		return errors.New("Please specify either a next trie or a pool")
 	}
+	// fill in current cname suffixes in multi-host rules
+	if e.arg.Rule.Type == "multi-host" && dns.Provider != nil {
+		suffix, err := dns.Provider.Suffix(Region)
+		if err != nil {
+			return err
+		}
+		list := strings.Join(helper.GetAppCNameSuffixes(suffix), ",")
+		e.arg.Rule.Value = fmt.Sprintf("%s:%s", e.arg.Rule.Value, list)
+	}
+
 	helper.SetRouterRoot(e.arg.Rule.Internal)
 	err = routerzk.SetRule(datamodel.Zk.Conn, e.arg.Rule)
 	if err != nil {
