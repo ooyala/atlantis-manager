@@ -20,7 +20,9 @@ clean:
 	@rm -f example/client example/manager
 
 copy-key: clean
+	@mkdir -p $(ATLANTIS_PATH)/src/atlantis/crypto
 	@cp $(ATLANTIS_SECRET_DIR)/atlantis_key.go $(ATLANTIS_PATH)/src/atlantis/crypto/key.go
+	@mkdir -p $(PROJECT_ROOT)/src/atlantis/manager/crypto
 	@cp $(ATLANTIS_SECRET_DIR)/manager_cert.go $(PROJECT_ROOT)/src/atlantis/manager/crypto/cert.go
 
 install-deps:
