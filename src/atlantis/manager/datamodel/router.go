@@ -49,6 +49,7 @@ func HasRouterPortForAppEnv(internal bool, app, env string) bool {
 }
 
 func ReclaimRouterPortsForApp(internal bool, app string) error {
+	helper.SetRouterRoot(internal)
 	lock := NewRouterPortsLock(internal)
 	lock.Lock()
 	defer lock.Unlock()
@@ -69,6 +70,7 @@ func ReclaimRouterPortsForApp(internal bool, app string) error {
 }
 
 func ReclaimRouterPortsForEnv(internal bool, env string) error {
+	helper.SetRouterRoot(internal)
 	lock := NewRouterPortsLock(internal)
 	lock.Lock()
 	defer lock.Unlock()
@@ -89,6 +91,7 @@ func ReclaimRouterPortsForEnv(internal bool, env string) error {
 }
 
 func ReserveRouterPortAndUpdateTrie(app, sha, env string) (string, bool, error) {
+	helper.SetRouterRoot(true)
 	var (
 		err     error
 		created = false
@@ -408,6 +411,7 @@ func DeleteFromPool(containers []string) error {
 }
 
 func CleanupCreatedPoolRefs(internal bool, app, sha, env string) error {
+	helper.SetRouterRoot(internal)
 	if !internal {
 		return nil
 	}

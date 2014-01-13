@@ -553,6 +553,79 @@ type ManagerListTriesReply struct {
 	Status string
 }
 
+// ------------ GetAppEnvPort ------------
+// used to get a port
+type ManagerGetAppEnvPortArg struct {
+	ManagerAuthArg
+	App string
+	Env string
+}
+
+type ManagerGetAppEnvPortReply struct {
+	Port   config.Port
+	Status string
+}
+
+// ------------ ListAppEnvsWithPort ------------
+// used to list all app envs with ports
+type ManagerListAppEnvsWithPortArg struct {
+	ManagerAuthArg
+	Internal bool
+}
+
+type ManagerListAppEnvsWithPortReply struct {
+	AppEnvs []AppEnv
+	Status  string
+}
+
+// ------------ UpdatePort ------------
+// used to update ports
+type ManagerUpdatePortArg struct {
+	ManagerAuthArg
+	Port config.Port
+}
+
+type ManagerUpdatePortReply struct {
+	Status string
+}
+
+// ------------ DeletePort ------------
+// used to delete a port
+type ManagerDeletePortArg struct {
+	ManagerAuthArg
+	Name     string
+	Internal bool
+}
+
+type ManagerDeletePortReply struct {
+	Status string
+}
+
+// ------------ GetPort ------------
+// used to get a port
+type ManagerGetPortArg struct {
+	ManagerAuthArg
+	Name     string
+	Internal bool
+}
+
+type ManagerGetPortReply struct {
+	Port   config.Port
+	Status string
+}
+
+// ------------ ListPorts ------------
+// used to list all ports
+type ManagerListPortsArg struct {
+	ManagerAuthArg
+	Internal bool
+}
+
+type ManagerListPortsReply struct {
+	Ports  []string
+	Status string
+}
+
 // ------------ Login -----------
 // used for LDAP Logins
 type ManagerLoginArg struct {

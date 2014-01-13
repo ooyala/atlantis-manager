@@ -14,6 +14,218 @@ import (
 // Port Related
 // ----------------------------------------------------------------------------------------------------------
 
+type GetAppEnvPortExecutor struct {
+	arg   ManagerGetAppEnvPortArg
+	reply *ManagerGetAppEnvPortReply
+}
+
+func (e *GetAppEnvPortExecutor) Request() interface{} {
+	return e.arg
+}
+
+func (e *GetAppEnvPortExecutor) Result() interface{} {
+	return e.reply
+}
+
+func (e *GetAppEnvPortExecutor) Description() string {
+	return fmt.Sprintf("%s in %s", e.arg.App, e.arg.Env)
+}
+
+func (e *GetAppEnvPortExecutor) Execute(t *Task) (err error) {
+	if e.arg.App == "" {
+		return errors.New("Please specify an app")
+	} else if e.arg.Env == "" {
+		return errors.New("Please specify an environment")
+	}
+	zkApp, err := datamodel.GetApp(e.arg.App)
+	if err != nil {
+		return err
+	}
+	helper.SetRouterRoot(zkApp.Internal)
+	e.reply.Port, err = routerzk.GetPort(datamodel.Zk.Conn, helper.GetAppEnvTrieName(e.arg.App, e.arg.Env))
+	return err
+}
+
+func (e *GetAppEnvPortExecutor) Authorize() error {
+	return SimpleAuthorize(&e.arg.ManagerAuthArg)
+}
+
+type ListAppEnvsWithPortExecutor struct {
+	arg   ManagerListAppEnvsWithPortArg
+	reply *ManagerListAppEnvsWithPortReply
+}
+
+func (e *ListAppEnvsWithPortExecutor) Request() interface{} {
+	return e.arg
+}
+
+func (e *ListAppEnvsWithPortExecutor) Result() interface{} {
+	return e.reply
+}
+
+func (e *ListAppEnvsWithPortExecutor) Description() string {
+	return fmt.Sprintf("internal: %t", e.arg.Internal)
+}
+
+func (e *ListAppEnvsWithPortExecutor) Execute(t *Task) (err error) {
+	zrp := datamodel.GetRouterPorts(e.arg.Internal)
+	e.reply.AppEnvs = []AppEnv{}
+	for _, appEnv := range zrp.PortMap {
+		e.reply.AppEnvs = append(e.reply.AppEnvs, appEnv)
+	}
+	return err
+}
+
+func (e *ListAppEnvsWithPortExecutor) Authorize() error {
+	return SimpleAuthorize(&e.arg.ManagerAuthArg)
+}
+
+type UpdatePortExecutor struct {
+	arg   ManagerUpdatePortArg
+	reply *ManagerUpdatePortReply
+}
+
+func (e *UpdatePortExecutor) Request() interface{} {
+	return e.arg
+}
+
+func (e *UpdatePortExecutor) Result() interface{} {
+	return e.reply
+}
+
+func (e *UpdatePortExecutor) Description() string {
+	return fmt.Sprintf("%+v", e.arg.Port)
+}
+
+func (e *UpdatePortExecutor) Execute(t *Task) (err error) {
+	if e.arg.Port.Name == "" {
+		return errors.New("Please specify a name")
+	}
+	if e.arg.Port.Trie == "" {
+		return errors.New("Please specify a trie")
+	}
+	if e.arg.Port.Port == uint16(0) {
+		return errors.New("Please specify a port")
+	}
+	helper.SetRouterRoot(e.arg.Port.Internal)
+	return routerzk.SetPort(datamodel.Zk.Conn, e.arg.Port)
+}
+
+func (e *UpdatePortExecutor) Authorize() error {
+	return SimpleAuthorize(&e.arg.ManagerAuthArg)
+}
+
+type DeletePortExecutor struct {
+	arg   ManagerDeletePortArg
+	reply *ManagerDeletePortReply
+}
+
+func (e *DeletePortExecutor) Request() interface{} {
+	return e.arg
+}
+
+func (e *DeletePortExecutor) Result() interface{} {
+	return e.reply
+}
+
+func (e *DeletePortExecutor) Description() string {
+	return e.arg.Name
+}
+
+func (e *DeletePortExecutor) Execute(t *Task) (err error) {
+	if e.arg.Name == "" {
+		return errors.New("Please specify a name")
+	}
+	helper.SetRouterRoot(e.arg.Internal)
+	err = routerzk.DelPort(datamodel.Zk.Conn, e.arg.Name)
+	return err
+}
+
+func (e *DeletePortExecutor) Authorize() error {
+	return SimpleAuthorize(&e.arg.ManagerAuthArg)
+}
+
+type GetPortExecutor struct {
+	arg   ManagerGetPortArg
+	reply *ManagerGetPortReply
+}
+
+func (e *GetPortExecutor) Request() interface{} {
+	return e.arg
+}
+
+func (e *GetPortExecutor) Result() interface{} {
+	return e.reply
+}
+
+func (e *GetPortExecutor) Description() string {
+	return e.arg.Name
+}
+
+func (e *GetPortExecutor) Execute(t *Task) (err error) {
+	if e.arg.Name == "" {
+		return errors.New("Please specify a name")
+	}
+	helper.SetRouterRoot(e.arg.Internal)
+	e.reply.Port, err = routerzk.GetPort(datamodel.Zk.Conn, e.arg.Name)
+	return err
+}
+
+func (e *GetPortExecutor) Authorize() error {
+	return SimpleAuthorize(&e.arg.ManagerAuthArg)
+}
+
+type ListPortsExecutor struct {
+	arg   ManagerListPortsArg
+	reply *ManagerListPortsReply
+}
+
+func (e *ListPortsExecutor) Request() interface{} {
+	return e.arg
+}
+
+func (e *ListPortsExecutor) Result() interface{} {
+	return e.reply
+}
+
+func (e *ListPortsExecutor) Description() string {
+	return "ListPorts"
+}
+
+func (e *ListPortsExecutor) Execute(t *Task) (err error) {
+	helper.SetRouterRoot(e.arg.Internal)
+	e.reply.Ports, err = routerzk.ListPorts(datamodel.Zk.Conn)
+	return err
+}
+
+func (e *ListPortsExecutor) Authorize() error {
+	return SimpleAuthorize(&e.arg.ManagerAuthArg)
+}
+
+func (m *ManagerRPC) GetAppEnvPort(arg ManagerGetAppEnvPortArg, reply *ManagerGetAppEnvPortReply) error {
+	return NewTask("GetAppEnvPort", &GetAppEnvPortExecutor{arg, reply}).Run()
+}
+
+func (m *ManagerRPC) ListAppEnvsWithPort(arg ManagerListAppEnvsWithPortArg, reply *ManagerListAppEnvsWithPortReply) error {
+	return NewTask("ListAppEnvsWithPort", &ListAppEnvsWithPortExecutor{arg, reply}).Run()
+}
+
+func (m *ManagerRPC) UpdatePort(arg ManagerUpdatePortArg, reply *ManagerUpdatePortReply) error {
+	return NewTask("UpdatePort", &UpdatePortExecutor{arg, reply}).Run()
+}
+
+func (m *ManagerRPC) DeletePort(arg ManagerDeletePortArg, reply *ManagerDeletePortReply) error {
+	return NewTask("DeletePort", &DeletePortExecutor{arg, reply}).Run()
+}
+
+func (m *ManagerRPC) GetPort(arg ManagerGetPortArg, reply *ManagerGetPortReply) error {
+	return NewTask("GetPort", &GetPortExecutor{arg, reply}).Run()
+}
+
+func (m *ManagerRPC) ListPorts(arg ManagerListPortsArg, reply *ManagerListPortsReply) error {
+	return NewTask("ListPorts", &ListPortsExecutor{arg, reply}).Run()
+}
+
 // ----------------------------------------------------------------------------------------------------------
 // Pool Related
 // ----------------------------------------------------------------------------------------------------------
