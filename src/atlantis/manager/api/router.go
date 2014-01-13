@@ -11,6 +11,111 @@ import (
 	"strings"
 )
 
+func GetAppEnvPort(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
+	pArg := ManagerGetAppEnvPortArg{
+		ManagerAuthArg: auth,
+		App: vars["App"],
+		Env: vars["App"],
+	}
+	var reply ManagerGetAppEnvPortReply
+	err := manager.GetAppEnvPort(pArg, &reply)
+	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Port": reply.Port, "Status": reply.Status}, err))
+}
+
+func ListAppEnvsWithPort(w http.ResponseWriter, r *http.Request) {
+	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
+	internal, err := strconv.ParseBool(r.FormValue("Internal"))
+	if err != nil {
+		fmt.Fprintf(w, "%s", Output(map[string]interface{}{}, err))
+		return
+	}
+	pArg := ManagerListAppEnvsWithPortArg{
+		ManagerAuthArg: auth,
+		Internal: internal,
+	}
+	var reply ManagerListAppEnvsWithPortReply
+	err = manager.ListAppEnvsWithPort(pArg, &reply)
+	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"AppEnvs": reply.AppEnvs, "Status": reply.Status}, err))
+}
+
+func UpdatePort(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
+	internal, err := strconv.ParseBool(r.FormValue("Internal"))
+	if err != nil {
+		fmt.Fprintf(w, "%s", Output(map[string]interface{}{}, err))
+		return
+	}
+	port, err := strconv.ParseUint(r.FormValue("Port"), 10, 16)
+	if err != nil {
+		fmt.Fprintf(w, "%s", Output(map[string]interface{}{}, err))
+		return
+	}
+	pArg := ManagerUpdatePortArg{
+		ManagerAuthArg: auth,
+		Port: config.Port{
+			Name: vars["PortName"],
+			Port: uint16(port),
+			Trie: r.FormValue("Trie"),
+			Internal: internal,
+		},
+	}
+	var reply ManagerUpdatePortReply
+	err = manager.UpdatePort(pArg, &reply)
+	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Status": reply.Status}, err))
+}
+
+func DeletePort(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
+	internal, err := strconv.ParseBool(r.FormValue("Internal"))
+	if err != nil {
+		fmt.Fprintf(w, "%s", Output(map[string]interface{}{}, err))
+		return
+	}
+	pArg := ManagerDeletePortArg{
+		ManagerAuthArg: auth,
+		Name: vars["PortName"],
+		Internal: internal,
+	}
+	var reply ManagerDeletePortReply
+	err = manager.DeletePort(pArg, &reply)
+	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Status": reply.Status}, err))
+}
+
+func GetPort(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
+	internal, err := strconv.ParseBool(r.FormValue("Internal"))
+	if err != nil {
+		fmt.Fprintf(w, "%s", Output(map[string]interface{}{}, err))
+		return
+	}
+	pArg := ManagerGetPortArg{
+		ManagerAuthArg: auth,
+		Name: vars["PortName"],
+		Internal: internal,
+	}
+	var reply ManagerGetPortReply
+	err = manager.GetPort(pArg, &reply)
+	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Port": reply.Port, "Status": reply.Status}, err))
+}
+
+func ListPorts(w http.ResponseWriter, r *http.Request) {
+	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
+	internal, err := strconv.ParseBool(r.FormValue("Internal"))
+	if err != nil {
+		fmt.Fprintf(w, "%s", Output(map[string]interface{}{}, err))
+		return
+	}
+	arg := ManagerListPortsArg{auth, internal}
+	var reply ManagerListPortsReply
+	err = manager.ListPorts(arg, &reply)
+	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Ports": reply.Ports, "Status": reply.Status}, err))
+}
+
 func GetPool(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
