@@ -345,3 +345,182 @@ func (c *ListTriesCommand) Execute(args []string) error {
 	}
 	return Output(map[string]interface{}{"status": reply.Status, "tries": reply.Tries}, reply.Tries, nil)
 }
+
+type UpdatePortCommand struct {
+	Name     string `short:"n" long:"name" description:"the name of the port"`
+	Port     uint16 `short:"p" long:"port" description:"the actual port to listen on"`
+	Trie     string `short:"t" long:"trie" description:"the trie to use as root for this port"`
+	Internal bool   `short:"i" long:"internal" description:"true if internal"`
+}
+
+func (c *UpdatePortCommand) Execute(args []string) error {
+	err := Init()
+	if err != nil {
+		return OutputError(err)
+	}
+	Log("Update Port...")
+	user, secret, err := GetSecret()
+	if err != nil {
+		return err
+	}
+	authArg := ManagerAuthArg{user, "", secret}
+	arg := ManagerUpdatePortArg{
+		ManagerAuthArg: authArg,
+		Port: config.Port{
+			Name: c.Name,
+			Port: c.Port,
+			Trie: c.Trie,
+			Internal: c.Internal,
+		},
+	}
+	var reply ManagerUpdatePortReply
+	err = rpcClient.Call("UpdatePort", arg, &reply)
+	if err != nil {
+		return OutputError(err)
+	}
+	Log("-> status: %s", reply.Status)
+	return Output(map[string]interface{}{"status": reply.Status}, nil, nil)
+}
+
+type DeletePortCommand struct {
+	Name     string `short:"n" long:"name" description:"the name of the port"`
+	Internal bool   `short:"i" long:"internal" description:"true if internal"`
+}
+
+func (c *DeletePortCommand) Execute(args []string) error {
+	err := Init()
+	if err != nil {
+		return OutputError(err)
+	}
+	Log("Delete Port...")
+	user, secret, err := GetSecret()
+	if err != nil {
+		return err
+	}
+	authArg := ManagerAuthArg{user, "", secret}
+	arg := ManagerDeletePortArg{authArg, c.Name, c.Internal}
+	var reply ManagerDeletePortReply
+	err = rpcClient.Call("DeletePort", arg, &reply)
+	if err != nil {
+		return OutputError(err)
+	}
+	Log("-> status: %s", reply.Status)
+	return Output(map[string]interface{}{"status": reply.Status}, nil, nil)
+}
+
+type GetPortCommand struct {
+	Name     string `short:"n" long:"name" description:"the name of the port"`
+	Internal bool   `short:"i" long:"internal" description:"true if internal"`
+}
+
+func (c *GetPortCommand) Execute(args []string) error {
+	err := Init()
+	if err != nil {
+		return OutputError(err)
+	}
+	Log("Get Port...")
+	user, secret, err := GetSecret()
+	if err != nil {
+		return err
+	}
+	authArg := ManagerAuthArg{user, "", secret}
+	arg := ManagerGetPortArg{authArg, c.Name, c.Internal}
+	var reply ManagerGetPortReply
+	err = rpcClient.Call("GetPort", arg, &reply)
+	if err != nil {
+		return OutputError(err)
+	}
+	Log("-> status: %s", reply.Status)
+	Log("-> %v", reply.Port.String())
+	return Output(map[string]interface{}{"status": reply.Status, "port": reply.Port}, reply.Port, nil)
+}
+
+type ListPortsCommand struct {
+	Internal bool `short:"i" long:"internal" description:"true if internal"`
+}
+
+func (c *ListPortsCommand) Execute(args []string) error {
+	err := Init()
+	if err != nil {
+		return OutputError(err)
+	}
+	Log("List Ports...")
+	user, secret, err := GetSecret()
+	if err != nil {
+		return err
+	}
+	authArg := ManagerAuthArg{user, "", secret}
+	arg := ManagerListPortsArg{authArg, c.Internal}
+	var reply ManagerListPortsReply
+	err = rpcClient.Call("ListPorts", arg, &reply)
+	if err != nil {
+		return OutputError(err)
+	}
+	Log("-> status: %s", reply.Status)
+	Log("-> ports:")
+	for _, port := range reply.Ports {
+		Log("->   %s", port)
+	}
+	return Output(map[string]interface{}{"status": reply.Status, "ports": reply.Ports}, reply.Ports, nil)
+}
+
+type GetAppEnvPortCommand struct {
+	App      string `short:"a" long:"app" description:"the app of the port"`
+	Env      string `short:"e" long:"env" description:"the env of the port"`
+	Internal bool   `short:"i" long:"internal" description:"true if internal"`
+}
+
+func (c *GetAppEnvPortCommand) Execute(args []string) error {
+	err := Init()
+	if err != nil {
+		return OutputError(err)
+	}
+	Log("Get AppEnv Port...")
+	user, secret, err := GetSecret()
+	if err != nil {
+		return err
+	}
+	authArg := ManagerAuthArg{user, "", secret}
+	arg := ManagerGetAppEnvPortArg{
+		ManagerAuthArg: authArg,
+		App: c.App,
+		Env: c.Env,
+	}
+	var reply ManagerGetAppEnvPortReply
+	err = rpcClient.Call("GetAppEnvPort", arg, &reply)
+	if err != nil {
+		return OutputError(err)
+	}
+	Log("-> status: %s", reply.Status)
+	Log("-> %v", reply.Port.String())
+	return Output(map[string]interface{}{"status": reply.Status, "port": reply.Port}, reply.Port, nil)
+}
+
+type ListAppEnvsWithPortCommand struct {
+	Internal bool `short:"i" long:"internal" description:"true if internal"`
+}
+
+func (c *ListAppEnvsWithPortCommand) Execute(args []string) error {
+	err := Init()
+	if err != nil {
+		return OutputError(err)
+	}
+	Log("List AppEnvs With Ports...")
+	user, secret, err := GetSecret()
+	if err != nil {
+		return err
+	}
+	authArg := ManagerAuthArg{user, "", secret}
+	arg := ManagerListAppEnvsWithPortArg{authArg, c.Internal}
+	var reply ManagerListAppEnvsWithPortReply
+	err = rpcClient.Call("ListAppEnvsWithPort", arg, &reply)
+	if err != nil {
+		return OutputError(err)
+	}
+	Log("-> status: %s", reply.Status)
+	Log("-> app+envs:")
+	for _, appEnv := range reply.AppEnvs {
+		Log("->   %s in %s", appEnv.App, appEnv.Env)
+	}
+	return Output(map[string]interface{}{"status": reply.Status, "appEnvs": reply.AppEnvs}, reply.AppEnvs, nil)
+}

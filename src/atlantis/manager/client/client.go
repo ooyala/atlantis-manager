@@ -265,6 +265,13 @@ func New() *ManagerClient {
 	o.AddCommand("delete-trie", "delete a router trie", "", &DeleteTrieCommand{})
 	o.AddCommand("get-trie", "get a router trie", "", &GetTrieCommand{})
 	o.AddCommand("list-tries", "list router tries", "", &ListTriesCommand{})
+	o.AddCommand("create-port", "create a router port", "", &UpdatePortCommand{}) // alias to update
+	o.AddCommand("update-port", "update a router port", "", &UpdatePortCommand{})
+	o.AddCommand("delete-port", "delete a router port", "", &DeletePortCommand{})
+	o.AddCommand("get-port", "get a router port", "", &GetPortCommand{})
+	o.AddCommand("list-ports", "list router ports", "", &ListPortsCommand{})
+	o.AddCommand("get-app-env-port", "get a router port for an appenv", "", &GetAppEnvPortCommand{})
+	o.AddCommand("list-app-envs-with-port", "list app envs with a router port", "", &ListAppEnvsWithPortCommand{})
 
 	// LDAP Management
 	o.AddCommand("create-team", "create a team", "", &CreateTeamCommand{})
