@@ -1,5 +1,5 @@
 PROJECT_ROOT := $(shell pwd)
-ifeq ($(shell pwd | xargs dirname | xargs basename),"lib")
+ifeq ($(shell pwd | xargs dirname | xargs basename),lib)
 	LIB_PATH := $(shell pwd | xargs dirname)
 	VENDOR_PATH := $(shell pwd | xargs dirname | xargs dirname)/vendor
 else
