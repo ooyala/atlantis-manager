@@ -54,14 +54,13 @@ func ReclaimRouterPortsForApp(internal bool, app string) error {
 	lock.Lock()
 	defer lock.Unlock()
 	zrp := GetRouterPorts(internal)
-	envs, err := zrp.reclaimApp(app)
+	ports, err := zrp.reclaimApp(app)
 	if err != nil {
 		return err
 	}
-	for _, env := range envs {
-		name := helper.GetAppEnvTrieName(app, env)
-		if err := routerzk.DelPort(Zk.Conn, name); err != nil {
-			log.Printf("Error reclaiming port %s", name)
+	for _, port := range ports {
+		if err := routerzk.DelPort(Zk.Conn, port); err != nil {
+			log.Printf("Error reclaiming port %d for app %s", port, app)
 			// don't fail here
 			// TODO email appsplat
 		}
@@ -75,14 +74,13 @@ func ReclaimRouterPortsForEnv(internal bool, env string) error {
 	lock.Lock()
 	defer lock.Unlock()
 	zrp := GetRouterPorts(internal)
-	apps, err := zrp.reclaimEnv(env)
+	ports, err := zrp.reclaimEnv(env)
 	if err != nil {
 		return err
 	}
-	for _, app := range apps {
-		name := helper.GetAppEnvTrieName(app, env)
-		if err := routerzk.DelPort(Zk.Conn, name); err != nil {
-			log.Printf("Error reclaiming port %s", name)
+	for _, port := range ports {
+		if err := routerzk.DelPort(Zk.Conn, port); err != nil {
+			log.Printf("Error reclaiming port %d for env %s", port, env)
 			// don't fail here
 			// TODO email appsplat
 		}
@@ -152,7 +150,6 @@ func ReserveRouterPortAndUpdateTrie(app, sha, env string) (string, bool, error) 
 		return port, created, err
 	}
 	err = routerzk.SetPort(Zk.Conn, routercfg.Port{
-		Name: trieName,
 		Port: uint16(portUInt),
 		Trie: trieName,
 	})
@@ -196,28 +193,38 @@ func (r *ZkRouterPorts) getPortForAppEnv(app, env string) (string, error) {
 	return "", errors.New("No available ports")
 }
 
-func (r *ZkRouterPorts) reclaimApp(app string) ([]string, error) {
-	reclaimedEnvs := []string{}
+func (r *ZkRouterPorts) reclaimApp(app string) ([]uint16, error) {
+	reclaimedPorts := []uint16{}
 	for port, appEnv := range r.PortMap {
 		if appEnv.App == app {
 			delete(r.PortMap, port)
 			delete(r.AppEnvMap, appEnv.String())
-			reclaimedEnvs = append(reclaimedEnvs, appEnv.Env)
+			portUint, err := strconv.ParseUint(port, 10, 16)
+			if err != nil {
+				// TODO email appsplat. this shouldn't happen
+			} else {
+				reclaimedPorts = append(reclaimedPorts, uint16(portUint))
+			}
 		}
 	}
-	return reclaimedEnvs, r.save()
+	return reclaimedPorts, r.save()
 }
 
-func (r *ZkRouterPorts) reclaimEnv(env string) ([]string, error) {
-	reclaimedApps := []string{}
+func (r *ZkRouterPorts) reclaimEnv(env string) ([]uint16, error) {
+	reclaimedPorts := []uint16{}
 	for port, appEnv := range r.PortMap {
 		if appEnv.Env == env {
 			delete(r.PortMap, port)
 			delete(r.AppEnvMap, appEnv.String())
-			reclaimedApps = append(reclaimedApps, appEnv.App)
+			portUint, err := strconv.ParseUint(port, 10, 16)
+			if err != nil {
+				// TODO email appsplat. this shouldn't happen
+			} else {
+				reclaimedPorts = append(reclaimedPorts, uint16(portUint))
+			}
 		}
 	}
-	return reclaimedApps, r.save()
+	return reclaimedPorts, r.save()
 }
 
 func (r *ZkRouterPorts) save() error {

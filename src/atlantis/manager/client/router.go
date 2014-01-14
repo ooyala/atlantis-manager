@@ -347,7 +347,6 @@ func (c *ListTriesCommand) Execute(args []string) error {
 }
 
 type UpdatePortCommand struct {
-	Name     string `short:"n" long:"name" description:"the name of the port"`
 	Port     uint16 `short:"p" long:"port" description:"the actual port to listen on"`
 	Trie     string `short:"t" long:"trie" description:"the trie to use as root for this port"`
 	Internal bool   `short:"i" long:"internal" description:"true if internal"`
@@ -367,9 +366,8 @@ func (c *UpdatePortCommand) Execute(args []string) error {
 	arg := ManagerUpdatePortArg{
 		ManagerAuthArg: authArg,
 		Port: config.Port{
-			Name: c.Name,
-			Port: c.Port,
-			Trie: c.Trie,
+			Port:     c.Port,
+			Trie:     c.Trie,
 			Internal: c.Internal,
 		},
 	}
@@ -383,7 +381,7 @@ func (c *UpdatePortCommand) Execute(args []string) error {
 }
 
 type DeletePortCommand struct {
-	Name     string `short:"n" long:"name" description:"the name of the port"`
+	Port     uint16 `short:"p" long:"port" description:"the port number"`
 	Internal bool   `short:"i" long:"internal" description:"true if internal"`
 }
 
@@ -398,7 +396,7 @@ func (c *DeletePortCommand) Execute(args []string) error {
 		return err
 	}
 	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerDeletePortArg{authArg, c.Name, c.Internal}
+	arg := ManagerDeletePortArg{authArg, c.Port, c.Internal}
 	var reply ManagerDeletePortReply
 	err = rpcClient.Call("DeletePort", arg, &reply)
 	if err != nil {
@@ -409,7 +407,7 @@ func (c *DeletePortCommand) Execute(args []string) error {
 }
 
 type GetPortCommand struct {
-	Name     string `short:"n" long:"name" description:"the name of the port"`
+	Port     uint16 `short:"p" long:"port" description:"the port number"`
 	Internal bool   `short:"i" long:"internal" description:"true if internal"`
 }
 
@@ -424,7 +422,7 @@ func (c *GetPortCommand) Execute(args []string) error {
 		return err
 	}
 	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerGetPortArg{authArg, c.Name, c.Internal}
+	arg := ManagerGetPortArg{authArg, c.Port, c.Internal}
 	var reply ManagerGetPortReply
 	err = rpcClient.Call("GetPort", arg, &reply)
 	if err != nil {
@@ -483,8 +481,8 @@ func (c *GetAppEnvPortCommand) Execute(args []string) error {
 	authArg := ManagerAuthArg{user, "", secret}
 	arg := ManagerGetAppEnvPortArg{
 		ManagerAuthArg: authArg,
-		App: c.App,
-		Env: c.Env,
+		App:            c.App,
+		Env:            c.Env,
 	}
 	var reply ManagerGetAppEnvPortReply
 	err = rpcClient.Call("GetAppEnvPort", arg, &reply)

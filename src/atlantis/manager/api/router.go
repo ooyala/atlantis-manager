@@ -16,8 +16,8 @@ func GetAppEnvPort(w http.ResponseWriter, r *http.Request) {
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
 	pArg := ManagerGetAppEnvPortArg{
 		ManagerAuthArg: auth,
-		App: vars["App"],
-		Env: vars["App"],
+		App:            vars["App"],
+		Env:            vars["App"],
 	}
 	var reply ManagerGetAppEnvPortReply
 	err := manager.GetAppEnvPort(pArg, &reply)
@@ -33,7 +33,7 @@ func ListAppEnvsWithPort(w http.ResponseWriter, r *http.Request) {
 	}
 	pArg := ManagerListAppEnvsWithPortArg{
 		ManagerAuthArg: auth,
-		Internal: internal,
+		Internal:       internal,
 	}
 	var reply ManagerListAppEnvsWithPortReply
 	err = manager.ListAppEnvsWithPort(pArg, &reply)
@@ -48,7 +48,7 @@ func UpdatePort(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "%s", Output(map[string]interface{}{}, err))
 		return
 	}
-	port, err := strconv.ParseUint(r.FormValue("Port"), 10, 16)
+	port, err := strconv.ParseUint(vars["Port"], 10, 16)
 	if err != nil {
 		fmt.Fprintf(w, "%s", Output(map[string]interface{}{}, err))
 		return
@@ -56,9 +56,8 @@ func UpdatePort(w http.ResponseWriter, r *http.Request) {
 	pArg := ManagerUpdatePortArg{
 		ManagerAuthArg: auth,
 		Port: config.Port{
-			Name: vars["PortName"],
-			Port: uint16(port),
-			Trie: r.FormValue("Trie"),
+			Port:     uint16(port),
+			Trie:     r.FormValue("Trie"),
 			Internal: internal,
 		},
 	}
@@ -75,10 +74,15 @@ func DeletePort(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "%s", Output(map[string]interface{}{}, err))
 		return
 	}
+	port, err := strconv.ParseUint(vars["Port"], 10, 16)
+	if err != nil {
+		fmt.Fprintf(w, "%s", Output(map[string]interface{}{}, err))
+		return
+	}
 	pArg := ManagerDeletePortArg{
 		ManagerAuthArg: auth,
-		Name: vars["PortName"],
-		Internal: internal,
+		Port:           uint16(port),
+		Internal:       internal,
 	}
 	var reply ManagerDeletePortReply
 	err = manager.DeletePort(pArg, &reply)
@@ -93,10 +97,15 @@ func GetPort(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "%s", Output(map[string]interface{}{}, err))
 		return
 	}
+	port, err := strconv.ParseUint(vars["Port"], 10, 16)
+	if err != nil {
+		fmt.Fprintf(w, "%s", Output(map[string]interface{}{}, err))
+		return
+	}
 	pArg := ManagerGetPortArg{
 		ManagerAuthArg: auth,
-		Name: vars["PortName"],
-		Internal: internal,
+		Port:           uint16(port),
+		Internal:       internal,
 	}
 	var reply ManagerGetPortReply
 	err = manager.GetPort(pArg, &reply)

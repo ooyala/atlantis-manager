@@ -593,7 +593,7 @@ type ManagerUpdatePortReply struct {
 // used to delete a port
 type ManagerDeletePortArg struct {
 	ManagerAuthArg
-	Name     string
+	Port     uint16
 	Internal bool
 }
 
@@ -605,7 +605,7 @@ type ManagerDeletePortReply struct {
 // used to get a port
 type ManagerGetPortArg struct {
 	ManagerAuthArg
-	Name     string
+	Port     uint16
 	Internal bool
 }
 
@@ -622,7 +622,7 @@ type ManagerListPortsArg struct {
 }
 
 type ManagerListPortsReply struct {
-	Ports  []string
+	Ports  []uint16
 	Status string
 }
 

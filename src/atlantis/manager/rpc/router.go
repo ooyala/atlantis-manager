@@ -10,6 +10,7 @@ import (
 	routerzk "atlantis/router/zk"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -44,8 +45,14 @@ func (e *GetAppEnvPortExecutor) Execute(t *Task) (err error) {
 	if err != nil {
 		return err
 	}
+	zrp := datamodel.GetRouterPorts(zkApp.Internal)
+	portStr := zrp.AppEnvMap[helper.GetAppEnvTrieName(e.arg.App, e.arg.Env)]
+	port, err := strconv.ParseUint(portStr, 10, 16)
+	if err != nil {
+		return err
+	}
 	helper.SetRouterRoot(zkApp.Internal)
-	e.reply.Port, err = routerzk.GetPort(datamodel.Zk.Conn, helper.GetAppEnvTrieName(e.arg.App, e.arg.Env))
+	e.reply.Port, err = routerzk.GetPort(datamodel.Zk.Conn, uint16(port))
 	return err
 }
 
@@ -101,9 +108,6 @@ func (e *UpdatePortExecutor) Description() string {
 }
 
 func (e *UpdatePortExecutor) Execute(t *Task) (err error) {
-	if e.arg.Port.Name == "" {
-		return errors.New("Please specify a name")
-	}
 	if e.arg.Port.Trie == "" {
 		return errors.New("Please specify a trie")
 	}
@@ -132,15 +136,15 @@ func (e *DeletePortExecutor) Result() interface{} {
 }
 
 func (e *DeletePortExecutor) Description() string {
-	return e.arg.Name
+	return fmt.Sprintf("port: %d, internal: %t", e.arg.Port, e.arg.Internal)
 }
 
 func (e *DeletePortExecutor) Execute(t *Task) (err error) {
-	if e.arg.Name == "" {
-		return errors.New("Please specify a name")
+	if e.arg.Port == 0 {
+		return errors.New("Please specify a port")
 	}
 	helper.SetRouterRoot(e.arg.Internal)
-	err = routerzk.DelPort(datamodel.Zk.Conn, e.arg.Name)
+	err = routerzk.DelPort(datamodel.Zk.Conn, e.arg.Port)
 	return err
 }
 
@@ -162,15 +166,15 @@ func (e *GetPortExecutor) Result() interface{} {
 }
 
 func (e *GetPortExecutor) Description() string {
-	return e.arg.Name
+	return fmt.Sprintf("port: %d, internal: %t", e.arg.Port, e.arg.Internal)
 }
 
 func (e *GetPortExecutor) Execute(t *Task) (err error) {
-	if e.arg.Name == "" {
-		return errors.New("Please specify a name")
+	if e.arg.Port == 0 {
+		return errors.New("Please specify a port")
 	}
 	helper.SetRouterRoot(e.arg.Internal)
-	e.reply.Port, err = routerzk.GetPort(datamodel.Zk.Conn, e.arg.Name)
+	e.reply.Port, err = routerzk.GetPort(datamodel.Zk.Conn, e.arg.Port)
 	return err
 }
 
