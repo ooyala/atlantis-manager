@@ -4,7 +4,6 @@ import (
 	. "atlantis/common"
 	"atlantis/manager/builder"
 	"atlantis/manager/datamodel"
-	appdns "atlantis/manager/dns/app"
 	. "atlantis/manager/rpc/types"
 	"atlantis/manager/supervisor"
 	. "atlantis/supervisor/rpc/types"
@@ -358,14 +357,6 @@ func (e *TeardownExecutor) Execute(t *Task) error {
 			}
 			last, _ := instance.Delete()
 			if last {
-				zkApp, err := datamodel.GetApp(instance.App)
-				if err != nil {
-					return err
-				}
-				if zkApp.Internal {
-					t.LogStatus("Updating DNS")
-					appdns.DeleteAppCNames(instance.App, instance.Sha, instance.Env)
-				}
 				DeleteAppShaFromEnv(instance.App, instance.Sha, instance.Env)
 			}
 		}

@@ -6,7 +6,6 @@ import (
 	. "atlantis/manager/constant"
 	"atlantis/manager/datamodel"
 	"atlantis/manager/dns"
-	appdns "atlantis/manager/dns/app"
 	"atlantis/manager/helper"
 	. "atlantis/manager/rpc/types"
 	"atlantis/manager/supervisor"
@@ -50,7 +49,7 @@ func ResolveDepValuesForZone(app string, zkEnv *datamodel.ZkEnv, zone string, na
 					// add warning since this means that the app has not been deployed in this env yet
 					t.AddWarning("App dependency " + name + " has not yet been deployed in environment " + zkEnv.Name)
 				}
-				deps[name] = helper.GetZoneAppCName(name, zkEnv.Name, zone, suffix) + ":" + port
+				deps[name] = helper.GetZoneRouterCName(true, zone, suffix) + ":" + port
 			} else {
 				leftoverNames = append(leftoverNames, name)
 			}
@@ -282,13 +281,6 @@ func deployToHostsInZones(deps map[string]map[string]string, manifest *Manifest,
 			cleanup(true, deployedContainers, t)
 			return nil, errors.New("Reserve Router Port Error: " + err.Error())
 		}
-		t.LogStatus("Updating DNS")
-		if err := appdns.CreateAppCNames(zkApp.Internal, manifest.Name, sha, env); err != nil {
-			// if DNS fails, clean up and fail
-			datamodel.DeleteFromPool(deployedIDs)
-			cleanup(true, deployedContainers, t)
-			return nil, errors.New("Update DNS Error: " + err.Error())
-		}
 	}
 	return deployedContainers, nil
 }
@@ -348,13 +340,6 @@ func devDeployToHosts(deps map[string]map[string]string, manifest *Manifest, sha
 			datamodel.DeleteFromPool(deployedIDs)
 			cleanup(true, deployedContainers, t)
 			return nil, errors.New("Reserve Router Port Error: " + err.Error())
-		}
-		t.LogStatus("Updating DNS")
-		// if we're internal, handle the DNS stuff
-		err := appdns.CreateAppCNames(zkApp.Internal, manifest.Name, sha, env)
-		if err != nil { // if DNS fails, clean up and fail
-			cleanup(true, deployedContainers, t)
-			return nil, errors.New("Update DNS Error: " + err.Error())
 		}
 	}
 	return deployedContainers, nil
