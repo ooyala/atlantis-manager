@@ -239,8 +239,8 @@ func (r *ZkRouterPorts) path() string {
 
 type ZkRouter types.Router
 
-func Router(internal bool, zone, value string) *ZkRouter {
-	return &ZkRouter{Internal: internal, Zone: zone, Host: value}
+func Router(internal bool, zone, host, ip string) *ZkRouter {
+	return &ZkRouter{Internal: internal, Zone: zone, Host: host, IP: ip}
 }
 
 func (r *ZkRouter) Save() error {
@@ -273,6 +273,28 @@ func ListRoutersInZone(internal bool, zone string) (routers []string, err error)
 	if routers == nil {
 		log.Printf("No routers found in zone %s", zone)
 		routers = []string{}
+	}
+	return
+}
+
+func ListRouterIPsInZone(internal bool, zone string) (ips []string, err error) {
+	basePath := helper.GetBaseRouterPath(internal, zone)
+	routers, _, err := Zk.Children(basePath)
+	if err != nil {
+		log.Printf("Error getting list of routers for zone %s. Error: %s.", zone, err.Error())
+		return []string{}, err
+	}
+	if routers == nil {
+		log.Printf("No routers found in zone %s", zone)
+		return []string{}, err
+	}
+	ips = make([]string, len(routers))
+	for i, routerName := range routers {
+		router, err := GetRouter(internal, zone, routerName)
+		if err != nil {
+			return []string{}, err
+		}
+		ips[i] = router.IP
 	}
 	return
 }

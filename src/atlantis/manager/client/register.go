@@ -10,6 +10,7 @@ type RegisterRouterCommand struct {
 	Internal bool   `long:"internal" description:"true to list internal routers"`
 	Zone     string `short:"z" long:"zone" description:"the zone to register in"`
 	Host     string `short:"H" long:"host" description:"the host to register"`
+	IP       string `short:"i" long:"ip" description:"the ip to register"`
 }
 
 func (c *RegisterRouterCommand) Execute(args []string) error {
@@ -18,7 +19,7 @@ func (c *RegisterRouterCommand) Execute(args []string) error {
 		return OutputError(err)
 	}
 	Log("Register Router...")
-	args = ExtractArgs([]*string{&c.Zone, &c.Host}, args)
+	args = ExtractArgs([]*string{&c.Zone, &c.Host, &c.IP}, args)
 	user, secret, err := GetSecret()
 	if err != nil {
 		return err
@@ -29,6 +30,7 @@ func (c *RegisterRouterCommand) Execute(args []string) error {
 		Internal:       c.Internal,
 		Zone:           c.Zone,
 		Host:           c.Host,
+		IP:             c.IP,
 	}
 	var reply atlantis.AsyncReply
 	err = rpcClient.Call("RegisterRouter", arg, &reply)
@@ -194,14 +196,12 @@ func (c *ListRoutersCommand) Execute(args []string) error {
 }
 
 type RegisterAppCommand struct {
-	App         string            `short:"a" long:"app" description:"the app to register"`
-	NonAtlantis bool              `short:"n" long:"non-atlantis" description:"true if this is a non-atlantis app"`
-	Internal    bool              `short:"i" long:"internal" description:"true if this is an internal app"`
-	Type        string            `short:"t" long:"type" description:"the proxy type (http for atlantis, tcp or http for non-atlantis)"`
-	Repo        string            `short:"g" long:"git" description:"the app's git repository"`
-	Root        string            `short:"r" long:"root" description:"the app's root within the repo"`
-	Addrs       map[string]string `long:"addr" description:"env to address map for non-atlantis apps"`
-	Email       string            `short:"e" long:"email" description"the email of the app's owner"`
+	App         string `short:"a" long:"app" description:"the app to register"`
+	NonAtlantis bool   `short:"n" long:"non-atlantis" description:"true if this is a non-atlantis app"`
+	Internal    bool   `short:"i" long:"internal" description:"true if this is an internal app"`
+	Repo        string `short:"g" long:"git" description:"the app's git repository"`
+	Root        string `short:"r" long:"root" description:"the app's root within the repo"`
+	Email       string `short:"e" long:"email" description"the email of the app's owner"`
 }
 
 func (c *RegisterAppCommand) Execute(args []string) error {
@@ -220,12 +220,10 @@ func (c *RegisterAppCommand) Execute(args []string) error {
 		ManagerAuthArg: authArg,
 		NonAtlantis:    c.NonAtlantis,
 		Internal:       c.Internal,
-		Type:           c.Type,
 		Name:           c.App,
 		Repo:           c.Repo,
 		Root:           c.Root,
 		Email:          c.Email,
-		Addrs:          c.Addrs,
 	}
 	var reply ManagerRegisterAppReply
 	err = rpcClient.Call("RegisterApp", arg, &reply)
@@ -237,14 +235,12 @@ func (c *RegisterAppCommand) Execute(args []string) error {
 }
 
 type UpdateAppCommand struct {
-	App         string            `short:"a" long:"app" description:"the app to update"`
-	NonAtlantis bool              `short:"n" long:"non-atlantis" description:"true if this is a non-atlantis app"`
-	Internal    bool              `short:"i" long:"internal" description:"true if this is an internal app"`
-	Type        string            `short:"t" long:"type" description:"the proxy type (http for atlantis, tcp or http for non-atlantis)"`
-	Repo        string            `short:"g" long:"git" description:"the app's git repository (or host:port for non-atlantis apps)"`
-	Root        string            `short:"r" long:"root" description:"the app's root within the repo"`
-	Addrs       map[string]string `long:"addr" description:"env to address map for non-atlantis apps"`
-	Email       string            `short:"e" long:"email" description"the email of the app's owner"`
+	App         string `short:"a" long:"app" description:"the app to update"`
+	NonAtlantis bool   `short:"n" long:"non-atlantis" description:"true if this is a non-atlantis app"`
+	Internal    bool   `short:"i" long:"internal" description:"true if this is an internal app"`
+	Repo        string `short:"g" long:"git" description:"the app's git repository (or host:port for non-atlantis apps)"`
+	Root        string `short:"r" long:"root" description:"the app's root within the repo"`
+	Email       string `short:"e" long:"email" description"the email of the app's owner"`
 }
 
 func (c *UpdateAppCommand) Execute(args []string) error {
@@ -263,12 +259,10 @@ func (c *UpdateAppCommand) Execute(args []string) error {
 		ManagerAuthArg: authArg,
 		NonAtlantis:    c.NonAtlantis,
 		Internal:       c.Internal,
-		Type:           c.Type,
 		Name:           c.App,
 		Repo:           c.Repo,
 		Root:           c.Root,
 		Email:          c.Email,
-		Addrs:          c.Addrs,
 	}
 	var reply ManagerRegisterAppReply
 	err = rpcClient.Call("UpdateApp", arg, &reply)
@@ -305,6 +299,42 @@ func (c *UnregisterAppCommand) Execute(args []string) error {
 	return Output(map[string]interface{}{"status": reply.Status}, nil, nil)
 }
 
+func LogDependerEnvData(indent string, envData *DependerEnvData) {
+	Log("->%s Name: %s", indent, envData.Name)
+	Log("->%s IPs:  %v", indent, envData.IPs)
+	Log("->%s EncryptedData: %s", indent, envData.EncryptedData)
+	Log("->%s DataMap: %v", indent, envData.DataMap)
+}
+
+func LogDependerAppData(indent string, appData *DependerAppData) {
+	Log("->%s Name: %s", indent, appData.Name)
+	Log("->%s DependerEnvData:", indent)
+	for env, envData := range appData.DependerEnvData {
+		Log("->%s   %s:", indent, env)
+		Log("->%s     Name: %s", indent, envData.Name)
+		Log("->%s     IPs:  %v", indent, envData.IPs)
+		Log("->%s     EncryptedData: %s", indent, envData.EncryptedData)
+		Log("->%s     DataMap: %v", indent, envData.DataMap)
+	}
+}
+
+func LogApp(app *App) {
+	Log("-> Name:  %s", app.Name)
+	Log("-> Repo:  %s", app.Repo)
+	Log("-> Root:  %s", app.Root)
+	Log("-> Email: %s", app.Email)
+	Log("-> DependerEnvData:")
+	for env, envData := range app.DependerEnvData {
+		Log("->   %s:", env)
+		LogDependerEnvData("    ", envData)
+	}
+	Log("-> DependerAppData:")
+	for app, appData := range app.DependerAppData {
+		Log("->   %s:", app)
+		LogDependerAppData("    ", appData)
+	}
+}
+
 type GetAppCommand struct {
 	App string `short:"a" long:"app" description:"the app to get"`
 }
@@ -327,15 +357,8 @@ func (c *GetAppCommand) Execute(args []string) error {
 	if err != nil {
 		return OutputError(err)
 	}
-	Log("-> status: %s", reply.Status)
-	Log("-> name:  %s", reply.App.Name)
-	Log("-> repo:  %s", reply.App.Repo)
-	Log("-> root:  %s", reply.App.Root)
-	Log("-> email: %s", reply.App.Email)
-	Log("-> dependers:")
-	for app, depends := range reply.App.AllowedDependerApps {
-		Log("->   %s : %t", app, depends)
-	}
+	Log("-> Status: %s", reply.Status)
+	LogApp(reply.App)
 	return Output(map[string]interface{}{"status": reply.Status, "app": reply.App}, nil, nil)
 }
 

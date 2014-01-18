@@ -83,9 +83,9 @@ func createRecordSets(internal bool, zone, value string, zkRouter *datamodel.ZkR
 	return records, nil
 }
 
-func Register(internal bool, zone, value string) (*datamodel.ZkRouter, error) {
+func Register(internal bool, zone, host, ip string) (*datamodel.ZkRouter, error) {
 	// create ZkRouter
-	zkRouter := datamodel.Router(internal, zone, value)
+	zkRouter := datamodel.Router(internal, zone, host, ip)
 	zkRouter.RecordIDs = []string{}
 	if dns.Provider == nil {
 		// if we have no dns provider then just save here
@@ -93,7 +93,7 @@ func Register(internal bool, zone, value string) (*datamodel.ZkRouter, error) {
 	}
 
 	// get record sets
-	cnames, err := createRecordSets(internal, zone, value, zkRouter)
+	cnames, err := createRecordSets(internal, zone, host, zkRouter)
 	if err != nil {
 		return zkRouter, err
 	}
@@ -101,7 +101,7 @@ func Register(internal bool, zone, value string) (*datamodel.ZkRouter, error) {
 		return zkRouter, nil
 	}
 
-	err = dns.Provider.CreateRecords(Region, "CREATE_ROUTER "+value+" in "+zone, cnames)
+	err = dns.Provider.CreateRecords(Region, "CREATE_ROUTER "+host+" with ip "+ip+" in "+zone, cnames)
 	if err != nil {
 		return zkRouter, err
 	}

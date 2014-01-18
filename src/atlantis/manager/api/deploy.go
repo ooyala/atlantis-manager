@@ -7,7 +7,22 @@ import (
 	"github.com/gorilla/mux"
 	"net/http"
 	"strconv"
+	"strings"
 )
+
+func ResolveDeps(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
+	arg := ManagerResolveDepsArg{
+		ManagerAuthArg: auth,
+		App:            vars["App"],
+		Env:            vars["Env"],
+		DepNames:       strings.Split(vars["DepNames"], ","),
+	}
+	var reply ManagerResolveDepsReply
+	err := manager.ResolveDeps(arg, &reply)
+	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Deps": reply.Deps}, err))
+}
 
 func Deploy(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)

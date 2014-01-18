@@ -7,6 +7,8 @@ import (
 	"atlantis/manager/datamodel"
 	"atlantis/manager/dns"
 	"atlantis/manager/helper"
+	. "atlantis/manager/rpc/types"
+	scrypto "atlantis/supervisor/crypto"
 	"fmt"
 	zookeeper "github.com/jigish/gozk-recipes"
 	. "launchpad.net/gocheck"
@@ -66,26 +68,27 @@ func (s *DeployHelperSuite) TearDownSuite(c *C) {
 func (s *DeployHelperSuite) TestResolveDepValues(c *C) {
 	datamodel.Zk.RecursiveDelete(helper.GetBaseEnvPath())
 	datamodel.CreateEnvPath()
-	zkEnv := datamodel.Env("root", "")
+	datamodel.CreateRouterPaths()
+	datamodel.Router(true, "dev", "somehost", "1.2.3.4").Save()
+	zkEnv := datamodel.Env("root")
 	err := zkEnv.Save()
 	c.Assert(err, IsNil)
-	deps, err := ResolveDepValues("app", zkEnv, []string{"somedep"}, false, &Task{})
-	c.Assert(err, Not(IsNil))
-	zkEnv.UpdateDep("somedep", string(crypto.Encrypt([]byte("somevalue"))))
-	deps, err = ResolveDepValues("app", zkEnv, []string{"somedep"}, false, &Task{})
-	c.Assert(err, IsNil)
-	c.Assert(deps["dev1"]["somedep"], Equals, "somevalue")
-	deps, err = ResolveDepValues("app", zkEnv, []string{"somedep", "hello-go"}, false, &Task{})
+	deps, err := ResolveDepValues("app", zkEnv, []string{"hello-go"}, false, &Task{})
 	c.Assert(err, Not(IsNil))
 	_, err = datamodel.CreateInstance("hello-go", "1234567890", "root", "myhost")
 	c.Assert(err, IsNil)
-	_, err = datamodel.CreateOrUpdateApp(false, true, "http", "app", "ssh://github.com/ooyala/app", "/", "jigish@ooyala.com", map[string]string{})
+	_, err = datamodel.CreateOrUpdateApp(false, false, "app", "ssh://github.com/ooyala/apo", "/", "jigish@ooyala.com")
 	c.Assert(err, IsNil)
-	zkApp, err := datamodel.CreateOrUpdateApp(false, true, "http", "hello-go", "ssh://github.com/ooyala/hello-go", "/", "jigish@ooyala.com", map[string]string{})
+	zkApp, err := datamodel.CreateOrUpdateApp(false, true, "hello-go", "ssh://github.com/ooyala/hello-go", "/", "jigish@ooyala.com")
 	c.Assert(err, IsNil)
-	c.Assert(zkApp.AddDepender("app"), IsNil)
-	deps, err = ResolveDepValues("app", zkEnv, []string{"somedep", "hello-go"}, false, &Task{})
+	c.Assert(zkApp.AddDependerAppData(&DependerAppData{Name: "app", DependerEnvData: map[string]*DependerEnvData{"root": &DependerEnvData{Name: "root"}}}), IsNil)
+	deps, err = ResolveDepValues("app", zkEnv, []string{"hello-go"}, false, &Task{})
 	c.Assert(err, IsNil)
-	c.Assert(deps["dev1"]["somedep"], Equals, "somevalue")
-	c.Assert(deps["dev1"]["hello-go"], Equals, fmt.Sprintf("hello-go.root.1.%s.suffix.com:%d", Region, datamodel.MinRouterPort))
+	c.Assert(deps["dev1"]["hello-go"].DataMap["address"], Equals, fmt.Sprintf("internal-router.1.%s.suffix.com:%d", Region, datamodel.MinRouterPort))
+	deps, err = ResolveDepValues("app", zkEnv, []string{"hello-go"}, true, &Task{})
+	c.Assert(err, IsNil)
+	c.Assert(deps["dev1"]["hello-go"].EncryptedData, Not(Equals), "")
+	c.Assert(deps["dev1"]["hello-go"].DataMap, IsNil)
+	scrypto.DecryptAppDep(deps["dev1"]["hello-go"])
+	c.Assert(deps["dev1"]["hello-go"].DataMap["address"], Equals, fmt.Sprintf("internal-router.1.%s.suffix.com:%d", Region, datamodel.MinRouterPort))
 }

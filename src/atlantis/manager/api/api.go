@@ -89,8 +89,15 @@ func Init(listenAddr string) error {
 	gmux.HandleFunc("/apps/{App}", RegisterApp).Methods("PUT")
 	gmux.HandleFunc("/apps/{App}", UpdateApp).Methods("POST")
 	gmux.HandleFunc("/apps/{App}", UnregisterApp).Methods("DELETE")
-	gmux.HandleFunc("/apps/{Dependee}/depender/{Depender}", AddDependerApp).Methods("PUT")
-	gmux.HandleFunc("/apps/{Dependee}/depender/{Depender}", RemoveDependerApp).Methods("DELETE")
+	gmux.HandleFunc("/apps/{App}/env/{Env}", AddDependerEnvData).Methods("PUT")
+	gmux.HandleFunc("/apps/{App}/env/{Env}", GetDependerEnvData).Methods("GET")
+	gmux.HandleFunc("/apps/{App}/env/{Env}", RemoveDependerEnvData).Methods("DELETE")
+	gmux.HandleFunc("/apps/{App}/depender/{Depender}", AddDependerAppData).Methods("PUT")
+	gmux.HandleFunc("/apps/{App}/depender/{Depender}", GetDependerAppData).Methods("GET")
+	gmux.HandleFunc("/apps/{App}/depender/{Depender}", RemoveDependerAppData).Methods("DELETE")
+	gmux.HandleFunc("/apps/{App}/depender/{Depender}/env/{Env}", AddDependerEnvDataForDependerApp).Methods("PUT")
+	gmux.HandleFunc("/apps/{App}/depender/{Depender}/env/{Env}", GetDependerEnvDataForDependerApp).Methods("GET")
+	gmux.HandleFunc("/apps/{App}/depender/{Depender}/env/{Env}", RemoveDependerEnvDataForDependerApp).Methods("DELETE")
 
 	// Container Health
 	gmux.HandleFunc("/healthz", ContainerHealthzGet).Methods("GET")
@@ -157,12 +164,7 @@ func Init(listenAddr string) error {
 	gmux.HandleFunc("/teams", ListTeams).Methods("GET")
 
 	// Environment Management
-	gmux.HandleFunc("/envs/{Env}/resolve/{DepNames}", ResolveDeps).Methods("GET")
-	gmux.HandleFunc("/envs/{Env}/deps/{DepName}", GetDep).Methods("GET")
-	gmux.HandleFunc("/envs/{Env}/deps/{DepName}", UpdateDep).Methods("PUT")
-	gmux.HandleFunc("/envs/{Env}/deps/{DepName}", DeleteDep).Methods("DELETE")
-	gmux.HandleFunc("/envs/{Env}/deps", GetDep).Methods("GET")
-	gmux.HandleFunc("/envs/{Env}", GetEnv).Methods("GET")
+	gmux.HandleFunc("/envs/{Env}/app/{App}/resolve/{DepNames}", ResolveDeps).Methods("GET")
 	gmux.HandleFunc("/envs/{Env}", UpdateEnv).Methods("PUT")
 	gmux.HandleFunc("/envs/{Env}", DeleteEnv).Methods("DELETE")
 	gmux.HandleFunc("/envs", ListEnvs).Methods("GET")

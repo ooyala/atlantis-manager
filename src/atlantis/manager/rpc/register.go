@@ -30,7 +30,7 @@ func (e *RegisterRouterExecutor) Result() interface{} {
 }
 
 func (e *RegisterRouterExecutor) Description() string {
-	return fmt.Sprintf("%s in %s, internal: %t", e.arg.Host, e.arg.Zone, e.arg.Internal)
+	return fmt.Sprintf("%s in %s with ip %s, internal: %t", e.arg.Host, e.arg.Zone, e.arg.IP, e.arg.Internal)
 }
 
 func (e *RegisterRouterExecutor) Authorize() error {
@@ -44,7 +44,10 @@ func (e *RegisterRouterExecutor) Execute(t *Task) error {
 	if e.arg.Zone == "" {
 		return errors.New("Please specify a zone")
 	}
-	routerObj, err := router.Register(e.arg.Internal, e.arg.Zone, e.arg.Host)
+	if e.arg.IP == "" {
+		return errors.New("Please specify an ip")
+	}
+	routerObj, err := router.Register(e.arg.Internal, e.arg.Zone, e.arg.Host, e.arg.IP)
 	if err != nil {
 		e.reply.Status = StatusError
 	}
@@ -250,15 +253,11 @@ func (e *RegisterAppExecutor) Execute(t *Task) error {
 	if e.arg.Email == "" {
 		return errors.New("Please specify the email of the app owner")
 	}
-	typ := "http"
-	if e.arg.Type != "" {
-		typ = e.arg.Type
-	}
 	if _, err := datamodel.GetApp(e.arg.Name); err == nil {
 		return errors.New("Already Registered.")
 	}
-	_, err := datamodel.CreateOrUpdateApp(e.arg.NonAtlantis, e.arg.Internal, typ, e.arg.Name, e.arg.Repo, e.arg.Root,
-		e.arg.Email, e.arg.Addrs)
+	_, err := datamodel.CreateOrUpdateApp(e.arg.NonAtlantis, e.arg.Internal, e.arg.Name, e.arg.Repo, e.arg.Root,
+		e.arg.Email)
 	if err != nil {
 		e.reply.Status = StatusError
 	}
@@ -303,12 +302,8 @@ func (e *UpdateAppExecutor) Execute(t *Task) error {
 	if e.arg.Email == "" {
 		return errors.New("Please specify the email of the app owner")
 	}
-	typ := "http"
-	if e.arg.Type != "" {
-		typ = e.arg.Type
-	}
-	_, err := datamodel.CreateOrUpdateApp(e.arg.NonAtlantis, e.arg.Internal, typ, e.arg.Name, e.arg.Repo,
-		e.arg.Root, e.arg.Email, e.arg.Addrs)
+	_, err := datamodel.CreateOrUpdateApp(e.arg.NonAtlantis, e.arg.Internal, e.arg.Name, e.arg.Repo, e.arg.Root,
+		e.arg.Email)
 	if err != nil {
 		e.reply.Status = StatusError
 	}

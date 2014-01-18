@@ -6,15 +6,26 @@ import (
 )
 
 type App struct {
-	NonAtlantis         bool
-	Internal            bool
-	Type                string // proxy type. http for atlantis apps, tcp or http for non-atlantis apps
-	Name                string
-	Repo                string            // atlantis apps only
-	Root                string            // atlantis apps only
-	Addrs               map[string]string // non-atlantis apps only. env -> addr
-	Email               string
-	AllowedDependerApps map[string]bool
+	NonAtlantis     bool
+	Internal        bool // atlantis apps only
+	Name            string
+	Email           string
+	Repo            string // atlantis apps only
+	Root            string // atlantis apps only
+	DependerEnvData map[string]*DependerEnvData
+	DependerAppData map[string]*DependerAppData
+}
+
+type DependerEnvData struct {
+	Name          string
+	IPs           []string
+	EncryptedData string
+	DataMap       map[string]interface{} `json:",omitempty"`
+}
+
+type DependerAppData struct {
+	Name            string
+	DependerEnvData map[string]*DependerEnvData
 }
 
 type Router struct {
@@ -22,6 +33,7 @@ type Router struct {
 	Zone      string
 	Host      string
 	CName     string
+	IP        string
 	RecordIDs []string
 }
 
@@ -130,11 +142,9 @@ type ManagerRegisterAppArg struct {
 	ManagerAuthArg
 	NonAtlantis bool
 	Internal    bool
-	Type        string
 	Name        string
 	Repo        string
 	Root        string
-	Addrs       map[string]string
 	Email       string
 }
 
@@ -154,17 +164,124 @@ type ManagerGetAppReply struct {
 	App    *App
 }
 
-// ------------ Depender App ------------
-// Used to get an App
-type ManagerDependerAppArg struct {
+// ------------ Add Depender App Data ------------
+// Used Add AppDependerData to an App
+type ManagerAddDependerAppDataArg struct {
 	ManagerAuthArg
-	Depender string
-	Dependee string
+	App             string
+	DependerAppData *DependerAppData
 }
 
-type ManagerDependerAppReply struct {
-	Status   string
-	Dependee *App
+type ManagerAddDependerAppDataReply struct {
+	Status string
+	App    *App
+}
+
+// ------------ Remove Depender App Data ------------
+// Used Remove AppDependerData from an App
+type ManagerRemoveDependerAppDataArg struct {
+	ManagerAuthArg
+	App      string
+	Depender string
+}
+
+type ManagerRemoveDependerAppDataReply struct {
+	Status string
+	App    *App
+}
+
+// ------------ Get Depender App Data ------------
+// Used Get AppDependerData from an App
+type ManagerGetDependerAppDataArg struct {
+	ManagerAuthArg
+	App      string
+	Depender string
+}
+
+type ManagerGetDependerAppDataReply struct {
+	Status          string
+	DependerAppData *DependerAppData
+}
+
+// ------------ Add Depender Env Data ------------
+// Used Add EnvDependerData to an App
+type ManagerAddDependerEnvDataArg struct {
+	ManagerAuthArg
+	App             string
+	DependerEnvData *DependerEnvData
+}
+
+type ManagerAddDependerEnvDataReply struct {
+	Status string
+	App    *App
+}
+
+// ------------ Remove Depender Env Data ------------
+// Used Remove EnvDependerData from an App
+type ManagerRemoveDependerEnvDataArg struct {
+	ManagerAuthArg
+	App string
+	Env string
+}
+
+type ManagerRemoveDependerEnvDataReply struct {
+	Status string
+	App    *App
+}
+
+// ------------ Get Depender Env Data ------------
+// Used Get EnvDependerData from an App
+type ManagerGetDependerEnvDataArg struct {
+	ManagerAuthArg
+	App string
+	Env string
+}
+
+type ManagerGetDependerEnvDataReply struct {
+	Status          string
+	DependerEnvData *DependerEnvData
+}
+
+// ------------ Add Depender Env Data For a Depender App ------------
+// Used Add EnvDependerData to a DependerApp in an App
+type ManagerAddDependerEnvDataForDependerAppArg struct {
+	ManagerAuthArg
+	App             string
+	Depender        string
+	DependerEnvData *DependerEnvData
+}
+
+type ManagerAddDependerEnvDataForDependerAppReply struct {
+	Status string
+	App    *App
+}
+
+// ------------ Remove Depender Env Data For a Depender App ------------
+// Used Remove EnvDependerData from a DependerApp in an App
+type ManagerRemoveDependerEnvDataForDependerAppArg struct {
+	ManagerAuthArg
+	App      string
+	Depender string
+	Env      string
+}
+
+type ManagerRemoveDependerEnvDataForDependerAppReply struct {
+	Status string
+	App    *App
+}
+
+// ------------ Get Depender Env Data For a Depender App ------------
+// Used Get EnvDependerData from a DependerApp in an App
+type ManagerGetDependerEnvDataForDependerAppArg struct {
+	ManagerAuthArg
+	App      string
+	Depender string
+	Env      string
+}
+
+type ManagerGetDependerEnvDataForDependerAppReply struct {
+	Status          string
+	DependerEnvData *DependerEnvData
 }
 
 // ------------ ListRegisteredApps ------------
@@ -185,6 +302,7 @@ type ManagerRegisterRouterArg struct {
 	Internal bool
 	Zone     string
 	Host     string
+	IP       string
 }
 
 type ManagerRegisterRouterReply struct {
@@ -258,15 +376,11 @@ type ManagerDepReply struct {
 // Used to update, get, or delete a environment
 type ManagerEnvArg struct {
 	ManagerAuthArg
-	Name   string
-	Parent string
+	Name string
 }
 
 type ManagerEnvReply struct {
-	Parent       string
-	Deps         map[string]string
-	ResolvedDeps map[string]string
-	Status       string
+	Status string
 }
 
 // ------------ Deploy ------------
@@ -328,7 +442,7 @@ type ManagerResolveDepsArg struct {
 
 type ManagerResolveDepsReply struct {
 	Status string
-	Deps   map[string]map[string]string
+	Deps   map[string]DepsType
 }
 
 // ------------ Teardown ------------

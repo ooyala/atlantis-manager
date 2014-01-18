@@ -224,6 +224,15 @@ func New() *ManagerClient {
 	o.AddCommand("list-registered-apps", "list registered apps", "", &ListRegisteredAppsCommand{})
 	o.AddCommand("list-authorized-registered-apps", "list authorized registered apps", "", &ListAuthorizedRegisteredAppsCommand{})
 	o.AddCommand("get-app", "get a registered app", "", &GetAppCommand{})
+	o.AddCommand("add-depender-app-data", "add depender app data", "", &AddDependerAppDataCommand{})
+	o.AddCommand("remove-depender-app-data", "remove depender app data", "", &RemoveDependerAppDataCommand{})
+	o.AddCommand("get-depender-app-data", "get depender app data", "", &GetDependerAppDataCommand{})
+	o.AddCommand("add-depender-env-data", "add depender env data", "", &AddDependerEnvDataCommand{})
+	o.AddCommand("remove-depender-env-data", "remove depender env data", "", &RemoveDependerEnvDataCommand{})
+	o.AddCommand("get-depender-env-data", "get depender env data", "", &GetDependerEnvDataCommand{})
+	o.AddCommand("add-depender-env-data-for-depender-app", "add depender env data for depender app", "", &AddDependerEnvDataForDependerAppCommand{})
+	o.AddCommand("remove-depender-env-data-for-depender-app", "remove depender env data for depender app", "", &RemoveDependerEnvDataForDependerAppCommand{})
+	o.AddCommand("get-depender-env-data-for-depender-app", "get depender env data for depender app", "", &GetDependerEnvDataForDependerAppCommand{})
 
 	// Environment Management
 	o.AddCommand("create-dep", "create a dependency", "", &UpdateDepCommand{}) // alias to update
@@ -233,7 +242,6 @@ func New() *ManagerClient {
 	o.AddCommand("delete-dep", "delete a dependency", "", &DeleteDepCommand{})
 	o.AddCommand("create-env", "create a environment", "", &UpdateEnvCommand{}) // alias to update
 	o.AddCommand("update-env", "update a environment", "", &UpdateEnvCommand{})
-	o.AddCommand("get-env", "get a environment", "", &GetEnvCommand{})
 	o.AddCommand("delete-env", "delete a environment", "", &DeleteEnvCommand{})
 	o.AddCommand("list-envs", "list evironments (available or deployed)", "",
 		&ListEnvsCommand{})

@@ -148,16 +148,16 @@ func (s *DatamodelSuite) TestRouterModel(c *C) {
 	for _, routersInZone := range routers {
 		c.Assert(len(routersInZone), Equals, 0)
 	}
-	zkRouter := Router(true, Region, "2.2.2.2")
+	zkRouter := Router(true, Region, "host", "2.2.2.2")
 	err = zkRouter.Save()
 	c.Assert(err, IsNil)
-	fetchedRouter, err := GetRouter(true, Region, "2.2.2.2")
+	fetchedRouter, err := GetRouter(true, Region, "host")
 	c.Assert(err, IsNil)
 	c.Assert(zkRouter, DeepEquals, fetchedRouter)
 	zkRouter.CName = "mycname"
 	zkRouter.RecordIDs = []string{"rid1", "rid2"}
 	zkRouter.Save()
-	fetchedRouter, err = GetRouter(true, Region, "2.2.2.2")
+	fetchedRouter, err = GetRouter(true, Region, "host")
 	c.Assert(err, IsNil)
 	c.Assert(zkRouter, DeepEquals, fetchedRouter)
 	routers, err = ListRouters(true)
@@ -179,8 +179,8 @@ func (s *DatamodelSuite) TestRouterInternalPool(c *C) {
 	CreateRouterPaths()
 	CreateAppPath()
 	// fake register app
-	CreateOrUpdateApp(false, true, "http", app, "ssh://git@omg.com/app", "/", "omg@omg.com", nil)
-	CreateOrUpdateApp(false, true, "http", "app2", "ssh://git@omg.com/app", "/", "omg@omg.com", nil)
+	CreateOrUpdateApp(false, true, app, "ssh://git@omg.com/app", "/", "omg@omg.com")
+	CreateOrUpdateApp(false, true, "app2", "ssh://git@omg.com/app", "/", "omg@omg.com")
 	// do tests
 	instance, err := CreateInstance(app, sha, env, host+"-1")
 	c.Assert(err, IsNil)
@@ -244,8 +244,8 @@ func (s *DatamodelSuite) TestRouterExternalPool(c *C) {
 	CreateRouterPaths()
 	CreateAppPath()
 	// fake register app
-	CreateOrUpdateApp(false, false, "http", app, "ssh://git@omg.com/app", "/", "omg@omg.com", nil)
-	CreateOrUpdateApp(false, false, "http", "app2", "ssh://git@omg.com/app", "/", "omg@omg.com", nil)
+	CreateOrUpdateApp(false, false, app, "ssh://git@omg.com/app", "/", "omg@omg.com")
+	CreateOrUpdateApp(false, false, "app2", "ssh://git@omg.com/app", "/", "omg@omg.com")
 	// do tests
 	instance, err := CreateInstance(app, sha, env, host+"-1")
 	c.Assert(err, IsNil)

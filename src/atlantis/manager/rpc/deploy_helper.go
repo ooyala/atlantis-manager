@@ -2,13 +2,13 @@ package rpc
 
 import (
 	. "atlantis/common"
-	"atlantis/crypto"
 	. "atlantis/manager/constant"
 	"atlantis/manager/datamodel"
 	"atlantis/manager/dns"
 	"atlantis/manager/helper"
 	. "atlantis/manager/rpc/types"
 	"atlantis/manager/supervisor"
+	"atlantis/supervisor/crypto"
 	. "atlantis/supervisor/rpc/types"
 	"errors"
 	"fmt"
@@ -24,65 +24,100 @@ func deployContainer(auth *ManagerAuthArg, cont *Container, instances uint, t *T
 	return deploy(auth, manifest, cont.Sha, cont.Env, t)
 }
 
-func ResolveDepValuesForZone(app string, zkEnv *datamodel.ZkEnv, zone string, names []string, encrypt bool, t *Task) (map[string]string, error) {
-	deps := map[string]string{}
-	leftoverNames := []string{}
-	// if we're using DNS and the app is registered, try to get the app cname (if deployed)
-	if dns.Provider != nil {
-		for _, name := range names {
-			// if app is registered for this dependency name
-			zkApp, err := datamodel.GetApp(name)
-			if err == nil && zkApp.NonAtlantis {
-				// TODO non-atlantis app dependencies
-			} else if err == nil && zkApp.Internal {
-				// atlantis internal app dependency.
-				if !zkApp.HasDepender(app) {
-					return nil, errors.New(app + " is not authorized to depend on the app '" + name + "'")
-				}
-				suffix, err := dns.Provider.Suffix(Region)
-				if err != nil {
-					leftoverNames = append(leftoverNames, name)
-					continue
-				}
-				port, created, err := datamodel.ReserveRouterPortAndUpdateTrie(name, "", zkEnv.Name)
-				if created {
-					// add warning since this means that the app has not been deployed in this env yet
-					t.AddWarning("App dependency " + name + " has not yet been deployed in environment " + zkEnv.Name)
-				}
-				deps[name] = helper.GetZoneRouterCName(true, zone, suffix) + ":" + port
-			} else {
-				leftoverNames = append(leftoverNames, name)
-			}
-		}
-	} else {
-		leftoverNames = names
+func MergeDependerEnvData(dst *DependerEnvData, src *DependerEnvData) *DependerEnvData {
+	data := &DependerEnvData{
+		Name:    dst.Name,
+		IPs:     dst.IPs,
+		DataMap: map[string]interface{}{},
 	}
-	envDeps, err := zkEnv.ResolveDepValues(leftoverNames)
-	if err != nil {
-		return nil, err
-	}
-	var retDeps map[string]string
-	if encrypt {
-		for name, value := range deps {
-			envDeps[name] = string(crypto.Encrypt([]byte(value)))
-		}
-		retDeps = envDeps
-	} else {
-		for name, value := range envDeps {
-			deps[name] = string(crypto.Decrypt([]byte(value)))
-		}
-		retDeps = deps
-	}
-	for _, name := range names {
-		if _, ok := retDeps[name]; !ok {
-			return retDeps, errors.New("Could not resolve dep " + name)
+	if dst != nil {
+		for key, val := range dst.DataMap {
+			data.DataMap[key] = val
 		}
 	}
-	return retDeps, nil
+	if src != nil {
+		for key, val := range src.DataMap {
+			data.DataMap[key] = val
+		}
+		if src.IPs != nil {
+			data.IPs = src.IPs
+		}
+	}
+	return data
 }
 
-func ResolveDepValues(app string, zkEnv *datamodel.ZkEnv, names []string, encrypt bool, t *Task) (deps map[string]map[string]string, err error) {
-	deps = map[string]map[string]string{}
+func ResolveDepValuesForZone(app string, zkEnv *datamodel.ZkEnv, zone string, names []string, encrypt bool, t *Task) (DepsType, error) {
+	var (
+		err       error
+		routerIPs []string
+		suffix    string
+	)
+	deps := DepsType{}
+	// if we're using DNS and the app is registered, try to get the app cname (if deployed)
+	if dns.Provider != nil {
+		suffix, err = dns.Provider.Suffix(Region)
+		if err != nil {
+			return deps, err
+		}
+		routerIPs, err = datamodel.ListRouterIPsInZone(true, zone)
+		if err != nil {
+			return deps, err
+		}
+	}
+	for _, name := range names {
+		// if app is registered for this dependency name
+		zkApp, err := datamodel.GetApp(name)
+		if err != nil {
+			continue
+		}
+		appEnvData := zkApp.GetDependerEnvDataForDependerApp(app, zkEnv.Name, true)
+		if appEnvData == nil {
+			continue
+		}
+		envData := zkApp.GetDependerEnvData(zkEnv.Name, true)
+		if envData == nil {
+			envData = &DependerEnvData{Name: appEnvData.Name}
+		}
+		// merge the data
+		mergedEnvData := MergeDependerEnvData(envData, appEnvData)
+		appDep := &AppDep{
+			IPs:     mergedEnvData.IPs,
+			DataMap: mergedEnvData.DataMap,
+		}
+		if dns.Provider != nil && zkApp.Internal {
+			// auto-populate IPs
+			appDep.IPs = routerIPs
+			// auto-populate Address
+			port, created, err := datamodel.ReserveRouterPortAndUpdateTrie(name, "", zkEnv.Name)
+			if err != nil {
+				return deps, err
+			}
+			if created {
+				// add warning since this means that the app has not been deployed in this env yet
+				t.AddWarning("App dependency " + name + " has not yet been deployed in environment " + zkEnv.Name)
+			}
+			if appDep.DataMap == nil {
+				appDep.DataMap = map[string]interface{}{}
+			}
+			appDep.DataMap["address"] = helper.GetZoneRouterCName(true, zone, suffix) + ":" + port
+		}
+		deps[name] = appDep
+	}
+	if encrypt {
+		for _, value := range deps {
+			crypto.EncryptAppDep(value)
+		}
+	}
+	for _, name := range names {
+		if _, ok := deps[name]; !ok {
+			return deps, errors.New("Could not resolve dep " + name)
+		}
+	}
+	return deps, nil
+}
+
+func ResolveDepValues(app string, zkEnv *datamodel.ZkEnv, names []string, encrypt bool, t *Task) (deps map[string]DepsType, err error) {
+	deps = map[string]DepsType{}
 	for _, zone := range AvailableZones {
 		deps[zone], err = ResolveDepValuesForZone(app, zkEnv, zone, names, encrypt, t)
 		if err != nil {
@@ -92,7 +127,7 @@ func ResolveDepValues(app string, zkEnv *datamodel.ZkEnv, names []string, encryp
 	return deps, nil
 }
 
-func validateDeploy(auth *ManagerAuthArg, manifest *Manifest, sha, env string, t *Task) (deps map[string]map[string]string, err error) {
+func validateDeploy(auth *ManagerAuthArg, manifest *Manifest, sha, env string, t *Task) (deps map[string]DepsType, err error) {
 	t.LogStatus("Validate Deploy")
 	// authorize that we're allowed to use the app
 	if err = AuthorizeApp(auth, manifest.Name); err != nil {
@@ -208,7 +243,7 @@ func deployToZone(respCh chan *DeployZoneResult, manifest *Manifest, sha, env st
 	return
 }
 
-func deployToHostsInZones(deps map[string]map[string]string, manifest *Manifest, sha, env string,
+func deployToHostsInZones(deps map[string]DepsType, manifest *Manifest, sha, env string,
 	hosts map[string][]string, zones []string, t *Task) ([]*Container, error) {
 	deployedContainers := []*Container{}
 	// fetch the app
@@ -285,7 +320,7 @@ func deployToHostsInZones(deps map[string]map[string]string, manifest *Manifest,
 	return deployedContainers, nil
 }
 
-func devDeployToHosts(deps map[string]map[string]string, manifest *Manifest, sha, env string, hosts []string, t *Task) ([]*Container, error) {
+func devDeployToHosts(deps map[string]DepsType, manifest *Manifest, sha, env string, hosts []string, t *Task) ([]*Container, error) {
 	// deploy to hosts
 	deployedContainers := []*Container{}
 	deployedIDs := []string{}
