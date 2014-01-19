@@ -299,9 +299,30 @@ func ListRouterIPsInZone(internal bool, zone string) (ips []string, err error) {
 	return
 }
 
+func ListRouterIPs(internal bool) (ips []string, err error) {
+	var zones []string
+	var zoneIPs []string
+	ips = []string{}
+	zones, err = ListRouterZones(internal)
+	if err != nil {
+		return
+	}
+	for _, zone := range zones {
+		zoneIPs, err = ListRoutersInZone(internal, zone)
+		if err != nil {
+			return
+		}
+		for _, ip := range zoneIPs {
+			ips = append(ips, ip)
+		}
+	}
+	return
+}
+
 func ListRouters(internal bool) (routers map[string][]string, err error) {
+	var zones []string
 	routers = map[string][]string{}
-	zones, err := ListRouterZones(internal)
+	zones, err = ListRouterZones(internal)
 	if err != nil {
 		return
 	}

@@ -48,18 +48,13 @@ func MergeDependerEnvData(dst *DependerEnvData, src *DependerEnvData) *DependerE
 
 func ResolveDepValuesForZone(app string, zkEnv *datamodel.ZkEnv, zone string, names []string, encrypt bool, t *Task) (DepsType, error) {
 	var (
-		err       error
-		routerIPs []string
-		suffix    string
+		err    error
+		suffix string
 	)
 	deps := DepsType{}
 	// if we're using DNS and the app is registered, try to get the app cname (if deployed)
 	if dns.Provider != nil {
 		suffix, err = dns.Provider.Suffix(Region)
-		if err != nil {
-			return deps, err
-		}
-		routerIPs, err = datamodel.ListRouterIPsInZone(true, zone)
 		if err != nil {
 			return deps, err
 		}
@@ -84,7 +79,7 @@ func ResolveDepValuesForZone(app string, zkEnv *datamodel.ZkEnv, zone string, na
 			SecurityGroup: mergedEnvData.SecurityGroup,
 			DataMap:       mergedEnvData.DataMap,
 		}
-		if dns.Provider != nil && zkApp.Internal {
+		if dns.Provider != nil && !zkApp.NonAtlantis && zkApp.Internal {
 			// auto-populate Address
 			port, created, err := datamodel.ReserveRouterPortAndUpdateTrie(name, "", zkEnv.Name)
 			if err != nil {
@@ -100,11 +95,7 @@ func ResolveDepValuesForZone(app string, zkEnv *datamodel.ZkEnv, zone string, na
 			appDep.DataMap["address"] = helper.GetZoneRouterCName(true, zone, suffix) + ":" + port
 
 			// auto-populate SecurityGroup
-			routerSG := make([]string, len(routerIPs))
-			for i, ip := range routerIPs {
-				routerSG[i] = ip + ":" + port
-			}
-			appDep.SecurityGroup = routerSG
+			appDep.SecurityGroup = []string{"internal-router:" + port}
 		}
 		deps[name] = appDep
 	}

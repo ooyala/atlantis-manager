@@ -2,6 +2,7 @@ package rpc
 
 import (
 	. "atlantis/common"
+	. "atlantis/manager/constant"
 	"atlantis/manager/datamodel"
 	. "atlantis/manager/rpc/types"
 	"errors"
@@ -41,6 +42,14 @@ func (e *AddDependerAppDataExecutor) Execute(t *Task) error {
 		return errors.New("Please specify data for the depender app")
 	} else if e.arg.DependerAppData.Name == "" {
 		return errors.New("Please specify name for the depender app")
+	}
+	// verify SecurityGroups are valid
+	for _, envData := range e.arg.DependerAppData.DependerEnvData {
+		for _, addr := range envData.SecurityGroup {
+			if !SecurityGroupRegexp.MatchString(addr) {
+				return errors.New("Invalid Address in Security Group: " + addr)
+			}
+		}
 	}
 	zkApp, err := datamodel.GetApp(e.arg.App)
 	if err != nil {
@@ -191,6 +200,12 @@ func (e *AddDependerEnvDataExecutor) Execute(t *Task) error {
 		return errors.New("Please specify data for the env")
 	} else if e.arg.DependerEnvData.Name == "" {
 		return errors.New("Please specify name for the env")
+	}
+	// verify SecurityGroups are valid
+	for _, addr := range e.arg.DependerEnvData.SecurityGroup {
+		if !SecurityGroupRegexp.MatchString(addr) {
+			return errors.New("Invalid Address in Security Group: " + addr)
+		}
 	}
 	zkApp, err := datamodel.GetApp(e.arg.App)
 	if err != nil {
@@ -343,6 +358,12 @@ func (e *AddDependerEnvDataForDependerAppExecutor) Execute(t *Task) error {
 		return errors.New("Please specify data for the env")
 	} else if e.arg.DependerEnvData.Name == "" {
 		return errors.New("Please specify name for the env")
+	}
+	// verify SecurityGroups are valid
+	for _, addr := range e.arg.DependerEnvData.SecurityGroup {
+		if !SecurityGroupRegexp.MatchString(addr) {
+			return errors.New("Invalid Address in Security Group: " + addr)
+		}
 	}
 	zkApp, err := datamodel.GetApp(e.arg.App)
 	if err != nil {
