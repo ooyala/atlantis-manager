@@ -78,14 +78,14 @@ func AddDependerEnvData(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Status": StatusError}, err))
 		return
 	}
-	ips := strings.Split(r.FormValue("IPs"), ",")
+	sg := strings.Split(r.FormValue("SecurityGroup"), ",")
 	arg := ManagerAddDependerEnvDataArg{
 		ManagerAuthArg: auth,
 		App:            vars["App"],
 		DependerEnvData: &DependerEnvData{
-			Name:    vars["Env"],
-			IPs:     ips,
-			DataMap: data,
+			Name:          vars["Env"],
+			SecurityGroup: sg,
+			DataMap:       data,
 		},
 	}
 	var reply ManagerAddDependerEnvDataReply
@@ -135,15 +135,15 @@ func AddDependerEnvDataForDependerApp(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Status": StatusError}, err))
 		return
 	}
-	ips := strings.Split(r.FormValue("IPs"), ",")
+	sg := strings.Split(r.FormValue("SecurityGroup"), ",")
 	arg := ManagerAddDependerEnvDataForDependerAppArg{
 		ManagerAuthArg: auth,
 		App:            vars["App"],
 		Depender:       vars["Depender"],
 		DependerEnvData: &DependerEnvData{
-			Name:    vars["Env"],
-			IPs:     ips,
-			DataMap: data,
+			Name:          vars["Env"],
+			SecurityGroup: sg,
+			DataMap:       data,
 		},
 	}
 	var reply ManagerAddDependerEnvDataForDependerAppReply

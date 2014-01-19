@@ -301,7 +301,7 @@ func (c *UnregisterAppCommand) Execute(args []string) error {
 
 func LogDependerEnvData(indent string, envData *DependerEnvData) {
 	Log("->%s Name: %s", indent, envData.Name)
-	Log("->%s IPs:  %v", indent, envData.IPs)
+	Log("->%s SecurityGroup: %v", indent, envData.SecurityGroup)
 	Log("->%s EncryptedData: %s", indent, envData.EncryptedData)
 	Log("->%s DataMap: %v", indent, envData.DataMap)
 }
@@ -312,7 +312,7 @@ func LogDependerAppData(indent string, appData *DependerAppData) {
 	for env, envData := range appData.DependerEnvData {
 		Log("->%s   %s:", indent, env)
 		Log("->%s     Name: %s", indent, envData.Name)
-		Log("->%s     IPs:  %v", indent, envData.IPs)
+		Log("->%s     SecurityGroup: %v", indent, envData.SecurityGroup)
 		Log("->%s     EncryptedData: %s", indent, envData.EncryptedData)
 		Log("->%s     DataMap: %v", indent, envData.DataMap)
 	}

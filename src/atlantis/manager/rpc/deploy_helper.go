@@ -26,9 +26,9 @@ func deployContainer(auth *ManagerAuthArg, cont *Container, instances uint, t *T
 
 func MergeDependerEnvData(dst *DependerEnvData, src *DependerEnvData) *DependerEnvData {
 	data := &DependerEnvData{
-		Name:    dst.Name,
-		IPs:     dst.IPs,
-		DataMap: map[string]interface{}{},
+		Name:          dst.Name,
+		SecurityGroup: dst.SecurityGroup,
+		DataMap:       map[string]interface{}{},
 	}
 	if dst != nil {
 		for key, val := range dst.DataMap {
@@ -39,8 +39,8 @@ func MergeDependerEnvData(dst *DependerEnvData, src *DependerEnvData) *DependerE
 		for key, val := range src.DataMap {
 			data.DataMap[key] = val
 		}
-		if src.IPs != nil {
-			data.IPs = src.IPs
+		if src.SecurityGroup != nil {
+			data.SecurityGroup = src.SecurityGroup
 		}
 	}
 	return data
@@ -81,12 +81,10 @@ func ResolveDepValuesForZone(app string, zkEnv *datamodel.ZkEnv, zone string, na
 		// merge the data
 		mergedEnvData := MergeDependerEnvData(envData, appEnvData)
 		appDep := &AppDep{
-			IPs:     mergedEnvData.IPs,
-			DataMap: mergedEnvData.DataMap,
+			SecurityGroup: mergedEnvData.SecurityGroup,
+			DataMap:       mergedEnvData.DataMap,
 		}
 		if dns.Provider != nil && zkApp.Internal {
-			// auto-populate IPs
-			appDep.IPs = routerIPs
 			// auto-populate Address
 			port, created, err := datamodel.ReserveRouterPortAndUpdateTrie(name, "", zkEnv.Name)
 			if err != nil {
@@ -100,6 +98,13 @@ func ResolveDepValuesForZone(app string, zkEnv *datamodel.ZkEnv, zone string, na
 				appDep.DataMap = map[string]interface{}{}
 			}
 			appDep.DataMap["address"] = helper.GetZoneRouterCName(true, zone, suffix) + ":" + port
+
+			// auto-populate SecurityGroup
+			routerSG := make([]string, len(routerIPs))
+			for i, ip := range routerIPs {
+				routerSG[i] = ip + ":" + port
+			}
+			appDep.SecurityGroup = routerSG
 		}
 		deps[name] = appDep
 	}

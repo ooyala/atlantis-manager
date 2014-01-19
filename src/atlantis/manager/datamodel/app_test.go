@@ -42,8 +42,8 @@ func (s *DatamodelSuite) TestApp(c *C) {
 
 	// attempt to set env/app data
 	c.Assert(app1.AddDependerEnvData(&types.DependerEnvData{
-		Name: "prod",
-		IPs:  []string{"1.1.1.1", "1.1.1.2"},
+		Name:          "prod",
+		SecurityGroup: []string{"1.1.1.1:1111", "1.1.1.2:1111"},
 		DataMap: map[string]interface{}{
 			"dep1": "prodvalue1",
 		},
@@ -60,8 +60,8 @@ func (s *DatamodelSuite) TestApp(c *C) {
 		},
 	}), IsNil)
 	c.Assert(app1.AddDependerEnvDataForDependerApp("app2", &types.DependerEnvData{
-		Name: "staging",
-		IPs:  []string{"1.1.2.1", "1.1.2.2"},
+		Name:          "staging",
+		SecurityGroup: []string{"1.1.2.1:1121", "1.1.2.2:1121"},
 		DataMap: map[string]interface{}{
 			"dep1": "stagingvalue1",
 		},

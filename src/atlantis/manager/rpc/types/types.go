@@ -18,7 +18,7 @@ type App struct {
 
 type DependerEnvData struct {
 	Name          string
-	IPs           []string
+	SecurityGroup []string
 	EncryptedData string
 	DataMap       map[string]interface{} `json:",omitempty"`
 }
