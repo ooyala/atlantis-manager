@@ -3,7 +3,6 @@ package api
 import (
 	. "atlantis/common"
 	. "atlantis/manager/rpc/types"
-	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
 	"net/http"
@@ -102,15 +101,6 @@ func RegisterApp(w http.ResponseWriter, r *http.Request) {
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
 	nonAtlantis, _ := strconv.ParseBool(r.FormValue("NonAtlantis"))
 	internal, _ := strconv.ParseBool(r.FormValue("Internal"))
-	var addrs map[string]string
-	if nonAtlantis {
-		addrsStr := r.FormValue("Addrs")
-		err := json.Unmarshal([]byte(addrsStr), &addrs)
-		if err != nil {
-			fmt.Fprintf(w, "%s", Output(map[string]interface{}{}, err))
-			return
-		}
-	}
 	arg := ManagerRegisterAppArg{
 		ManagerAuthArg: auth,
 		NonAtlantis:    nonAtlantis,
@@ -130,15 +120,6 @@ func UpdateApp(w http.ResponseWriter, r *http.Request) {
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
 	nonAtlantis, _ := strconv.ParseBool(r.FormValue("NonAtlantis"))
 	internal, _ := strconv.ParseBool(r.FormValue("Internal"))
-	var addrs map[string]string
-	if nonAtlantis {
-		addrsStr := r.FormValue("Addrs")
-		err := json.Unmarshal([]byte(addrsStr), &addrs)
-		if err != nil {
-			fmt.Fprintf(w, "%s", Output(map[string]interface{}{}, err))
-			return
-		}
-	}
 	arg := ManagerRegisterAppArg{
 		ManagerAuthArg: auth,
 		NonAtlantis:    nonAtlantis,
