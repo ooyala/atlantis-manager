@@ -3,6 +3,7 @@ package datamodel
 import (
 	"atlantis/manager/helper"
 	. "launchpad.net/gocheck"
+	"fmt"
 )
 
 func (s *DatamodelSuite) TestDeployAndTeardownLocking(c *C) {
@@ -55,4 +56,9 @@ func (s *DatamodelSuite) TestDeployAndTeardownLocking(c *C) {
 	c.Assert(err, Not(IsNil))
 	c.Assert(err, FitsTypeOf, LockConflictError("tl3"))
 	c.Assert(err, Equals, LockConflictError("tl3"))
+}
+
+func (s *DatamodelSuite) TestLockPrint(c *C) {
+	e := LockConflictError("hello")
+	fmt.Sprintf("%s", e)
 }

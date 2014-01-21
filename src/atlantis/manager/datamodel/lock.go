@@ -12,11 +12,7 @@ const allPath = "/"
 type LockConflictError string
 
 func (e LockConflictError) Error() string {
-	return fmt.Sprintf("Lock Conflict with: %s", e)
-}
-
-func (e LockConflictError) String() string {
-	return fmt.Sprintf("Lock Conflict with: %s", e)
+	return "Lock Conflict with: " + string(e)
 }
 
 func getLockedPaths(path string) (map[string]string, error) {
