@@ -17,3 +17,8 @@ func (m *ManagerRPC) Status(id string, status *TaskStatus) error {
 	}
 	return getError
 }
+
+func (m *ManagerRPC) ListTaskIDs(typ string, ids *[]string) error {
+	*ids = Tracker.ListIDs(typ)
+	return nil
+}

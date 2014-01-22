@@ -305,6 +305,7 @@ func New() *ManagerClient {
 		&ContainerMaintenanceCommand{})
 
 	// Task Management
+	o.AddCommand("list-task-ids", "list all the task ids of async commands", "", &ListTaskIDsCommand{})
 	o.AddCommand("status", "get the status of an async command", "", &StatusCommand{})
 	o.AddCommand("result", "get the result of an async command", "", &ResultCommand{})
 	o.AddCommand("wait", "get the wait of an async command", "", &WaitCommand{})
