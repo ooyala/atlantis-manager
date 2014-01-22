@@ -2,8 +2,8 @@ package datamodel
 
 import (
 	"atlantis/manager/helper"
-	. "launchpad.net/gocheck"
 	"fmt"
+	. "launchpad.net/gocheck"
 )
 
 func (s *DatamodelSuite) TestDeployAndTeardownLocking(c *C) {
