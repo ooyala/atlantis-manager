@@ -15,6 +15,7 @@ type TestJsonStruct struct {
 }
 
 func (s *DatamodelSuite) TestJson(c *C) {
+	Zk.RecursiveDelete("/testjson")
 	var getObj TestJsonStruct
 	c.Assert(getJson("/testjson", &getObj), Not(IsNil))
 	testObj := &TestJsonStruct{"string", 5, -2, true, 0.1337, []string{"leet"},
