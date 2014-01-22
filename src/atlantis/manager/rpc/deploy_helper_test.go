@@ -67,6 +67,10 @@ func (s *DeployHelperSuite) TearDownSuite(c *C) {
 
 func (s *DeployHelperSuite) TestResolveDepValues(c *C) {
 	datamodel.Zk.RecursiveDelete(helper.GetBaseEnvPath())
+	datamodel.Zk.RecursiveDelete(helper.GetBaseRouterPath(true))
+	datamodel.Zk.RecursiveDelete(helper.GetBaseRouterPath(false))
+	datamodel.Zk.RecursiveDelete(helper.GetBaseRouterPortsPath(true))
+	datamodel.Zk.RecursiveDelete(helper.GetBaseRouterPortsPath(false))
 	datamodel.CreateEnvPath()
 	datamodel.CreateRouterPaths()
 	datamodel.Router(true, "dev", "somehost", "1.2.3.4").Save()
@@ -90,5 +94,6 @@ func (s *DeployHelperSuite) TestResolveDepValues(c *C) {
 	c.Assert(deps["dev1"]["hello-go"].EncryptedData, Not(Equals), "")
 	c.Assert(deps["dev1"]["hello-go"].DataMap, IsNil)
 	scrypto.DecryptAppDep(deps["dev1"]["hello-go"])
+	c.Assert(deps["dev1"]["hello-go"].DataMap, Not(IsNil))
 	c.Assert(deps["dev1"]["hello-go"].DataMap["address"], Equals, fmt.Sprintf("internal-router.1.%s.suffix.com:%d", Region, datamodel.MinRouterPort))
 }
