@@ -8,6 +8,7 @@ import (
 	"atlantis/manager/helper"
 	. "atlantis/manager/rpc/types"
 	routerzk "atlantis/router/zk"
+	routercfg "atlantis/router/config"
 	"errors"
 	"fmt"
 	"strconv"
@@ -268,10 +269,40 @@ func (e *UpdatePoolExecutor) Execute(t *Task) error {
 	err := routerzk.SetPool(datamodel.Zk.Conn, e.arg.Pool)
 	if err != nil {
 		e.reply.Status = StatusError
-	} else {
-		e.reply.Status = StatusOk
+		return err
 	}
-	return err
+	// diff pools and update
+	existingHosts, err := routerzk.GetHosts(datamodel.Zk.Conn, e.arg.Pool.Name)
+	if err != nil {
+		e.reply.Status = StatusError
+		return err
+	}
+	delHosts := []string{}
+	for name, _ := range existingHosts {
+		if _, ok := e.arg.Pool.Hosts[name]; !ok {
+			delHosts = append(delHosts, name)
+		}
+	}
+	newHosts := map[string]routercfg.Host{}
+	for name, newHost := range e.arg.Pool.Hosts {
+		if _, ok := existingHosts[name]; !ok {
+			newHosts[name] = newHost
+		}
+	}
+	t.Log("NEW HOSTS: %+v", newHosts)
+	t.Log("DEL HOSTS: %+v", delHosts)
+	err = routerzk.AddHosts(datamodel.Zk.Conn, e.arg.Pool.Name, newHosts)
+	if err != nil {
+		e.reply.Status = StatusError
+		return err
+	}
+	err = routerzk.DelHosts(datamodel.Zk.Conn, e.arg.Pool.Name, delHosts)
+	if err != nil {
+		e.reply.Status = StatusError
+		return err
+	}
+	e.reply.Status = StatusOk
+	return nil
 }
 
 func (e *UpdatePoolExecutor) Authorize() error {
