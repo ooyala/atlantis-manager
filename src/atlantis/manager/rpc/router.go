@@ -289,8 +289,6 @@ func (e *UpdatePoolExecutor) Execute(t *Task) error {
 			newHosts[name] = newHost
 		}
 	}
-	t.Log("NEW HOSTS: %+v", newHosts)
-	t.Log("DEL HOSTS: %+v", delHosts)
 	err = routerzk.AddHosts(datamodel.Zk.Conn, e.arg.Pool.Name, newHosts)
 	if err != nil {
 		e.reply.Status = StatusError
