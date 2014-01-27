@@ -14,8 +14,8 @@ var (
 )
 
 const (
-	ManagerRPCVersion               = "1.0.0"
-	ManagerAPIVersion               = "1.0.0"
+	ManagerRPCVersion               = "2.0.0"
+	ManagerAPIVersion               = "2.0.0"
 	DefaultManagerHost              = "localhost"
 	DefaultManagerRPCPort           = uint16(1338)
 	DefaultManagerAPIPort           = uint16(443)
