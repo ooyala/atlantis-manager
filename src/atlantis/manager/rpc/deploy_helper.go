@@ -81,7 +81,7 @@ func ResolveDepValuesForZone(app string, zkEnv *datamodel.ZkEnv, zone string, na
 		}
 		if dns.Provider != nil && !zkApp.NonAtlantis && zkApp.Internal {
 			// auto-populate Address
-			port, created, err := datamodel.ReserveRouterPortAndUpdateTrie(name, "", zkEnv.Name)
+			port, created, err := datamodel.ReserveRouterPortAndUpdateTrie(zkApp.Internal, name, "", zkEnv.Name)
 			if err != nil {
 				return deps, err
 			}
@@ -306,7 +306,15 @@ func deployToHostsInZones(deps map[string]DepsType, manifest *Manifest, sha, env
 	}
 	if zkApp.Internal {
 		// reserve router port if needed and add app+env
-		_, _, err = datamodel.ReserveRouterPortAndUpdateTrie(manifest.Name, sha, env)
+		_, _, err = datamodel.ReserveRouterPortAndUpdateTrie(zkApp.Internal, manifest.Name, sha, env)
+		if err != nil {
+			datamodel.DeleteFromPool(deployedIDs)
+			cleanup(true, deployedContainers, t)
+			return nil, errors.New("Reserve Router Port Error: " + err.Error())
+		}
+	} else {
+		// only update trie
+		_, err = datamodel.UpdateAppEnvTrie(zkApp.Internal, manifest.Name, sha, env)
 		if err != nil {
 			datamodel.DeleteFromPool(deployedIDs)
 			cleanup(true, deployedContainers, t)
@@ -366,7 +374,15 @@ func devDeployToHosts(deps map[string]DepsType, manifest *Manifest, sha, env str
 	}
 	if zkApp.Internal {
 		// reserve router port if needed and add app+env
-		_, _, err = datamodel.ReserveRouterPortAndUpdateTrie(manifest.Name, sha, env)
+		_, _, err = datamodel.ReserveRouterPortAndUpdateTrie(zkApp.Internal, manifest.Name, sha, env)
+		if err != nil {
+			datamodel.DeleteFromPool(deployedIDs)
+			cleanup(true, deployedContainers, t)
+			return nil, errors.New("Reserve Router Port Error: " + err.Error())
+		}
+	} else {
+		// only update trie
+		_, err = datamodel.UpdateAppEnvTrie(zkApp.Internal, manifest.Name, sha, env)
 		if err != nil {
 			datamodel.DeleteFromPool(deployedIDs)
 			cleanup(true, deployedContainers, t)

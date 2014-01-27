@@ -17,7 +17,7 @@ func GetAppEnvPort(w http.ResponseWriter, r *http.Request) {
 	pArg := ManagerGetAppEnvPortArg{
 		ManagerAuthArg: auth,
 		App:            vars["App"],
-		Env:            vars["App"],
+		Env:            vars["Env"],
 	}
 	var reply ManagerGetAppEnvPortReply
 	err := manager.GetAppEnvPort(pArg, &reply)

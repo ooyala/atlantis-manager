@@ -116,12 +116,12 @@ func Init(listenAddr string) error {
 	gmux.HandleFunc("/tries/{TrieName}", GetTrie).Methods("GET")
 	gmux.HandleFunc("/tries/{TrieName}", UpdateTrie).Methods("PUT")
 	gmux.HandleFunc("/tries/{TrieName}", DeleteTrie).Methods("DELETE")
-	gmux.HandleFunc("/ports", ListPorts).Methods("GET")
+	gmux.HandleFunc("/ports/apps/{App}/envs/{Env}", GetAppEnvPort).Methods("GET")
+	gmux.HandleFunc("/ports/apps", ListAppEnvsWithPort).Methods("GET")
 	gmux.HandleFunc("/ports/{Port}", GetPort).Methods("GET")
 	gmux.HandleFunc("/ports/{Port}", UpdatePort).Methods("PUT")
 	gmux.HandleFunc("/ports/{Port}", DeletePort).Methods("DELETE")
-	gmux.HandleFunc("/ports/apps", ListAppEnvsWithPort).Methods("GET")
-	gmux.HandleFunc("/ports/apps/{App}/envs/{Env}", GetAppEnvPort).Methods("GET")
+	gmux.HandleFunc("/ports", ListPorts).Methods("GET")
 
 	// Router Visualizations
 	gmux.HandleFunc("/visualize/router", graph.VisualizeIndex)

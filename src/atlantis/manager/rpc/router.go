@@ -47,7 +47,9 @@ func (e *GetAppEnvPortExecutor) Execute(t *Task) (err error) {
 		return err
 	}
 	zrp := datamodel.GetRouterPorts(zkApp.Internal)
+	fmt.Printf("ROUTER PORTS: %+v\n", zrp)
 	portStr := zrp.AppEnvMap[helper.GetAppEnvTrieName(e.arg.App, e.arg.Env)]
+	fmt.Printf("PORT STRING: %+v -> %+v\n", helper.GetAppEnvTrieName(e.arg.App, e.arg.Env), portStr)
 	port, err := strconv.ParseUint(portStr, 10, 16)
 	if err != nil {
 		return err

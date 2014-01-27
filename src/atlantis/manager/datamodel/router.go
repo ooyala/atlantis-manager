@@ -88,61 +88,23 @@ func ReclaimRouterPortsForEnv(internal bool, env string) error {
 	return nil
 }
 
-func ReserveRouterPortAndUpdateTrie(app, sha, env string) (string, bool, error) {
-	helper.SetRouterRoot(true)
+func ReserveRouterPortAndUpdateTrie(internal bool, app, sha, env string) (string, bool, error) {
+	helper.SetRouterRoot(internal)
 	var (
-		err     error
-		created = false
-		port    = ""
+		err      error
+		created  = false
+		port     = ""
+		trieName = ""
 	)
 	// reserve port for app env
-	if !HasRouterPortForAppEnv(true, app, env) {
+	if !HasRouterPortForAppEnv(internal, app, env) {
 		created = true
 	}
-	if port, err = reserveRouterPort(true, app, env); err != nil {
+	if port, err = reserveRouterPort(internal, app, env); err != nil {
 		return port, created, err
 	}
-	// create trie (if it doesn't exist)
-	trieName := helper.GetAppEnvTrieName(app, env)
-	if exists, err := routerzk.TrieExists(Zk.Conn, trieName); !exists || err != nil {
-		err = routerzk.SetTrie(Zk.Conn, routercfg.Trie{
-			Name:     trieName,
-			Rules:    []string{},
-			Internal: true,
-		})
-		if err != nil {
-			return port, created, err
-		}
-	}
-	// if sha != "" attach pool as static rule (if trie is empty)
-	if sha != "" {
-		// if static rule does not exist, create it
-		ruleName := helper.GetAppShaEnvStaticRuleName(app, sha, env)
-		poolName := helper.CreatePoolName(app, sha, env)
-		if exists, err := routerzk.RuleExists(Zk.Conn, ruleName); !exists || err != nil {
-			err = routerzk.SetRule(Zk.Conn, routercfg.Rule{
-				Name:     ruleName,
-				Type:     "static",
-				Value:    "true",
-				Pool:     poolName,
-				Internal: true,
-			})
-			if err != nil {
-				return port, created, err
-			}
-		}
-		trie, err := routerzk.GetTrie(Zk.Conn, trieName)
-		if err != nil {
-			return port, created, err
-		}
-		if len(trie.Rules) == 0 {
-			trie.Rules = []string{ruleName}
-		} else {
-			trie.Rules = append(trie.Rules, ruleName)
-		}
-		if err = routerzk.SetTrie(Zk.Conn, trie); err != nil {
-			return port, created, err
-		}
+	if trieName, err = UpdateAppEnvTrie(internal, app, sha, env); err != nil {
+		return port, created, err
 	}
 	// now port is reserved and trie is created so we can actually create port for router
 	portUInt, err := strconv.ParseUint(port, 10, 16)
@@ -158,6 +120,53 @@ func ReserveRouterPortAndUpdateTrie(app, sha, env string) (string, bool, error) 
 	}
 	// return true if port was created
 	return port, created, err
+}
+
+func UpdateAppEnvTrie(internal bool, app, sha, env string) (string, error) {
+	helper.SetRouterRoot(internal)
+	// create trie (if it doesn't exist)
+	trieName := helper.GetAppEnvTrieName(app, env)
+	if exists, err := routerzk.TrieExists(Zk.Conn, trieName); !exists || err != nil {
+		err = routerzk.SetTrie(Zk.Conn, routercfg.Trie{
+			Name:     trieName,
+			Rules:    []string{},
+			Internal: internal,
+		})
+		if err != nil {
+			return trieName, err
+		}
+	}
+	// if sha != "" attach pool as static rule (if trie is empty)
+	if sha != "" {
+		// if static rule does not exist, create it
+		ruleName := helper.GetAppShaEnvStaticRuleName(app, sha, env)
+		poolName := helper.CreatePoolName(app, sha, env)
+		if exists, err := routerzk.RuleExists(Zk.Conn, ruleName); !exists || err != nil {
+			err = routerzk.SetRule(Zk.Conn, routercfg.Rule{
+				Name:     ruleName,
+				Type:     "static",
+				Value:    "true",
+				Pool:     poolName,
+				Internal: internal,
+			})
+			if err != nil {
+				return trieName, err
+			}
+		}
+		trie, err := routerzk.GetTrie(Zk.Conn, trieName)
+		if err != nil {
+			return trieName, err
+		}
+		if len(trie.Rules) == 0 {
+			trie.Rules = []string{ruleName}
+		} else {
+			trie.Rules = append(trie.Rules, ruleName)
+		}
+		if err = routerzk.SetTrie(Zk.Conn, trie); err != nil {
+			return trieName, err
+		}
+	}
+	return trieName, nil
 }
 
 func reserveRouterPort(internal bool, app, env string) (string, error) {
