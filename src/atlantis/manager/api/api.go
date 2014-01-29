@@ -51,7 +51,7 @@ func Init(listenAddr string) error {
 		http.ServeFile(w, r, staticDir+"/img/favicon.ico")
 	})
 	gmux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, staticDir+"/dashboard", 302)
+		http.Redirect(w, r, staticDir+"/dashboard/#dashboard", 302)
 	})
 
 	// Login
