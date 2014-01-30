@@ -57,6 +57,12 @@ func (e *RequestAppDependencyExecutor) Execute(t *Task) error {
 		e.reply.Status = StatusError
 		return errors.New("Please specify the envs your app needs the dependency in")
 	}
+	for _, env := range e.arg.Envs {
+		if _, err := datamodel.GetEnv(env); err != nil {
+			e.reply.Status = StatusError
+			return errors.New("The env " + env + " does not exist")
+		}
+	}
 	// fetch apps
 	zkApp, err := datamodel.GetApp(e.arg.App)
 	if err != nil {
@@ -74,6 +80,8 @@ func (e *RequestAppDependencyExecutor) Execute(t *Task) error {
 				missingEnvs = append(missingEnvs, env)
 			}
 		}
+	} else {
+		missingEnvs = e.arg.Envs
 	}
 	if len(missingEnvs) == 0 {
 		return errors.New(fmt.Sprintf("Your app already has access to the dependency %s in envs %v",

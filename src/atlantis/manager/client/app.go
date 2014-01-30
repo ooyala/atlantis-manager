@@ -8,7 +8,7 @@ import (
 
 type RequestAppDependencyCommand struct {
 	App        string   `short:"a" long:"app" description:"the app to request a dependency for"`
-	Dependency string   `short:"a" long:"dependency" description:"the dependency to request"`
+	Dependency string   `short:"d" long:"dependency" description:"the dependency to request"`
 	Envs       []string `short:"e" long:"env" description:"the envs to request the dependency in"`
 }
 

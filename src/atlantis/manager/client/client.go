@@ -224,6 +224,7 @@ func New() *ManagerClient {
 	o.AddCommand("list-registered-apps", "list registered apps", "", &ListRegisteredAppsCommand{})
 	o.AddCommand("list-authorized-registered-apps", "list authorized registered apps", "", &ListAuthorizedRegisteredAppsCommand{})
 	o.AddCommand("get-app", "get a registered app", "", &GetAppCommand{})
+	o.AddCommand("request-app-dependency", "request a dependency for an app", "", &RequestAppDependencyCommand{})
 	o.AddCommand("add-depender-app-data", "add depender app data", "", &AddDependerAppDataCommand{})
 	o.AddCommand("remove-depender-app-data", "remove depender app data", "", &RemoveDependerAppDataCommand{})
 	o.AddCommand("get-depender-app-data", "get depender app data", "", &GetDependerAppDataCommand{})
