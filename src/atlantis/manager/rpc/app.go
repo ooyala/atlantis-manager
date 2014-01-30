@@ -18,9 +18,10 @@ import (
 // ----------------------------------------------------------------------------------------------------------
 
 type RequestAppDependencyTemplate struct {
-	App        string
-	Dependency string
-	Envs       string
+	App          string
+	Dependency   string
+	Envs         string
+	ManagerCName string
 }
 
 type RequestAppDependencyExecutor struct {
@@ -96,11 +97,16 @@ The app '{{.App}}' is requesting that you add it as a depender of your app '{{.D
 
 Please visit this page to do so: https://{{.ManagerCName}}/static/dashboard/#apps?app={{.Dependency}}&depender={{.App}}&envs={{.Envs}}
 `))
+	myself, err := datamodel.GetManager(Region, Host)
+	if err != nil {
+		return err
+	}
 	buf := bytes.NewBuffer([]byte{})
 	tmpl.Execute(buf, RequestAppDependencyTemplate{
-		App:        e.arg.App,
-		Dependency: e.arg.Dependency,
-		Envs:       strings.Join(e.arg.Envs, ","),
+		App:          e.arg.App,
+		Dependency:   e.arg.Dependency,
+		Envs:         strings.Join(e.arg.Envs, ","),
+		ManagerCName: myself.ManagerCName,
 	})
 	// send email requesting dependency
 	if err := smtp.SendMail([]string{zkDep.Email, zkApp.Email}, subject, buf.String()); err != nil {
