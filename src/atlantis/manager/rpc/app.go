@@ -5,9 +5,103 @@ import (
 	. "atlantis/manager/constant"
 	"atlantis/manager/datamodel"
 	. "atlantis/manager/rpc/types"
+	"atlantis/manager/smtp"
+	"bytes"
 	"errors"
 	"fmt"
+	"strings"
+	"text/template"
 )
+
+// ----------------------------------------------------------------------------------------------------------
+// Request App Dependency Methods
+// ----------------------------------------------------------------------------------------------------------
+
+type RequestAppDependencyTemplate struct {
+	App        string
+	Dependency string
+	Envs       string
+}
+
+type RequestAppDependencyExecutor struct {
+	arg   ManagerRequestAppDependencyArg
+	reply *ManagerRequestAppDependencyReply
+}
+
+func (e *RequestAppDependencyExecutor) Request() interface{} {
+	return e.arg
+}
+
+func (e *RequestAppDependencyExecutor) Result() interface{} {
+	return e.reply
+}
+
+func (e *RequestAppDependencyExecutor) Description() string {
+	return fmt.Sprintf("[?] %s depender %s", e.arg.Dependency, e.arg.App)
+}
+
+func (e *RequestAppDependencyExecutor) Authorize() error {
+	return AuthorizeApp(&e.arg.ManagerAuthArg, e.arg.App)
+}
+
+func (e *RequestAppDependencyExecutor) Execute(t *Task) error {
+	if e.arg.App == "" {
+		e.reply.Status = StatusError
+		return errors.New("Please specify an app")
+	}
+	if e.arg.Dependency == "" {
+		e.reply.Status = StatusError
+		return errors.New("Please specify an app to depend on")
+	}
+	if len(e.arg.Envs) == 0 {
+		e.reply.Status = StatusError
+		return errors.New("Please specify the envs your app needs the dependency in")
+	}
+	// fetch apps
+	zkApp, err := datamodel.GetApp(e.arg.App)
+	if err != nil {
+		return err
+	}
+	zkDep, err := datamodel.GetApp(e.arg.Dependency)
+	if err != nil {
+		return err
+	}
+	// check depender envs
+	missingEnvs := []string{}
+	if dad := zkDep.GetDependerAppData(e.arg.App, false); dad != nil {
+		for _, env := range e.arg.Envs {
+			if dad.DependerEnvData[env] == nil {
+				missingEnvs = append(missingEnvs, env)
+			}
+		}
+	}
+	if len(missingEnvs) == 0 {
+		return errors.New(fmt.Sprintf("Your app already has access to the dependency %s in envs %v",
+			e.arg.Dependency, e.arg.Envs))
+	}
+	// load template, format body, and set up subject
+	subject := fmt.Sprintf("[Atlantis] '%s' is requesting your app '%s' as a dependency in envs %s", e.arg.App,
+		e.arg.Dependency, strings.Join(e.arg.Envs, ","))
+
+	tmpl := template.Must(template.New("request_dependency").Parse("templates/request_dependency.tmpl"))
+	buf := bytes.NewBuffer([]byte{})
+	tmpl.Execute(buf, RequestAppDependencyTemplate{
+		App:        e.arg.App,
+		Dependency: e.arg.Dependency,
+		Envs:       strings.Join(e.arg.Envs, ","),
+	})
+	// send email requesting dependency
+	if err := smtp.SendMail([]string{zkDep.Email, zkApp.Email}, subject, buf.String()); err != nil {
+		e.reply.Status = StatusError
+		return err
+	}
+	e.reply.Status = StatusOk
+	return nil
+}
+
+func (m *ManagerRPC) RequestAppDependency(arg ManagerRequestAppDependencyArg, reply *ManagerRequestAppDependencyReply) error {
+	return NewTask("RequestAppDependency", &RequestAppDependencyExecutor{arg, reply}).Run()
+}
 
 // ----------------------------------------------------------------------------------------------------------
 // Depender App Data Methods

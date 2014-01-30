@@ -96,6 +96,7 @@ func Init(listenAddr string) error {
 	gmux.HandleFunc("/apps/{App}/depender/{Depender}", AddDependerAppData).Methods("PUT")
 	gmux.HandleFunc("/apps/{App}/depender/{Depender}", GetDependerAppData).Methods("GET")
 	gmux.HandleFunc("/apps/{App}/depender/{Depender}", RemoveDependerAppData).Methods("DELETE")
+	gmux.HandleFunc("/apps/{App}/depender/{Depender}/request", RequestAppDependency).Methods("POST")
 	gmux.HandleFunc("/apps/{App}/depender/{Depender}/env/{Env}", AddDependerEnvDataForDependerApp).Methods("PUT")
 	gmux.HandleFunc("/apps/{App}/depender/{Depender}/env/{Env}", GetDependerEnvDataForDependerApp).Methods("GET")
 	gmux.HandleFunc("/apps/{App}/depender/{Depender}/env/{Env}", RemoveDependerEnvDataForDependerApp).Methods("DELETE")

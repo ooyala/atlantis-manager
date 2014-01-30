@@ -164,6 +164,19 @@ type ManagerGetAppReply struct {
 	App    *App
 }
 
+// ------------ Request App Dependency ------------
+// User for RquestAppDependency
+type ManagerRequestAppDependencyArg struct {
+	ManagerAuthArg
+	App        string
+	Dependency string
+	Envs       []string
+}
+
+type ManagerRequestAppDependencyReply struct {
+	Status string
+}
+
 // ------------ Add Depender App Data ------------
 // Used Add AppDependerData to an App
 type ManagerAddDependerAppDataArg struct {

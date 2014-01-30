@@ -10,6 +10,23 @@ import (
 	"strings"
 )
 
+func RequestAppDependency(w http.ResponseWriter, r *http.Request) {
+	var err error
+	vars := mux.Vars(r)
+	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
+	envsString := r.FormValue("Envs")
+	envs := strings.Split(envsString, ",")
+	arg := ManagerRequestAppDependencyArg{
+		ManagerAuthArg: auth,
+		App:            vars["App"],
+		Dependency:     vars["Dependency"],
+		Envs:           envs,
+	}
+	var reply ManagerRequestAppDependencyReply
+	err = manager.RequestAppDependency(arg, &reply)
+	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Status": reply.Status}, err))
+}
+
 // ----------------------------------------------------------------------------------------------------------
 // Depender App Data Methods
 // ----------------------------------------------------------------------------------------------------------

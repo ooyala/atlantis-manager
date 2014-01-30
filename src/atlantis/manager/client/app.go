@@ -6,6 +6,39 @@ import (
 	"os"
 )
 
+type RequestAppDependencyCommand struct {
+	App        string   `short:"a" long:"app" description:"the app to request a dependency for"`
+	Dependency string   `short:"a" long:"dependency" description:"the dependency to request"`
+	Envs       []string `short:"e" long:"env" description:"the envs to request the dependency in"`
+}
+
+func (c *RequestAppDependencyCommand) Execute(args []string) error {
+	err := Init()
+	if err != nil {
+		return OutputError(err)
+	}
+	Log("Request App Dependency...")
+	args = ExtractArgs([]*string{&c.App, &c.Dependency}, args)
+	user, secret, err := GetSecret()
+	if err != nil {
+		return OutputError(err)
+	}
+	authArg := ManagerAuthArg{user, "", secret}
+	arg := ManagerRequestAppDependencyArg{
+		ManagerAuthArg: authArg,
+		App:            c.App,
+		Dependency:     c.Dependency,
+		Envs:           c.Envs,
+	}
+	var reply ManagerRequestAppDependencyReply
+	err = rpcClient.Call("RequestAppDependency", arg, &reply)
+	if err != nil {
+		return OutputError(err)
+	}
+	Log("-> Status: %s", reply.Status)
+	return Output(map[string]interface{}{"status": reply.Status}, nil, nil)
+}
+
 // ----------------------------------------------------------------------------------------------------------
 // Depender App Data Methods
 // ----------------------------------------------------------------------------------------------------------
