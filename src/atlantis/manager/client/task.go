@@ -2,6 +2,7 @@ package client
 
 import (
 	. "atlantis/common"
+	. "atlantis/manager/rpc/types"
 	"errors"
 )
 
@@ -94,17 +95,20 @@ func (c *WaitCommand) Execute(args []string) error {
 }
 
 type ListTaskIDsCommand struct {
-	Type string `short:"t" long:"type" description:"the type of the task to list ids for"`
 }
 
 func (c *ListTaskIDsCommand) Execute(args []string) error {
-	err := Init()
-	if err != nil {
+	if err := Init(); err != nil {
 		return OutputError(err)
 	}
-	args = ExtractArgs([]*string{&c.Type}, args)
+	Log("List Task IDs...")
+	user, secret, err := GetSecret()
+	if err != nil {
+		return err
+	}
+	authArg := ManagerAuthArg{user, "", secret}
 	var ids []string
-	if err := rpcClient.Call("ListTaskIDs", c.Type, &ids); err != nil {
+	if err := rpcClient.Call("ListTaskIDs", authArg, &ids); err != nil {
 		return OutputError(err)
 	}
 	return Output(map[string]interface{}{"ids": ids}, ids, nil)

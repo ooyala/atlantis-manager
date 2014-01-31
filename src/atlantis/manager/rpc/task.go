@@ -2,6 +2,7 @@ package rpc
 
 import (
 	. "atlantis/common"
+	. "atlantis/manager/rpc/types"
 	"errors"
 )
 
@@ -18,7 +19,22 @@ func (m *ManagerRPC) Status(id string, status *TaskStatus) error {
 	return getError
 }
 
-func (m *ManagerRPC) ListTaskIDs(typ string, ids *[]string) error {
-	*ids = Tracker.ListIDs(typ)
+func (m *ManagerRPC) ListTaskIDs(arg ManagerAuthArg, ids *[]string) error {
+	if err := SimpleAuthorize(&arg); err != nil {
+		return err
+	}
+	types := []string{"Deploy", "Teardown"}
+	if AuthorizeSuperUser(&arg) == nil {
+		// superuser, return all types
+		types = append(types, []string{
+			"RegisterRouter",
+			"UnregisterRouter",
+			"RegisterManager",
+			"UnregisterManager",
+			"RegisterSupervisor",
+			"UnregisterSupervisor",
+		}...)
+	}
+	*ids = Tracker.ListIDs(types)
 	return nil
 }

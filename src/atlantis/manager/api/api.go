@@ -58,8 +58,8 @@ func Init(listenAddr string) error {
 	gmux.HandleFunc("/login", Login).Methods("POST")
 
 	// Task Management
-	gmux.HandleFunc("/tasks/list/{Type}", ListTaskIDs).Methods("GET")
-	gmux.HandleFunc("/tasks/status/{ID}", GetTaskStatus).Methods("GET")
+	gmux.HandleFunc("/tasks", ListTaskIDs).Methods("GET")
+	gmux.HandleFunc("/tasks/{ID}", GetTaskStatus).Methods("GET")
 
 	// Manager Management
 	gmux.HandleFunc("/health", Health).Methods("GET")

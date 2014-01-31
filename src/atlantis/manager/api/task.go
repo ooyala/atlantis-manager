@@ -57,9 +57,9 @@ func GetTaskStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 func ListTaskIDs(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
+	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
 	var ids []string
-	err := manager.ListTaskIDs(vars["Type"], &ids)
+	err := manager.ListTaskIDs(auth, &ids)
 	output := map[string]interface{}{"IDs": ids}
 	fmt.Fprintf(w, "%s", Output(output, err))
 }
