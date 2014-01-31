@@ -67,10 +67,12 @@ func (e *RequestAppDependencyExecutor) Execute(t *Task) error {
 	// fetch apps
 	zkApp, err := datamodel.GetApp(e.arg.App)
 	if err != nil {
+		e.reply.Status = StatusError
 		return err
 	}
 	zkDep, err := datamodel.GetApp(e.arg.Dependency)
 	if err != nil {
+		e.reply.Status = StatusError
 		return err
 	}
 	// check depender envs
@@ -95,7 +97,7 @@ func (e *RequestAppDependencyExecutor) Execute(t *Task) error {
 	tmpl := template.Must(template.New("request_dependency").Parse(`
 The app '{{.App}}' is requesting that you add it as a depender of your app '{{.Dependency}}' in the the environments '{{.Envs}}'.
 
-Please visit this page to do so: https://{{.ManagerCName}}/static/dashboard/#apps?app={{.Dependency}}&depender={{.App}}&envs={{.Envs}}
+Please visit this page to do so: https://{{.ManagerCName}}/static/dashboard/#addAppDepender/{{.Dependency}}/{{.App}}/{{.Envs}}
 `))
 	myself, err := datamodel.GetManager(Region, Host)
 	if err != nil {

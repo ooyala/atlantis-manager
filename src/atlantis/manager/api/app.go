@@ -18,8 +18,8 @@ func RequestAppDependency(w http.ResponseWriter, r *http.Request) {
 	envs := strings.Split(envsString, ",")
 	arg := ManagerRequestAppDependencyArg{
 		ManagerAuthArg: auth,
-		App:            vars["App"],
-		Dependency:     vars["Dependency"],
+		App:            vars["Depender"],
+		Dependency:     vars["App"],
 		Envs:           envs,
 	}
 	var reply ManagerRequestAppDependencyReply
