@@ -685,59 +685,103 @@ func (m *ManagerRPC) DisallowApp(arg ManagerAppArg, reply *ManagerAppReply) erro
 	return NewTask("DisallowApp", &DisallowAppExecutor{arg, reply}).Run()
 }
 
-type HasAppPermissionsExecutor struct {
-	arg   ManagerAppPermissionsArg
-	reply *ManagerAppPermissionsReply
+type IsAppAllowedExecutor struct {
+	arg   ManagerIsAppAllowedArg
+	reply *ManagerIsAppAllowedReply
 }
 
-func (e *HasAppPermissionsExecutor) Request() interface{} {
+func (e *IsAppAllowedExecutor) Request() interface{} {
 	return e.arg
 }
 
-func (e *HasAppPermissionsExecutor) Result() interface{} {
+func (e *IsAppAllowedExecutor) Result() interface{} {
 	return e.reply
 }
 
-func (e *HasAppPermissionsExecutor) Description() string {
+func (e *IsAppAllowedExecutor) Description() string {
 	return fmt.Sprintf("%s : %s", e.arg.App, e.arg.User)
 }
 
-func (e *HasAppPermissionsExecutor) Execute(t *Task) error {
+func (e *IsAppAllowedExecutor) Execute(t *Task) error {
 	if aldap.SkipAuthorization {
-		e.reply.Permission = true
+		e.reply.IsAllowed = true
 		return nil
 	}
 
 	var suReply ManagerSuperUserReply
-	if err := NewTask("HasAppPermissions-IsSuperUser",
-		&IsSuperUserExecutor{ManagerSuperUserArg{e.arg.ManagerAuthArg}, &suReply}).Run(); err == nil {
-		e.reply.Permission = suReply.IsSuperUser
-		if e.reply.Permission {
-			return nil
-		}
-	} else {
+	if err := NewTask("IsAppAllowed-IsSuperUser",
+		&IsSuperUserExecutor{ManagerSuperUserArg{e.arg.ManagerAuthArg}, &suReply}).Run(); err != nil {
 		return err
 	}
-	apps := GetAllowedApps(&e.arg.ManagerAuthArg)
-	e.reply.Permission = ProcessAppPermission(e.arg.App, apps)
+	user := e.arg.ManagerAuthArg.User
+	if suReply.IsSuperUser && e.arg.User != "" {
+		user = e.arg.User
+	}
+
+	e.reply.IsAllowed = IsAppAllowed(&e.arg.ManagerAuthArg, user, e.arg.App)
+	return nil
+}
+
+func (e *IsAppAllowedExecutor) Authorize() error {
+	return nil
+}
+
+type ListAllowedAppsExecutor struct {
+	arg   ManagerListAllowedAppsArg
+	reply *ManagerListAllowedAppsReply
+}
+
+func (e *ListAllowedAppsExecutor) Request() interface{} {
+	return e.arg
+}
+
+func (e *ListAllowedAppsExecutor) Result() interface{} {
+	return e.reply
+}
+
+func (e *ListAllowedAppsExecutor) Description() string {
+	return fmt.Sprintf("%s: %s", e.arg.ManagerAuthArg.User, e.arg.User)
+}
+
+func (e *ListAllowedAppsExecutor) Execute(t *Task) error {
+	if aldap.SkipAuthorization {
+		e.reply.Apps = []string{"all"}
+		return nil
+	}
+
+	var suReply ManagerSuperUserReply
+	if err := NewTask("ListAllowedApps-IsSuperUser",
+		&IsSuperUserExecutor{ManagerSuperUserArg{e.arg.ManagerAuthArg}, &suReply}).Run(); err != nil {
+		return err
+	}
+	user := e.arg.ManagerAuthArg.User
+	if suReply.IsSuperUser && e.arg.User != "" {
+		user = e.arg.User
+	}
+	appMap := GetAllowedApps(&e.arg.ManagerAuthArg, user)
+	e.reply.Apps = []string{}
+	for app, isAllowed := range appMap {
+		if isAllowed {
+			e.reply.Apps = append(e.reply.Apps, app)
+		}
+	}
 
 	return nil
 }
 
-func (e *HasAppPermissionsExecutor) Authorize() error {
+func (e *ListAllowedAppsExecutor) Authorize() error {
 	return nil
 }
 
-func GetAllowedApps(auth *ManagerAuthArg) map[string]string {
-	result := map[string]string{}
-	filterStr := "(&(objectClass=" + aldap.TeamClass + ")(" + aldap.UsernameAttr + "=" + aldap.UserCommonName + "=" + auth.User +
+func GetAllowedApps(auth *ManagerAuthArg, user string) map[string]bool {
+	result := map[string]bool{}
+	filterStr := "(&(objectClass=" + aldap.TeamClass + ")(" + aldap.UsernameAttr + "=" + aldap.UserCommonName + "=" + user +
 		"," + aldap.UserOu + "))"
 	sr, err := NewSearchReq(filterStr, []string{aldap.TeamCommonName}, auth)
 	if err != nil {
 		return result
 	}
-	entries := len(sr.Entries)
-	for i := 0; i < entries; i++ {
+	for i := 0; i < len(sr.Entries); i++ {
 		filterStr := "(&(objectClass=" + aldap.AppClass + ")(" + aldap.TeamCommonName + ":dn:=" +
 			sr.Entries[i].GetAttributeValues(aldap.TeamCommonName)[0] + "))"
 		ss, err := NewSearchReq(filterStr, []string{aldap.AllowedAppAttr}, auth)
@@ -747,17 +791,14 @@ func GetAllowedApps(auth *ManagerAuthArg) map[string]string {
 		appCount := len(ss.Entries)
 		for j := 0; j < appCount; j++ {
 			app := ss.Entries[j].GetAttributeValues(aldap.AllowedAppAttr)[0]
-			result[app] = app
+			result[app] = true
 		}
 	}
 	return result
 }
 
-func ProcessAppPermission(app string, allowedApps map[string]string) bool {
-	if _, exists := allowedApps[app]; !exists {
-		return false
-	}
-	return true
+func IsAppAllowed(auth *ManagerAuthArg, user string, app string) bool {
+	return GetAllowedApps(auth, user)[app]
 }
 
 // ----------------------------------------------------------------------------------------------------------
@@ -872,8 +913,12 @@ func (e *IsSuperUserExecutor) Authorize() error {
 	return nil
 }
 
-func (m *ManagerRPC) HasAppPermissions(arg ManagerAppPermissionsArg, reply *ManagerAppPermissionsReply) error {
-	return NewTask("HasAppPermissions", &HasAppPermissionsExecutor{arg, reply}).Run()
+func (m *ManagerRPC) IsAppAllowed(arg ManagerIsAppAllowedArg, reply *ManagerIsAppAllowedReply) error {
+	return NewTask("IsAppAllowed", &IsAppAllowedExecutor{arg, reply}).Run()
+}
+
+func (m *ManagerRPC) ListAllowedApps(arg ManagerListAllowedAppsArg, reply *ManagerListAllowedAppsReply) error {
+	return NewTask("ListAllowedApps", &ListAllowedAppsExecutor{arg, reply}).Run()
 }
 
 func (m *ManagerRPC) IsTeamAdmin(arg ManagerTeamAdminArg, reply *ManagerTeamAdminReply) error {

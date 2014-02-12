@@ -55,10 +55,10 @@ func AuthorizeApp(AuthArg *ManagerAuthArg, app string) error {
 	if err := SimpleAuthorize(AuthArg); err != nil {
 		return err
 	}
-	var reply ManagerAppPermissionsReply
-	arg := ManagerAppPermissionsArg{*AuthArg, app}
-	err := NewTask("Authorizer-HasAppPermissions", &HasAppPermissionsExecutor{arg, &reply}).Run()
-	if err != nil || !reply.Permission {
+	var reply ManagerIsAppAllowedReply
+	arg := ManagerIsAppAllowedArg{ManagerAuthArg: *AuthArg, App: app, User: AuthArg.User}
+	err := NewTask("Authorizer-IsAppAllowed", &IsAppAllowedExecutor{arg, &reply}).Run()
+	if err != nil || !reply.IsAllowed {
 		return errors.New("Not Authorized to Deploy App")
 	}
 	return nil

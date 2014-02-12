@@ -235,12 +235,12 @@ func (e *ListAppsExecutor) Execute(t *Task) error {
 	if err == nil {
 		e.reply.Apps = apps
 	} else {
-		allowedApps := GetAllowedApps(&e.arg.ManagerAuthArg)
+		allowedApps := GetAllowedApps(&e.arg.ManagerAuthArg, e.arg.ManagerAuthArg.User)
 		appsCount := len(allowedApps)
 		totalAppsCount := len(apps)
 		e.reply.Apps = make([]string, 0, appsCount)
 		for i := 0; i < totalAppsCount; i++ {
-			if _, ok := allowedApps[apps[i]]; ok {
+			if allowedApps[apps[i]] {
 				e.reply.Apps = append(e.reply.Apps, apps[i])
 			}
 		}

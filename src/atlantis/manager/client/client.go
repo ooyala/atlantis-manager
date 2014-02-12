@@ -305,6 +305,8 @@ func New() *ManagerClient {
 	o.AddCommand("remove-team-member", "remove member from team", "", &RemoveTeamMemberCommand{})
 	o.AddCommand("allow-app", "allow an app for deploy by a team", "", &AllowTeamAppCommand{})
 	o.AddCommand("disallow-app", "disallow an app for deploy by a team", "", &DisallowTeamAppCommand{})
+	o.AddCommand("is-app-allowed", "check if an app is allowed for deploy by a user", "", &IsAppAllowedCommand{})
+	o.AddCommand("list-allowed-apps", "list all allowed apps for a user", "", &ListAllowedAppsCommand{})
 	o.AddCommand("add-team-admin", "add team admin to a team", "", &AddTeamAdminCommand{})
 	o.AddCommand("remove-team-admin", "dellete team admin from a team", "", &RemoveTeamAdminCommand{})
 	o.AddCommand("add-team-email", "add an email address to a team", "", &AddTeamEmailCommand{})

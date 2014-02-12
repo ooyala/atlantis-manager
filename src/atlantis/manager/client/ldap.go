@@ -462,6 +462,58 @@ func ModifyTeamEmail(action, email, team string) error {
 	return nil
 }
 
+type IsAppAllowedCommand struct {
+	App  string `short:"a" long:"app" description:"the app to check permissions for"`
+	User string `short:"u" long:"user" description:"[superuser only] the user to check permissions for"`
+}
+
+func (c *IsAppAllowedCommand) Execute(args []string) error {
+	if err := Init(); err != nil {
+		return err
+	}
+	if !ldapOperationsEnabled {
+		return nil
+	}
+	user, secret, err := GetSecret()
+	if err != nil {
+		return err
+	}
+	auth := ManagerAuthArg{user, "", secret}
+	arg := ManagerIsAppAllowedArg{ManagerAuthArg: auth, User: c.User, App: c.App}
+	var reply ManagerIsAppAllowedReply
+	if err = rpcClient.Call("IsAppAllowed", arg, &reply); err == nil {
+		Log("-> %t", reply.IsAllowed)
+	}
+	return Output(map[string]interface{}{"isAllowed": reply.IsAllowed}, reply.IsAllowed, err)
+}
+
+type ListAllowedAppsCommand struct {
+	User string `short:"u" long:"user" description:"[superuser only] the user to check permissions for"`
+}
+
+func (c *ListAllowedAppsCommand) Execute(args []string) error {
+	if err := Init(); err != nil {
+		return err
+	}
+	if !ldapOperationsEnabled {
+		return nil
+	}
+	user, secret, err := GetSecret()
+	if err != nil {
+		return err
+	}
+	auth := ManagerAuthArg{user, "", secret}
+	arg := ManagerListAllowedAppsArg{ManagerAuthArg: auth, User: c.User}
+	var reply ManagerListAllowedAppsReply
+	if err = rpcClient.Call("ListAllowedApps", arg, &reply); err == nil {
+		Log("-> apps:")
+		for _, app := range reply.Apps {
+			Log("->   %s", app)
+		}
+	}
+	return Output(map[string]interface{}{"apps": reply.Apps}, reply.Apps, err)
+}
+
 // ----------------------------------------------------------------------------------------------------------
 // Login Related Functions
 // ----------------------------------------------------------------------------------------------------------
