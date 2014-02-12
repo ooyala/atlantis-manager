@@ -21,15 +21,6 @@ type LDAPSuite struct{}
 
 var _ = Suite(&LDAPSuite{})
 
-func (s *LDAPSuite) TestLDAPAuthorization(c *C) {
-	// Has App Permissions
-	posAllowedApp := map[string]string{"testApp": "testApp"}
-	negAllowedApp := map[string]string{"noop": "noop"}
-	c.Assert(ProcessAppPermission("testApp", posAllowedApp), Equals, true)
-	c.Assert(ProcessAppPermission("testApp", negAllowedApp), Equals, false)
-	return
-}
-
 func (s *LDAPSuite) TestIsTeamAdmin(c *C) {
 	posTeamAdmin := ldap.EntryAttribute{aldap.TeamAdminAttr, []string{"cn=user"}}
 	negTeamAdmin := ldap.EntryAttribute{aldap.TeamAdminAttr, []string{"cn=blah"}}
