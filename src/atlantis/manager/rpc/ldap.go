@@ -846,9 +846,12 @@ func (e *IsTeamAdminExecutor) Execute(t *Task) error {
 
 	filterStr := "(&(objectClass=" + aldap.TeamClass + ")(" + aldap.TeamCommonName + "=" + e.arg.Team + "))"
 	sr, err := NewSearchReq(filterStr, []string{aldap.TeamAdminAttr}, &e.arg.ManagerAuthArg)
-	if err != nil || len(sr.Entries) == 0 {
+	if err != nil {
 		e.reply.IsAdmin = false
 		return err
+	} else if len(sr.Entries) == 0 {
+		e.reply.IsAdmin = false
+		return errors.New("Could not list team admin attribute")
 	}
 	e.reply.IsAdmin = ProcessTeamAdmin(aldap.UserCommonName+"="+e.arg.User+","+aldap.UserOu, sr)
 	return nil

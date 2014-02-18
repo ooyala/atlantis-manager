@@ -45,7 +45,9 @@ func AuthorizeTeamAdmin(AuthArg *ManagerAuthArg, team string) error {
 	req := ManagerTeamAdminArg{*AuthArg, team}
 	var res ManagerTeamAdminReply
 	err := NewTask("Authorizer-IsTeamAdmin", &IsTeamAdminExecutor{req, &res}).Run()
-	if err != nil || !res.IsAdmin {
+	if err != nil {
+		return err
+	} else if !res.IsAdmin {
 		return errors.New("Not a Team Admin")
 	}
 	return nil
@@ -58,7 +60,9 @@ func AuthorizeApp(AuthArg *ManagerAuthArg, app string) error {
 	var reply ManagerIsAppAllowedReply
 	arg := ManagerIsAppAllowedArg{ManagerAuthArg: *AuthArg, App: app, User: AuthArg.User}
 	err := NewTask("Authorizer-IsAppAllowed", &IsAppAllowedExecutor{arg, &reply}).Run()
-	if err != nil || !reply.IsAllowed {
+	if err != nil {
+		return err
+	} else if !reply.IsAllowed {
 		return errors.New("Not Authorized to Deploy App")
 	}
 	return nil
@@ -71,7 +75,9 @@ func AuthorizeSuperUser(AuthArg *ManagerAuthArg) error {
 	var reply ManagerSuperUserReply
 	arg := ManagerSuperUserArg{*AuthArg}
 	err := NewTask("Authorizer-IsSuperUser", &IsSuperUserExecutor{arg, &reply}).Run()
-	if err != nil || !reply.IsSuperUser {
+	if err != nil {
+		return err
+	} else if !reply.IsSuperUser {
 		return errors.New("Not a Super User")
 	}
 	return nil
