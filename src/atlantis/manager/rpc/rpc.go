@@ -24,6 +24,7 @@ import (
 	"log"
 	"net"
 	"net/rpc"
+	"os"
 	"strings"
 	"time"
 )
@@ -38,7 +39,29 @@ var (
 	config               *tls.Config
 	CPUSharesIncrement   = uint(1) // default to no increment
 	MemoryLimitIncrement = uint(1) // default to no increment
+	superUserOnly        = false
 )
+
+func SuperUserOnlyChecker(file string, interval time.Duration) {
+	go func() {
+		for {
+			if _, err := os.Stat(file); err == nil {
+				// superUserOnly file exists
+				if !superUserOnly {
+					log.Println("Begin SuperUser Only Mode")
+					superUserOnly = true
+				}
+			} else {
+				// maintenance file doesn't exist or there is an error looking for it
+				if superUserOnly {
+					log.Println("End SuperUserOnly Mode")
+					superUserOnly = false
+				}
+			}
+			time.Sleep(interval)
+		}
+	}()
+}
 
 func Init(listenAddr string, supervisorPort uint16, cpuIncr, memIncr uint, resDuration time.Duration) error {
 	var err error
