@@ -895,15 +895,27 @@ type ManagerDeauthorizeSSHReply struct {
 	Status string
 }
 
-// ------------ App Permissions ---------
+// ------------ Is App Allowed ---------
 // Check whether an user has permissions to an app
-type ManagerAppPermissionsArg struct {
+type ManagerIsAppAllowedArg struct {
 	ManagerAuthArg
-	App string
+	App  string
+	User string // optional. superusers can check for another user
 }
 
-type ManagerAppPermissionsReply struct {
-	Permission bool
+type ManagerIsAppAllowedReply struct {
+	IsAllowed bool
+}
+
+// ------------ List Allowed Apps ---------
+// List all allowed apps for this user
+type ManagerListAllowedAppsArg struct {
+	ManagerAuthArg
+	User string // optional. superusers can check for another user
+}
+
+type ManagerListAllowedAppsReply struct {
+	Apps []string
 }
 
 // --------- Team Admin Permissions -------
