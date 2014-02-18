@@ -61,6 +61,7 @@ func (c *CreateTeamCommand) Execute(args []string) error {
 		return OutputError(err)
 	}
 	if !ldapOperationsEnabled {
+		Log("LDAP Operations are not enabled.")
 		return OutputEmpty()
 	}
 	user, secret, err := GetSecret()
@@ -90,6 +91,7 @@ func (c *DeleteTeamCommand) Execute(args []string) error {
 		return OutputError(err)
 	}
 	if !ldapOperationsEnabled {
+		Log("LDAP Operations are not enabled.")
 		return OutputEmpty()
 	}
 	user, secret, err := GetSecret()
@@ -122,6 +124,7 @@ func (c *ListTeamsCommand) Execute(args []string) error {
 		return OutputError(err)
 	}
 	if !ldapOperationsEnabled {
+		Log("LDAP Operations are not enabled.")
 		return OutputEmpty()
 	}
 	user, secret, err := GetSecret()
@@ -150,6 +153,7 @@ func (c *ListTeamEmailsCommand) Execute(args []string) error {
 		return OutputError(err)
 	}
 	if !ldapOperationsEnabled {
+		Log("LDAP Operations are not enabled.")
 		return OutputEmpty()
 	}
 	user, secret, err := GetSecret()
@@ -178,6 +182,7 @@ func (c *ListTeamAdminsCommand) Execute(args []string) error {
 		return OutputError(err)
 	}
 	if !ldapOperationsEnabled {
+		Log("LDAP Operations are not enabled.")
 		return OutputEmpty()
 	}
 	user, secret, err := GetSecret()
@@ -206,6 +211,7 @@ func (c *ListTeamMembersCommand) Execute(args []string) error {
 		return OutputError(err)
 	}
 	if !ldapOperationsEnabled {
+		Log("LDAP Operations are not enabled.")
 		return OutputEmpty()
 	}
 	user, secret, err := GetSecret()
@@ -234,6 +240,7 @@ func (c *ListTeamAppsCommand) Execute(args []string) error {
 		return OutputError(err)
 	}
 	if !ldapOperationsEnabled {
+		Log("LDAP Operations are not enabled.")
 		return OutputEmpty()
 	}
 	user, secret, err := GetSecret()
@@ -285,7 +292,8 @@ func ModifyTeamMember(action, team, user string) error {
 		return err
 	}
 	if !ldapOperationsEnabled {
-		return nil
+		Log("LDAP Operations are not enabled.")
+		return OutputEmpty()
 	}
 	cuser, secret, err := GetSecret()
 	if err != nil {
@@ -337,7 +345,8 @@ func ModifyTeamAdmin(action, user, team string) error {
 		return err
 	}
 	if !ldapOperationsEnabled {
-		return nil
+		Log("LDAP Operations are not enabled.")
+		return OutputEmpty()
 	}
 	cuser, secret, err := GetSecret()
 	if err != nil {
@@ -389,6 +398,7 @@ func ModifyAllowedTeamApp(action, team, app string) error {
 		return err
 	}
 	if !ldapOperationsEnabled {
+		Log("LDAP Operations are not enabled.")
 		return OutputEmpty()
 	}
 	user, secret, err := GetSecret()
@@ -441,7 +451,8 @@ func ModifyTeamEmail(action, email, team string) error {
 		return err
 	}
 	if !ldapOperationsEnabled {
-		return nil
+		Log("LDAP Operations are not enabled.")
+		return OutputEmpty()
 	}
 	user, secret, err := GetSecret()
 	if err != nil {
@@ -472,7 +483,8 @@ func (c *IsAppAllowedCommand) Execute(args []string) error {
 		return err
 	}
 	if !ldapOperationsEnabled {
-		return nil
+		Log("LDAP Operations are not enabled. All apps are allowed.")
+		return OutputEmpty()
 	}
 	user, secret, err := GetSecret()
 	if err != nil {
@@ -496,7 +508,8 @@ func (c *ListAllowedAppsCommand) Execute(args []string) error {
 		return err
 	}
 	if !ldapOperationsEnabled {
-		return nil
+		Log("LDAP Operations are not enabled. All apps are allowed.")
+		return OutputEmpty()
 	}
 	user, secret, err := GetSecret()
 	if err != nil {
