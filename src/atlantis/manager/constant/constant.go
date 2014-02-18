@@ -25,15 +25,17 @@ var (
 )
 
 const (
-	ManagerRPCVersion               = "2.0.0"
-	ManagerAPIVersion               = "2.0.0"
-	DefaultManagerHost              = "localhost"
-	DefaultManagerRPCPort           = uint16(1338)
-	DefaultManagerAPIPort           = uint16(443)
-	DefaultManagerKeyPath           = "~/.manager"
-	DefaultResultDuration           = "30m"
-	DefaultMaintenanceFile          = "/etc/atlantis/manager/maint"
-	DefaultMaintenanceCheckInterval = "5s"
-	DefaultMinRouterPort            = uint16(49152)
-	DefaultMaxRouterPort            = uint16(65535)
+	ManagerRPCVersion                 = "2.0.0"
+	ManagerAPIVersion                 = "2.0.0"
+	DefaultManagerHost                = "localhost"
+	DefaultManagerRPCPort             = uint16(1338)
+	DefaultManagerAPIPort             = uint16(443)
+	DefaultManagerKeyPath             = "~/.manager"
+	DefaultResultDuration             = "30m"
+	DefaultMaintenanceFile            = "/etc/atlantis/manager/maint"
+	DefaultMaintenanceCheckInterval   = "5s"
+	DefaultSuperUserOnlyFile          = "/etc/atlantis/manager/superuser"
+	DefaultSuperUserOnlyCheckInterval = "5s"
+	DefaultMinRouterPort              = uint16(49152)
+	DefaultMaxRouterPort              = uint16(65535)
 )

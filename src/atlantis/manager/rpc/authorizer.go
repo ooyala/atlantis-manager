@@ -30,6 +30,11 @@ func (a *Authorizer) Authenticate() (err error) {
 }
 
 func SimpleAuthorize(AuthArg *ManagerAuthArg) error {
+	// if superuser only file exists, this should authorize superusers only.
+	if superUserOnly {
+		return AuthorizeSuperUser(AuthArg)
+	}
+
 	user, password, secret := AuthArg.Credentials()
 	auther := Authorizer{user, password, secret}
 	if err := auther.Authenticate(); err != nil {

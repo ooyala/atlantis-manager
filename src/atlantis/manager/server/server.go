@@ -37,67 +37,71 @@ import (
 )
 
 type ServerConfig struct {
-	RpcAddr                  string `toml:"rpc_addr"`
-	ApiAddr                  string `toml:"api_addr"`
-	SupervisorPort           uint16 `toml:"supervisor_port"`
-	ZookeeperUri             string `toml:"zookeeper_uri"`
-	LdapHost                 string `toml:"ldap_host"`
-	LdapPort                 uint16 `toml:"ldap_port"`
-	LdapBaseDomain           string `toml:"ldap_basedomain"`
-	CPUSharesIncrement       uint   `toml:"cpu_shares_increment"`
-	MemoryLimitIncrement     uint   `toml:"memory_limit_increment"`
-	ResultDuration           string `toml:"result_duration"`
-	LdapUserSearchBase       string `toml:"ldap_user_search_base"`
-	LdapTeamSearchBase       string `toml:"ldap_team_search_base"`
-	LdapUsernameAttr         string `toml:"ldap_username_attr"`
-	LdapAppClass             string `toml:"ldap_app_class"`
-	LdapTeamClass            string `toml:"ldap_team_class"`
-	LdapTeamAdminAttr        string `toml:"ldap_team_admin_attr"`
-	LdapAllowedAppAttr       string `toml:"ldap_allowed_app_attr"`
-	LdapAllowedAppCommonName string `toml:"ldap_allowed_app_common_name"`
-	LdapUserCommonNamePrefix string `toml:"ldap_user_common_name_prefix"`
-	LdapTeamCommonNamePrefix string `toml:"ldap_team_common_name_prefix"`
-	LdapUserClass            string `toml:"ldap_user_class"`
-	LdapUserClassAttr        string `toml:"ldap_user_class_attr"`
-	SkipAuthorization        bool   `toml:"skip_authorization"`
-	LdapSuperUserGroup       string `toml:"ldap_super_user_group"`
-	Host                     string `toml:"host"`
-	Region                   string `toml:"region"`
-	Zone                     string `toml:"zone"`
-	AvailableZones           string `toml:"available_zones"`
-	MaintenanceFile          string `toml:"maintenance_file"`
-	MaintenanceCheckInterval string `toml:"maintenance_check_interval"`
-	MinRouterPort            uint16 `toml:"min_router_port"`
-	MaxRouterPort            uint16 `toml:"max_router_port"`
-	SMTPAddr                 string `toml:"smtp_addr"`
-	SMTPFrom                 string `toml:"smtp_from"`
-	SMTPCC                   string `toml:"smtp_cc"`
+	RpcAddr                    string `toml:"rpc_addr"`
+	ApiAddr                    string `toml:"api_addr"`
+	SupervisorPort             uint16 `toml:"supervisor_port"`
+	ZookeeperUri               string `toml:"zookeeper_uri"`
+	LdapHost                   string `toml:"ldap_host"`
+	LdapPort                   uint16 `toml:"ldap_port"`
+	LdapBaseDomain             string `toml:"ldap_basedomain"`
+	CPUSharesIncrement         uint   `toml:"cpu_shares_increment"`
+	MemoryLimitIncrement       uint   `toml:"memory_limit_increment"`
+	ResultDuration             string `toml:"result_duration"`
+	LdapUserSearchBase         string `toml:"ldap_user_search_base"`
+	LdapTeamSearchBase         string `toml:"ldap_team_search_base"`
+	LdapUsernameAttr           string `toml:"ldap_username_attr"`
+	LdapAppClass               string `toml:"ldap_app_class"`
+	LdapTeamClass              string `toml:"ldap_team_class"`
+	LdapTeamAdminAttr          string `toml:"ldap_team_admin_attr"`
+	LdapAllowedAppAttr         string `toml:"ldap_allowed_app_attr"`
+	LdapAllowedAppCommonName   string `toml:"ldap_allowed_app_common_name"`
+	LdapUserCommonNamePrefix   string `toml:"ldap_user_common_name_prefix"`
+	LdapTeamCommonNamePrefix   string `toml:"ldap_team_common_name_prefix"`
+	LdapUserClass              string `toml:"ldap_user_class"`
+	LdapUserClassAttr          string `toml:"ldap_user_class_attr"`
+	SkipAuthorization          bool   `toml:"skip_authorization"`
+	LdapSuperUserGroup         string `toml:"ldap_super_user_group"`
+	Host                       string `toml:"host"`
+	Region                     string `toml:"region"`
+	Zone                       string `toml:"zone"`
+	AvailableZones             string `toml:"available_zones"`
+	MaintenanceFile            string `toml:"maintenance_file"`
+	MaintenanceCheckInterval   string `toml:"maintenance_check_interval"`
+	SuperUserOnlyFile          string `toml:"superuser_only_file"`
+	SuperUserOnlyCheckInterval string `toml:"superuser_only_check_interval"`
+	MinRouterPort              uint16 `toml:"min_router_port"`
+	MaxRouterPort              uint16 `toml:"max_router_port"`
+	SMTPAddr                   string `toml:"smtp_addr"`
+	SMTPFrom                   string `toml:"smtp_from"`
+	SMTPCC                     string `toml:"smtp_cc"`
 }
 
 type ServerOpts struct {
-	RpcAddr                  string `long:"rpc" description:"the RPC listen addr"`
-	SupervisorPort           uint16 `long:"supervisor" description:"the RPC port for supervisor"`
-	ApiAddr                  string `long:"api" description:"the API listen addr"`
-	ZookeeperUri             string `long:"zookeeper" description:"the uri of the zookeeper to connect to"`
-	ConfigFile               string `long:"config-file" default:"/etc/atlantis/manager/server.toml" description:"the config file to use"`
-	LdapHost                 string `long:"ldap-host" description:"LDAP server to contact"`
-	LdapPort                 uint16 `long:"ldap-port" description:"LDAP port to use"`
-	LdapBaseDomain           string `long:"ldap-base-domain" description:"LDAP Base Domain Name to use"`
-	CPUSharesIncrement       uint   `long:"cpu-shares-increment" description:"CPU shares increment"`
-	MemoryLimitIncrement     uint   `long:"memory-limit-increment" description:"Memory Limit increment"`
-	ResultDuration           string `long:"result-duration" description:"How long to keep the results of an Async Command"`
-	SkipAuthorization        bool   `long:"skip-authorization" description:"Skip verification for LDAP UTA Details"`
-	Host                     string `long:"host" description:"the host of this manager"`
-	Region                   string `long:"region" description:"the region this manager is in"`
-	Zone                     string `long:"zone" description:"the availability zone this manager is in"`
-	AvailableZones           string `long:"available-zones" description:"the available availability zones"`
-	MaintenanceFile          string `long:"maintenance-file" description:"the maintenance file to check"`
-	MaintenanceCheckInterval string `long:"maintenance-check-interval" description:"the interval to check the maintenance file"`
-	MinRouterPort            uint16 `long:"min-router-port"`
-	MaxRouterPort            uint16 `long:"max-router-port"`
-	SMTPAddr                 string `long:"smtp-addr"`
-	SMTPFrom                 string `long:"smtp-from"`
-	SMTPCC                   string `long:"smtp-cc"`
+	RpcAddr                    string `long:"rpc" description:"the RPC listen addr"`
+	SupervisorPort             uint16 `long:"supervisor" description:"the RPC port for supervisor"`
+	ApiAddr                    string `long:"api" description:"the API listen addr"`
+	ZookeeperUri               string `long:"zookeeper" description:"the uri of the zookeeper to connect to"`
+	ConfigFile                 string `long:"config-file" default:"/etc/atlantis/manager/server.toml" description:"the config file to use"`
+	LdapHost                   string `long:"ldap-host" description:"LDAP server to contact"`
+	LdapPort                   uint16 `long:"ldap-port" description:"LDAP port to use"`
+	LdapBaseDomain             string `long:"ldap-base-domain" description:"LDAP Base Domain Name to use"`
+	CPUSharesIncrement         uint   `long:"cpu-shares-increment" description:"CPU shares increment"`
+	MemoryLimitIncrement       uint   `long:"memory-limit-increment" description:"Memory Limit increment"`
+	ResultDuration             string `long:"result-duration" description:"How long to keep the results of an Async Command"`
+	SkipAuthorization          bool   `long:"skip-authorization" description:"Skip verification for LDAP UTA Details"`
+	Host                       string `long:"host" description:"the host of this manager"`
+	Region                     string `long:"region" description:"the region this manager is in"`
+	Zone                       string `long:"zone" description:"the availability zone this manager is in"`
+	AvailableZones             string `long:"available-zones" description:"the available availability zones"`
+	MaintenanceFile            string `long:"maintenance-file" description:"the maintenance file to check"`
+	MaintenanceCheckInterval   string `long:"maintenance-check-interval" description:"the interval to check the maintenance file"`
+	SuperUserOnlyFile          string `long:"superuser-only-file" description:"if this file exists, only allow superusers to do things"`
+	SuperUserOnlyCheckInterval string `long:"maintenance-check-interval" description:"the interval to check the superuser only file"`
+	MinRouterPort              uint16 `long:"min-router-port"`
+	MaxRouterPort              uint16 `long:"max-router-port"`
+	SMTPAddr                   string `long:"smtp-addr"`
+	SMTPFrom                   string `long:"smtp-from"`
+	SMTPCC                     string `long:"smtp-cc"`
 }
 
 type ManagerServer struct {
@@ -112,26 +116,28 @@ func New() *ManagerServer {
 		parser: flags.NewParser(opts, flags.Default),
 		Opts:   opts,
 		Config: &ServerConfig{
-			RpcAddr:                  fmt.Sprintf(":%d", DefaultManagerRPCPort),
-			SupervisorPort:           iconst.DefaultSupervisorRPCPort,
-			ApiAddr:                  fmt.Sprintf(":%d", DefaultManagerAPIPort),
-			LdapPort:                 DefaultLDAPPort,
-			ZookeeperUri:             "localhost:2181",
-			CPUSharesIncrement:       1,
-			MemoryLimitIncrement:     1,
-			ResultDuration:           DefaultResultDuration,
-			SkipAuthorization:        false,
-			Host:                     DefaultManagerHost,
-			Region:                   DefaultRegion,
-			Zone:                     DefaultZone,
-			AvailableZones:           DefaultZone,
-			MaintenanceFile:          DefaultMaintenanceFile,
-			MaintenanceCheckInterval: DefaultMaintenanceCheckInterval,
-			MinRouterPort:            DefaultMinRouterPort,
-			MaxRouterPort:            DefaultMaxRouterPort,
-			SMTPAddr:                 "",
-			SMTPFrom:                 "",
-			SMTPCC:                   "",
+			RpcAddr:                    fmt.Sprintf(":%d", DefaultManagerRPCPort),
+			SupervisorPort:             iconst.DefaultSupervisorRPCPort,
+			ApiAddr:                    fmt.Sprintf(":%d", DefaultManagerAPIPort),
+			LdapPort:                   DefaultLDAPPort,
+			ZookeeperUri:               "localhost:2181",
+			CPUSharesIncrement:         1,
+			MemoryLimitIncrement:       1,
+			ResultDuration:             DefaultResultDuration,
+			SkipAuthorization:          false,
+			Host:                       DefaultManagerHost,
+			Region:                     DefaultRegion,
+			Zone:                       DefaultZone,
+			AvailableZones:             DefaultZone,
+			MaintenanceFile:            DefaultMaintenanceFile,
+			MaintenanceCheckInterval:   DefaultMaintenanceCheckInterval,
+			SuperUserOnlyFile:          DefaultSuperUserOnlyFile,
+			SuperUserOnlyCheckInterval: DefaultSuperUserOnlyCheckInterval,
+			MinRouterPort:              DefaultMinRouterPort,
+			MaxRouterPort:              DefaultMaxRouterPort,
+			SMTPAddr:                   "",
+			SMTPFrom:                   "",
+			SMTPCC:                     "",
 		},
 	}
 	manager.parser.Parse()
@@ -181,7 +187,12 @@ func (m *ManagerServer) Run(bldr builder.Builder) {
 	if err != nil {
 		log.Fatalln(err)
 	}
+	superUserCheckInterval, err := time.ParseDuration(m.Config.SuperUserOnlyCheckInterval)
+	if err != nil {
+		log.Fatalln(err)
+	}
 	MaintenanceChecker(m.Config.MaintenanceFile, maintenanceCheckInterval)
+	rpc.SuperUserOnlyChecker(m.Config.SuperUserOnlyFile, superUserCheckInterval)
 	go signalListener()
 	go rpc.Listen()
 	api.Listen()
@@ -248,6 +259,12 @@ func (m *ManagerServer) overlayConfig() {
 	}
 	if m.Opts.MaintenanceCheckInterval != "" {
 		m.Config.MaintenanceCheckInterval = m.Opts.MaintenanceCheckInterval
+	}
+	if m.Opts.SuperUserOnlyFile != "" {
+		m.Config.SuperUserOnlyFile = m.Opts.SuperUserOnlyFile
+	}
+	if m.Opts.SuperUserOnlyCheckInterval != "" {
+		m.Config.SuperUserOnlyCheckInterval = m.Opts.SuperUserOnlyCheckInterval
 	}
 	if m.Opts.MinRouterPort != 0 {
 		m.Config.MinRouterPort = m.Opts.MinRouterPort
