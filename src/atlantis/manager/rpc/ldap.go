@@ -798,6 +798,15 @@ func GetAllowedApps(auth *ManagerAuthArg, user string) map[string]bool {
 }
 
 func IsAppAllowed(auth *ManagerAuthArg, user string, app string) bool {
+	var suReply ManagerSuperUserReply
+	if err := NewTask("IsAppAllowed-IsSuperUser",
+		&IsSuperUserExecutor{ManagerSuperUserArg{*auth}, &suReply}).Run(); err != nil {
+		return false
+	}
+	if suReply.IsSuperUser {
+		// shortcut for superusers
+		return true
+	}
 	return GetAllowedApps(auth, user)[app]
 }
 
@@ -906,9 +915,10 @@ func (e *IsSuperUserExecutor) Execute(t *Task) error {
 	}
 	if len(sr.Entries) > 0 {
 		e.reply.IsSuperUser = true
-		return nil
+	} else {
+		e.reply.IsSuperUser = false
 	}
-	e.reply.IsSuperUser = false
+	t.Log("-> %t", e.reply.IsSuperUser)
 	return nil
 }
 
