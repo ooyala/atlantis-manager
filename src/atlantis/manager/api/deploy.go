@@ -73,7 +73,7 @@ func Deploy(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"ID": reply.ID}, err))
 }
 
-func CopyContainer(w http.ResponseWriter, r *http.Request) {
+func DeployContainer(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
 	instances, err := strconv.ParseUint(r.FormValue("Instances"), 10, 0)
@@ -81,34 +81,28 @@ func CopyContainer(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "{\"error\": \"%s\"}", err.Error())
 		return
 	}
-	ccArg := ManagerCopyContainerArg{ManagerAuthArg: auth, Instances: uint(instances),
+	ccArg := ManagerDeployContainerArg{ManagerAuthArg: auth, Instances: uint(instances),
 		ContainerID: vars["ID"]}
 	var reply AsyncReply
-	err = manager.CopyContainer(ccArg, &reply)
+	err = manager.DeployContainer(ccArg, &reply)
 	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"ID": reply.ID}, err))
 }
 
-func MoveContainer(w http.ResponseWriter, r *http.Request) {
+func CopyContainer(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
-	ccArg := ManagerMoveContainerArg{ManagerAuthArg: auth, ContainerID: vars["ID"]}
-	var reply AsyncReply
-	err := manager.MoveContainer(ccArg, &reply)
-	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"ID": reply.ID}, err))
-}
-
-func CopyOrphaned(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
-	cleanup, err := strconv.ParseBool(r.FormValue("CleanupZk"))
+	postcopy, err := strconv.Atoi(r.FormValue("PostCopy"))
 	if err != nil {
-		fmt.Fprintf(w, "{\"error\": \"%s\"}", err.Error())
-		return
+		postcopy = 0 // default to noop
 	}
-	ccArg := ManagerCopyOrphanedArg{ManagerAuthArg: auth, ContainerID: vars["ID"], Host: r.FormValue("Host"),
-		CleanupZk: cleanup}
+	ccArg := ManagerCopyContainerArg{
+		ManagerAuthArg: auth,
+		ContainerID:    vars["ID"],
+		ToHost:         r.FormValue("ToHost"),
+		PostCopy:       postcopy,
+	}
 	var reply AsyncReply
-	err = manager.CopyOrphaned(ccArg, &reply)
+	err = manager.CopyContainer(ccArg, &reply)
 	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"ID": reply.ID}, err))
 }
 
