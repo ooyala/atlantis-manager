@@ -266,7 +266,7 @@ func deployToHostsInZones(deps map[string]DepsType, manifest *Manifest, sha, env
 		}
 	}
 	// now that we know that enough hosts are available
-	t.LogStatus("Deploying to: %v", zones)
+	t.LogStatus("Deploying to zones: %v", zones)
 	respCh := make(chan *DeployZoneResult, len(zones))
 	for _, zone := range zones {
 		zoneManifest := manifest.Dup()
@@ -274,7 +274,7 @@ func deployToHostsInZones(deps map[string]DepsType, manifest *Manifest, sha, env
 		go deployToZone(respCh, zoneManifest, sha, env, hosts[zone], zone)
 	}
 	numResults := 0
-	status := "Deployed to: "
+	status := "Deployed to zones: "
 	for result := range respCh {
 		deployedContainers = append(deployedContainers, result.Containers...)
 		if result.Error != nil {
@@ -335,74 +335,6 @@ func deployToHostsInZones(deps map[string]DepsType, manifest *Manifest, sha, env
 	return deployedContainers, nil
 }
 
-func devDeployToHosts(deps map[string]DepsType, manifest *Manifest, sha, env string, hosts []string, t *Task) ([]*Container, error) {
-	// deploy to hosts
-	deployedContainers := []*Container{}
-	deployedIDs := []string{}
-	// fetch the app
-	zkApp, err := datamodel.GetApp(manifest.Name)
-	if err != nil {
-		return nil, err
-	}
-	for _, host := range hosts {
-		health, err := supervisor.HealthCheck(host)
-		if err != nil {
-			continue
-		}
-		manifest.Deps = deps[health.Zone]
-		instance, err := datamodel.CreateInstance(manifest.Name, sha, env, host)
-		if err != nil {
-			continue
-		}
-		t.LogStatus("Deploying %s to %s", instance.ID, host)
-		ihReply, err := supervisor.Deploy(host, manifest.Name, sha, env, instance.ID, manifest)
-		if err != nil {
-			instance.Delete()
-			t.LogStatus("Supervisor " + host + " Deploy " + instance.ID + " Failed: " + err.Error())
-			continue // try another host
-		}
-		if ihReply.Status != StatusOk {
-			instance.Delete()
-			t.LogStatus("Supervisor " + host + " Deploy " + instance.ID + " Status Not OK: " + ihReply.Status)
-			continue // try another host
-		}
-		ihReply.Container.Host = host
-		instance.SetPort(ihReply.Container.PrimaryPort)
-		datamodel.Supervisor(host).SetContainerAndPort(instance.ID, ihReply.Container.PrimaryPort)
-		deployedContainers = append(deployedContainers, ihReply.Container)
-		deployedIDs = append(deployedIDs, ihReply.Container.ID)
-		AddAppShaToEnv(manifest.Name, sha, env)
-		break // only deploy 1
-	}
-	if len(deployedContainers) == 0 {
-		return nil, errors.New("Could not deploy to any hosts")
-	}
-	t.LogStatus("Updating Router")
-	err = datamodel.AddToPool(deployedIDs)
-	if err != nil { // if we can't add the pool, clean up and fail
-		cleanup(true, deployedContainers, t)
-		return nil, errors.New("Update Pool Error: " + err.Error())
-	}
-	if zkApp.Internal {
-		// reserve router port if needed and add app+env
-		_, _, err = datamodel.ReserveRouterPortAndUpdateTrie(zkApp.Internal, manifest.Name, sha, env)
-		if err != nil {
-			datamodel.DeleteFromPool(deployedIDs)
-			cleanup(true, deployedContainers, t)
-			return nil, errors.New("Reserve Router Port Error: " + err.Error())
-		}
-	} else {
-		// only update trie
-		_, err = datamodel.UpdateAppEnvTrie(zkApp.Internal, manifest.Name, sha, env)
-		if err != nil {
-			datamodel.DeleteFromPool(deployedIDs)
-			cleanup(true, deployedContainers, t)
-			return nil, errors.New("Reserve Router Port Error: " + err.Error())
-		}
-	}
-	return deployedContainers, nil
-}
-
 func deploy(auth *ManagerAuthArg, manifest *Manifest, sha, env string, t *Task) ([]*Container, error) {
 	deps, err := validateDeploy(auth, manifest, sha, env, t)
 	if err != nil {
@@ -438,41 +370,10 @@ func devDeploy(auth *ManagerAuthArg, manifest *Manifest, sha, env string, t *Tas
 	for i, elem := range list {
 		hosts[i] = elem.Supervisor
 	}
-	return devDeployToHosts(deps, manifest, sha, env, hosts, t)
+	return deployToHostsInZones(deps, manifest, sha, env, map[string][]string{"[any]": hosts}, []string{"[any]"}, t)
 }
 
-func moveContainer(auth *ManagerAuthArg, cont *Container, t *Task) (*Container, error) {
-	manifest := cont.Manifest
-	manifest.Instances = 1 // we only want 1 instance
-	deps, err := validateDeploy(auth, manifest, cont.Sha, cont.Env, t)
-	if err != nil {
-		return nil, err
-	}
-	// choose host
-	t.LogStatus("Choosing Supervisor")
-	zone, err := supervisor.GetZone(cont.Host)
-	if err != nil {
-		return nil, err
-	}
-	hosts, err := datamodel.ChooseSupervisors(manifest.Name, cont.Sha, cont.Env, manifest.Instances, manifest.CPUShares,
-		manifest.MemoryLimit, []string{zone}, map[string]bool{cont.Host: true})
-	if err != nil {
-		return nil, err
-	}
-	deployed, err := deployToHostsInZones(deps, manifest, cont.Sha, cont.Env, hosts, []string{zone}, t)
-	if err != nil {
-		return nil, err
-	}
-	// should only deploy 1 since we're only moving 1
-	if len(deployed) != 1 {
-		cleanup(true, deployed, t)
-		return nil, errors.New(fmt.Sprintf("Didn't deploy 1 container. Deployed %d", len(deployed)))
-	}
-	cleanup(true, []*Container{cont}, t) // cleanup the old container
-	return deployed[0], nil
-}
-
-func copyOrphaned(auth *ManagerAuthArg, cid, toHost string, purge bool, t *Task) (*Container, error) {
+func copyContainer(auth *ManagerAuthArg, cid, toHost string, t *Task) (*Container, error) {
 	// get old instance
 	inst, err := datamodel.GetInstance(cid)
 	if err != nil {
@@ -512,9 +413,6 @@ func copyOrphaned(auth *ManagerAuthArg, cid, toHost string, purge bool, t *Task)
 	if len(deployed) != 1 {
 		cleanup(true, deployed, t)
 		return nil, errors.New(fmt.Sprintf("Didn't deploy 1 container. Deployed %d", len(deployed)))
-	}
-	if purge {
-		cleanupZk(inst, t) // cleanup the old instance references
 	}
 	return deployed[0], nil
 }

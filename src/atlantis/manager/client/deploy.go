@@ -59,9 +59,38 @@ func (c *DeployCommand) Execute(args []string) error {
 	return (&WaitCommand{reply.ID}).Execute(args)
 }
 
+type DeployContainerCommand struct {
+	ContainerID string `short:"c" long:"container" description:"the id of the container to replicate"`
+	Instances   uint   `short:"i" long:"instances" default:"1" description:"the number of instances to deploy in each AZ"`
+	Wait        bool   `long:"wait" description:"wait until the deploy is done before exiting"`
+}
+
+func (c *DeployContainerCommand) Execute(args []string) error {
+	if err := Init(); err != nil {
+		return OutputError(err)
+	}
+	Log("DeployContainer...")
+	user, secret, err := GetSecret()
+	if err != nil {
+		return err
+	}
+	authArg := ManagerAuthArg{user, "", secret}
+	arg := ManagerDeployContainerArg{ManagerAuthArg: authArg, ContainerID: c.ContainerID, Instances: c.Instances}
+	var reply atlantis.AsyncReply
+	if err := rpcClient.Call("DeployContainer", arg, &reply); err != nil {
+		return OutputError(err)
+	}
+	Log("-> ID: %s", reply.ID)
+	if !c.Wait {
+		return Output(map[string]interface{}{"id": reply.ID}, reply.ID, nil)
+	}
+	return (&WaitCommand{reply.ID}).Execute(args)
+}
+
 type CopyContainerCommand struct {
 	ContainerID string `short:"c" long:"container" description:"the id of the container to copy"`
-	Instances   uint   `short:"i" long:"instances" default:"1" description:"the number of instances to deploy in each AZ"`
+	ToHost      string `short:"H" long:"host" description:"the host to copy to"`
+	PostCopy    int    `short:"p" long:"post" description:"what to do after the copy. (0 = nothing, 1 = cleanup datamodel only, 2 = teardown)"`
 	Wait        bool   `long:"wait" description:"wait until the deploy is done before exiting"`
 }
 
@@ -75,66 +104,14 @@ func (c *CopyContainerCommand) Execute(args []string) error {
 		return err
 	}
 	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerCopyContainerArg{ManagerAuthArg: authArg, ContainerID: c.ContainerID, Instances: c.Instances}
+	arg := ManagerCopyContainerArg{
+		ManagerAuthArg: authArg,
+		ContainerID:    c.ContainerID,
+		ToHost:         c.ToHost,
+		PostCopy:       c.PostCopy,
+	}
 	var reply atlantis.AsyncReply
 	if err := rpcClient.Call("CopyContainer", arg, &reply); err != nil {
-		return OutputError(err)
-	}
-	Log("-> ID: %s", reply.ID)
-	if !c.Wait {
-		return Output(map[string]interface{}{"id": reply.ID}, reply.ID, nil)
-	}
-	return (&WaitCommand{reply.ID}).Execute(args)
-}
-
-type MoveContainerCommand struct {
-	ContainerID string `short:"c" long:"container" description:"the id of the container to move"`
-	Wait        bool   `long:"wait" description:"wait until the deploy is done before exiting"`
-}
-
-func (c *MoveContainerCommand) Execute(args []string) error {
-	if err := Init(); err != nil {
-		return OutputError(err)
-	}
-	Log("MoveContainer...")
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerMoveContainerArg{ManagerAuthArg: authArg, ContainerID: c.ContainerID}
-	var reply atlantis.AsyncReply
-	if err := rpcClient.Call("MoveContainer", arg, &reply); err != nil {
-		return OutputError(err)
-	}
-	Log("-> ID: %s", reply.ID)
-	if !c.Wait {
-		return Output(map[string]interface{}{"id": reply.ID}, reply.ID, nil)
-	}
-	return (&WaitCommand{reply.ID}).Execute(args)
-}
-
-type CopyOrphanedCommand struct {
-	ContainerID string `short:"c" long:"container" description:"the id of the container to move"`
-	Host        string `short:"c" long:"container" description:"the id of the container to move"`
-	CleanupZk   bool   `long:"cleanup" description:"the id of the container to move"`
-	Wait        bool   `long:"wait" description:"wait until the deploy is done before exiting"`
-}
-
-func (c *CopyOrphanedCommand) Execute(args []string) error {
-	if err := Init(); err != nil {
-		return OutputError(err)
-	}
-	Log("CopyOrphaned...")
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerCopyOrphanedArg{ManagerAuthArg: authArg, ContainerID: c.ContainerID, Host: c.Host,
-		CleanupZk: c.CleanupZk}
-	var reply atlantis.AsyncReply
-	if err := rpcClient.Call("CopyOrphaned", arg, &reply); err != nil {
 		return OutputError(err)
 	}
 	Log("-> ID: %s", reply.ID)

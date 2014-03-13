@@ -425,35 +425,32 @@ type ManagerDeployReply struct {
 	Containers []*Container
 }
 
-// ------------ CopyContainer ------------
-// Used to deploy by copying a container
-type ManagerCopyContainerArg struct {
+// ------------ DeployContainer ------------
+// Used to deploy by replicating a container 1+ times to arbitrary hosts in every zone
+type ManagerDeployContainerArg struct {
 	ManagerAuthArg
 	ContainerID string
 	Instances   uint
 }
 
+// DeployContainer uses ManagerDeployReply
+
+// ------------ CopyContainer ------------
+// Used to deploy by copying a single container to a specific host
+type ManagerCopyContainerArg struct {
+	ManagerAuthArg
+	ContainerID string
+	ToHost      string
+	PostCopy    int
+}
+
+const (
+	PostCopyNoop = iota
+	PostCopyCleanup
+	PostCopyTeardown
+)
+
 // CopyContainer uses ManagerDeployReply
-
-// ------------ MoveContainer ------------
-// Used to deploy by copying a container
-type ManagerMoveContainerArg struct {
-	ManagerAuthArg
-	ContainerID string
-}
-
-// MoveContainer uses ManagerDeployReply
-
-// ------------ CopyOrphaned ------------
-// Used to deploy by copying a container
-type ManagerCopyOrphanedArg struct {
-	ManagerAuthArg
-	ContainerID string
-	Host        string
-	CleanupZk   bool
-}
-
-// CopyOrphaned uses ManagerDeployReply
 
 // ------------ ResolveDeps ------------
 // used to resolve deps in an environment to see what the deploy will contain

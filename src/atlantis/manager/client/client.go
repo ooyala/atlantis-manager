@@ -263,9 +263,8 @@ func New() *ManagerClient {
 	o.AddCommand("list-shas", "list deployed shas", "", &ListShasCommand{})
 	o.AddCommand("list-apps", "list deployed apps", "", &ListAppsCommand{})
 	o.AddCommand("deploy", "[async] deploy something", "", &DeployCommand{})
-	o.AddCommand("copy-container", "[async] deploy by copying a container", "", &CopyContainerCommand{})
-	o.AddCommand("move-container", "[async] deploy by moving a container", "", &MoveContainerCommand{})
-	o.AddCommand("copy-orphaned", "[async] deploy by copying an orphaned container", "", &CopyOrphanedCommand{})
+	o.AddCommand("deploy-container", "[async] deploy by replicating a container", "", &DeployContainerCommand{})
+	o.AddCommand("copy-container", "[async] deploy by copying a single container to a specific host", "", &CopyContainerCommand{})
 	o.AddCommand("teardown", "[async] teardown something", "", &TeardownCommand{})
 	o.AddCommand("get-container", "get a container", "", &GetContainerCommand{})
 

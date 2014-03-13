@@ -108,24 +108,24 @@ func (m *ManagerRPC) Deploy(arg ManagerDeployArg, reply *AsyncReply) error {
 	return NewTask("Deploy", &DeployExecutor{arg, &ManagerDeployReply{}}).RunAsync(reply)
 }
 
-type CopyContainerExecutor struct {
-	arg   ManagerCopyContainerArg
+type DeployContainerExecutor struct {
+	arg   ManagerDeployContainerArg
 	reply *ManagerDeployReply
 }
 
-func (e *CopyContainerExecutor) Request() interface{} {
+func (e *DeployContainerExecutor) Request() interface{} {
 	return e.arg
 }
 
-func (e *CopyContainerExecutor) Result() interface{} {
+func (e *DeployContainerExecutor) Result() interface{} {
 	return e.reply
 }
 
-func (e *CopyContainerExecutor) Description() string {
+func (e *DeployContainerExecutor) Description() string {
 	return fmt.Sprintf("%s x%d", e.arg.ContainerID, e.arg.Instances)
 }
 
-func (e *CopyContainerExecutor) Authorize() error {
+func (e *DeployContainerExecutor) Authorize() error {
 	if err := checkRole("deploys", "write"); err != nil {
 		return err
 	}
@@ -133,7 +133,7 @@ func (e *CopyContainerExecutor) Authorize() error {
 	return SimpleAuthorize(&e.arg.ManagerAuthArg)
 }
 
-func (e *CopyContainerExecutor) Execute(t *Task) error {
+func (e *DeployContainerExecutor) Execute(t *Task) error {
 	if e.arg.ContainerID == "" {
 		return errors.New("Container ID is empty")
 	}
@@ -152,95 +152,75 @@ func (e *CopyContainerExecutor) Execute(t *Task) error {
 	return err
 }
 
+func (m *ManagerRPC) DeployContainer(arg ManagerDeployContainerArg, reply *AsyncReply) error {
+	return NewTask("DeployContainer", &DeployContainerExecutor{arg, &ManagerDeployReply{}}).RunAsync(reply)
+}
+
+type CopyContainerExecutor struct {
+	arg   ManagerCopyContainerArg
+	reply *ManagerDeployReply
+}
+
+func (e *CopyContainerExecutor) Request() interface{} {
+	return e.arg
+}
+
+func (e *CopyContainerExecutor) Result() interface{} {
+	return e.reply
+}
+
+func (e *CopyContainerExecutor) Description() string {
+	return fmt.Sprintf("%s -> %s", e.arg.ContainerID, e.arg.ToHost)
+}
+
+func (e *CopyContainerExecutor) Authorize() error {
+	if err := checkRole("deploys", "write"); err != nil {
+		return err
+	}
+	// app is authorized in deploy()
+	return SimpleAuthorize(&e.arg.ManagerAuthArg)
+}
+
+func (e *CopyContainerExecutor) Execute(t *Task) error {
+	if e.arg.ContainerID == "" {
+		return errors.New("Container ID is empty")
+	}
+	if e.arg.ToHost == "" {
+		return errors.New("To Host is empty")
+	}
+	cont, err := copyContainer(&e.arg.ManagerAuthArg, e.arg.ContainerID, e.arg.ToHost, t)
+	if err != nil {
+		return err
+	}
+	e.reply.Containers = []*Container{cont}
+	switch e.arg.PostCopy {
+	case PostCopyCleanup:
+		// we want to only cleanup ZK
+		// get old instance
+		inst, err := datamodel.GetInstance(e.arg.ContainerID)
+		if err != nil {
+			return err
+		}
+		cleanupZk(inst, t)
+	case PostCopyTeardown:
+		// now time to remove the old instance
+		// get old instance
+		inst, err := datamodel.GetInstance(e.arg.ContainerID)
+		if err != nil {
+			return err
+		}
+		// get old container from supervisor
+		ihReply, err := supervisor.Get(inst.Host, inst.ID)
+		if err != nil {
+			return err
+		}
+		cleanup(true, []*Container{ihReply.Container}, t)
+	}
+	return nil
+}
+
 func (m *ManagerRPC) CopyContainer(arg ManagerCopyContainerArg, reply *AsyncReply) error {
 	return NewTask("CopyContainer", &CopyContainerExecutor{arg, &ManagerDeployReply{}}).RunAsync(reply)
-}
-
-type MoveContainerExecutor struct {
-	arg   ManagerMoveContainerArg
-	reply *ManagerDeployReply
-}
-
-func (e *MoveContainerExecutor) Request() interface{} {
-	return e.arg
-}
-
-func (e *MoveContainerExecutor) Result() interface{} {
-	return e.reply
-}
-
-func (e *MoveContainerExecutor) Description() string {
-	return fmt.Sprintf("%s", e.arg.ContainerID)
-}
-
-func (e *MoveContainerExecutor) Authorize() error {
-	if err := checkRole("deploys", "write"); err != nil {
-		return err
-	}
-	// app is authorized in deploy()
-	return SimpleAuthorize(&e.arg.ManagerAuthArg)
-}
-
-func (e *MoveContainerExecutor) Execute(t *Task) error {
-	if e.arg.ContainerID == "" {
-		return errors.New("Container ID is empty")
-	}
-	instance, err := datamodel.GetInstance(e.arg.ContainerID)
-	if err != nil {
-		return err
-	}
-	ihReply, err := supervisor.Get(instance.Host, instance.ID)
-	if err != nil {
-		return err
-	}
-	cont, err := moveContainer(&e.arg.ManagerAuthArg, ihReply.Container, t)
-	e.reply.Containers = []*Container{cont}
-	return err
-}
-
-func (m *ManagerRPC) MoveContainer(arg ManagerMoveContainerArg, reply *AsyncReply) error {
-	return NewTask("MoveContainer", &MoveContainerExecutor{arg, &ManagerDeployReply{}}).RunAsync(reply)
-}
-
-type CopyOrphanedExecutor struct {
-	arg   ManagerCopyOrphanedArg
-	reply *ManagerDeployReply
-}
-
-func (e *CopyOrphanedExecutor) Request() interface{} {
-	return e.arg
-}
-
-func (e *CopyOrphanedExecutor) Result() interface{} {
-	return e.reply
-}
-
-func (e *CopyOrphanedExecutor) Description() string {
-	return fmt.Sprintf("%s", e.arg.ContainerID)
-}
-
-func (e *CopyOrphanedExecutor) Authorize() error {
-	if err := checkRole("deploys", "write"); err != nil {
-		return err
-	}
-	// app is authorized in deploy()
-	return SimpleAuthorize(&e.arg.ManagerAuthArg)
-}
-
-func (e *CopyOrphanedExecutor) Execute(t *Task) error {
-	if e.arg.ContainerID == "" {
-		return errors.New("Container ID is empty")
-	}
-	if e.arg.Host == "" {
-		return errors.New("Container ID is empty")
-	}
-	cont, err := copyOrphaned(&e.arg.ManagerAuthArg, e.arg.ContainerID, e.arg.Host, e.arg.CleanupZk, t)
-	e.reply.Containers = []*Container{cont}
-	return err
-}
-
-func (m *ManagerRPC) CopyOrphaned(arg ManagerCopyOrphanedArg, reply *AsyncReply) error {
-	return NewTask("CopyOrphaned", &CopyOrphanedExecutor{arg, &ManagerDeployReply{}}).RunAsync(reply)
 }
 
 type ResolveDepsExecutor struct {
