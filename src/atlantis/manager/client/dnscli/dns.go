@@ -95,6 +95,35 @@ func (c *DNSCreateAliasCommand) Execute(args []string) error {
 	return Output(map[string]interface{}{"id": alias.ID()}, alias.ID(), err)
 }
 
+type DNSCreateCNameCommand struct {
+	Provider string `long:"provider" default:"route53" description:"the dns provider"`
+	ZoneID   string `short:"z" long:"zone" description:"the dns zone to use"`
+	TTL      uint   `long:"ttl" default:"10" description:"the ttl to use"`
+	Prefix   string `short:"p" long:"prefix" description:"the name prefix to use for the alias"`
+	Original string `short:"o" long:"original" description:"the target of the alias"`
+	Failover string `short:"f" long:"failover" description:"the failover policy to use"`
+	Weight   uint8  `short:"w" long:"weight" description:"the record's weight"`
+	Comment  string `long:"comment" default:"CLIENT" description:"the comment to use"`
+}
+
+func (c *DNSCreateCNameCommand) Execute(args []string) error {
+	if err := InitDNSProvider(c.Provider, c.ZoneID, c.TTL); err != nil {
+		return Output(nil, nil, err)
+	}
+	cname := dns.CName{
+		Name:     c.Prefix + "." + suffix,
+		Original: c.Original,
+		Failover: c.Failover,
+		Weight:   c.Weight,
+	}
+	err := dns.Provider.CreateRecords("cli", c.Comment, []dns.Record{&cname})
+	if err != nil {
+		return Output(nil, nil, err)
+	}
+	Log("-> created %s", cname.ID())
+	return Output(map[string]interface{}{"id": cname.ID()}, cname.ID(), err)
+}
+
 type DNSDeleteRecordsCommand struct {
 	Provider  string   `long:"provider" default:"route53" description:"the dns provider"`
 	ZoneID    string   `short:"z" long:"zone" description:"the dns zone to use"`
@@ -113,12 +142,41 @@ func (c *DNSDeleteRecordsCommand) Execute(args []string) error {
 	}
 	err = <-errChan
 	if err == nil {
-		Log("-> deleted:", c.RecordIDs)
+		Log("-> deleted:")
 		for _, id := range c.RecordIDs {
 			Log("->   %s", id)
 		}
 	}
 	return Output(map[string]interface{}{"ids": c.RecordIDs}, c.RecordIDs, err)
+}
+
+type DNSDeleteCNameCommand struct {
+	Provider  string `long:"provider" default:"route53" description:"the dns provider"`
+	ZoneID    string `short:"z" long:"zone" description:"the dns zone to use"`
+	TTL       uint   `long:"ttl" default:"10" description:"the ttl to use"`
+	Prefix    string `short:"p" long:"prefix" description:"the name prefix to use for the alias"`
+	Original  string `short:"o" long:"original" description:"the target of the alias"`
+	Comment   string `long:"comment" default:"CLIENT" description:"the comment to use"`
+}
+
+func (c *DNSDeleteCNameCommand) Execute(args []string) error {
+	if err := InitDNSProvider(c.Provider, c.ZoneID, c.TTL); err != nil {
+		return Output(nil, nil, err)
+	}
+	cname := dns.CName{
+		Name:     c.Prefix + "." + suffix,
+		Original: c.Original,
+	}
+	recordID := cname.ID()
+	err, errChan := dns.Provider.DeleteRecords("cli", c.Comment, recordID)
+	if err != nil {
+		return Output(nil, nil, err)
+	}
+	err = <-errChan
+	if err == nil {
+		Log("-> deleted: ", recordID)
+	}
+	return Output(map[string]interface{}{"id": recordID}, recordID, err)
 }
 
 type DNSGetRecordsForValueCommand struct {
