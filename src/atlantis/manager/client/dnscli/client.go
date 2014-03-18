@@ -188,13 +188,13 @@ func New() *DNSClient {
 	o := &DNSClient{flags.NewParser(clientOpts, flags.Default)}
 
 	// DNS Management
-	o.AddCommand("dns-create-arecord", "create an a record", "", &DNSCreateARecordCommand{})
-	o.AddCommand("dns-create-alias", "create an alias record", "", &DNSCreateAliasCommand{})
-	//	o.AddCommand("dns-create-health-check", "create a health check", "", &DNSCreateHealthCheckCommand{})
-	//	o.AddCommand("dns-delete-health-check", "delete a health check", "", &DNSDeleteHealthCheckCommand{})
-	o.AddCommand("dns-delete-records", "delete records", "", &DNSDeleteRecordsCommand{})
-	o.AddCommand("dns-delete-records-value", "delete records for value", "", &DNSDeleteRecordsForValueCommand{})
-	o.AddCommand("dns-get-records-value", "get records for value", "", &DNSGetRecordsForValueCommand{})
+	o.AddCommand("create-arecord", "create an a record", "", &DNSCreateARecordCommand{})
+	o.AddCommand("create-alias", "create an alias record", "", &DNSCreateAliasCommand{})
+	o.AddCommand("create-cname", "create a cname record", "", &DNSCreateCNameCommand{})
+	o.AddCommand("delete-records", "delete records", "", &DNSDeleteRecordsCommand{})
+	o.AddCommand("delete-cname", "delete cname", "", &DNSDeleteCNameCommand{})
+	o.AddCommand("delete-records-value", "delete records for value", "", &DNSDeleteRecordsForValueCommand{})
+	o.AddCommand("get-records-value", "get records for value", "", &DNSGetRecordsForValueCommand{})
 
 	return o
 }
