@@ -192,6 +192,7 @@ func New() *DNSClient {
 	o.AddCommand("create-alias", "create an alias record", "", &DNSCreateAliasCommand{})
 	o.AddCommand("create-cname", "create a cname record", "", &DNSCreateCNameCommand{})
 	o.AddCommand("delete-records", "delete records", "", &DNSDeleteRecordsCommand{})
+	o.AddCommand("delete-cname", "delete cname", "", &DNSDeleteCNameCommand{})
 	o.AddCommand("delete-records-value", "delete records for value", "", &DNSDeleteRecordsForValueCommand{})
 	o.AddCommand("get-records-value", "get records for value", "", &DNSGetRecordsForValueCommand{})
 
