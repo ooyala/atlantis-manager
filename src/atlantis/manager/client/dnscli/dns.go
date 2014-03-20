@@ -151,12 +151,12 @@ func (c *DNSDeleteRecordsCommand) Execute(args []string) error {
 }
 
 type DNSDeleteCNameCommand struct {
-	Provider  string `long:"provider" default:"route53" description:"the dns provider"`
-	ZoneID    string `short:"z" long:"zone" description:"the dns zone to use"`
-	TTL       uint   `long:"ttl" default:"10" description:"the ttl to use"`
-	Prefix    string `short:"p" long:"prefix" description:"the name prefix to use for the alias"`
-	Original  string `short:"o" long:"original" description:"the target of the alias"`
-	Comment   string `long:"comment" default:"CLIENT" description:"the comment to use"`
+	Provider string `long:"provider" default:"route53" description:"the dns provider"`
+	ZoneID   string `short:"z" long:"zone" description:"the dns zone to use"`
+	TTL      uint   `long:"ttl" default:"10" description:"the ttl to use"`
+	Prefix   string `short:"p" long:"prefix" description:"the name prefix to use for the alias"`
+	Original string `short:"o" long:"original" description:"the target of the alias"`
+	Comment  string `long:"comment" default:"CLIENT" description:"the comment to use"`
 }
 
 func (c *DNSDeleteCNameCommand) Execute(args []string) error {

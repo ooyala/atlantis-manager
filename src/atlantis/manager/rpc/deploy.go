@@ -12,6 +12,7 @@
 package rpc
 
 import (
+	bman "atlantis/builder/manifest"
 	. "atlantis/common"
 	"atlantis/manager/builder"
 	"atlantis/manager/datamodel"
@@ -77,7 +78,11 @@ func (e *DeployExecutor) Execute(t *Task) error {
 	}
 	defer manifestReader.Close()
 	t.LogStatus("Reading Manifest")
-	manifest, err := ReadManifest(manifestReader)
+	data, err := bman.Read(manifestReader)
+	if err != nil {
+		return err
+	}
+	manifest, err := CreateManifest(data)
 	if err != nil {
 		return err
 	}
