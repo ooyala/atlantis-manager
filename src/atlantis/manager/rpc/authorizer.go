@@ -30,15 +30,14 @@ func (a *Authorizer) Authenticate() (err error) {
 }
 
 func SimpleAuthorize(AuthArg *ManagerAuthArg) error {
-	// if superuser only file exists, this should authorize superusers only.
-	if superUserOnly {
-		return AuthorizeSuperUser(AuthArg)
-	}
-
 	user, password, secret := AuthArg.Credentials()
 	auther := Authorizer{user, password, secret}
 	if err := auther.Authenticate(); err != nil {
 		return err
+	}
+	// if superuser only file exists, this should authorize superusers only.
+	if superUserOnly {
+		return authorizeSuperUser(AuthArg)
 	}
 	return nil
 }
@@ -73,12 +72,16 @@ func AuthorizeApp(AuthArg *ManagerAuthArg, app string) error {
 	return nil
 }
 
-func AuthorizeSuperUser(AuthArg *ManagerAuthArg) error {
-	if err := SimpleAuthorize(AuthArg); err != nil {
+func AuthorizeSuperUser(authArg *ManagerAuthArg) error {
+	if err := SimpleAuthorize(authArg); err != nil {
 		return err
 	}
+	return authorizeSuperUser(authArg)
+}
+
+func authorizeSuperUser(authArg *ManagerAuthArg) error {
 	var reply ManagerSuperUserReply
-	arg := ManagerSuperUserArg{*AuthArg}
+	arg := ManagerSuperUserArg{*authArg}
 	err := NewTask("Authorizer-IsSuperUser", &IsSuperUserExecutor{arg, &reply}).Run()
 	if err != nil {
 		return err
