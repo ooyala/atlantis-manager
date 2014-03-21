@@ -482,9 +482,6 @@ func DeleteFromPool(containers []string) error {
 
 func CleanupCreatedPoolRefs(internal bool, app, sha, env string) error {
 	helper.SetRouterRoot(internal)
-	if !internal {
-		return nil
-	}
 	// remove static rule, cleanup rule from trie if needed
 	ruleName := helper.GetAppShaEnvStaticRuleName(app, sha, env)
 	trieName := helper.GetAppEnvTrieName(app, env)
