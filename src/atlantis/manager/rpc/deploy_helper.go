@@ -203,18 +203,27 @@ type DeployZoneResult struct {
 	Error      error
 }
 
-func deployToZone(respCh chan *DeployZoneResult, manifest *Manifest, sha, env string, hosts []string, zone string) {
+func deployToZone(respCh chan *DeployZoneResult, deps map[string]DepsType, rawManifest *Manifest, sha,
+	env string, hosts []string, zone string) {
 	hostNum := 0
 	failures := 0
 	deployed := uint(0)
 	maxFailures := len(hosts)
 	deployedContainers := []*Container{}
-	for deployed < manifest.Instances && failures < maxFailures {
-		numToDeploy := manifest.Instances - deployed
+	for deployed < rawManifest.Instances && failures < maxFailures {
+		numToDeploy := rawManifest.Instances - deployed
 		respCh := make(chan *DeployHostResult, numToDeploy)
 		for i := uint(0); i < numToDeploy; i++ {
 			host := hosts[hostNum]
-			go deployToHost(respCh, manifest, sha, env, host)
+			// check health on host to figure out its zone to get the deps
+			ihReply, err := supervisor.HealthCheck(host)
+			if err == nil && ihReply.Status == StatusOk {
+				// only try to deploy if health was fine
+				// duplicate manifest and get deps
+				manifest := rawManifest.Dup()
+				manifest.Deps = deps[ihReply.Zone]
+				go deployToHost(respCh, manifest, sha, env, host)
+			}
 			hostNum++
 			if hostNum >= len(hosts) {
 				hostNum = 0
@@ -238,7 +247,8 @@ func deployToZone(respCh chan *DeployZoneResult, manifest *Manifest, sha, env st
 		respCh <- &DeployZoneResult{
 			Zone:       zone,
 			Containers: deployedContainers,
-			Error:      errors.New(fmt.Sprintf("Failed to deploy %d instances in zone %s.", manifest.Instances, zone)),
+			Error: errors.New(fmt.Sprintf("Failed to deploy %d instances in zone %s.", rawManifest.Instances,
+				zone)),
 		}
 		return
 	}
@@ -269,9 +279,7 @@ func deployToHostsInZones(deps map[string]DepsType, manifest *Manifest, sha, env
 	t.LogStatus("Deploying to zones: %v", zones)
 	respCh := make(chan *DeployZoneResult, len(zones))
 	for _, zone := range zones {
-		zoneManifest := manifest.Dup()
-		zoneManifest.Deps = deps[zone]
-		go deployToZone(respCh, zoneManifest, sha, env, hosts[zone], zone)
+		go deployToZone(respCh, deps, manifest, sha, env, hosts[zone], zone)
 	}
 	numResults := 0
 	status := "Deployed to zones: "
