@@ -16,6 +16,11 @@ import (
 	. "atlantis/supervisor/rpc/types"
 )
 
+type IPGroup struct {
+	Name string
+	IPs  []string
+}
+
 type App struct {
 	NonAtlantis     bool
 	Internal        bool // atlantis apps only
@@ -29,7 +34,7 @@ type App struct {
 
 type DependerEnvData struct {
 	Name          string
-	SecurityGroup []string
+	SecurityGroup map[string][]uint16
 	EncryptedData string
 	DataMap       map[string]interface{} `json:",omitempty"`
 }
@@ -954,6 +959,38 @@ type ManagerSuperUserArg struct {
 
 type ManagerSuperUserReply struct {
 	IsSuperUser bool
+}
+
+// ------------ Update IP Group ------------
+type ManagerUpdateIPGroupArg struct {
+	ManagerAuthArg
+	Name string
+	IPs  []string
+}
+
+type ManagerUpdateIPGroupReply struct {
+	Status string
+}
+
+// ------------ Delete IP Group ------------
+type ManagerDeleteIPGroupArg struct {
+	ManagerAuthArg
+	Name string
+}
+
+type ManagerDeleteIPGroupReply struct {
+	Status string
+}
+
+// ------------ Get IP Group ------------
+type ManagerGetIPGroupArg struct {
+	ManagerAuthArg
+	Name string
+}
+
+type ManagerGetIPGroupReply struct {
+	IPGroup *IPGroup
+	Status  string
 }
 
 // ------------ ContainerMaintenance ------------

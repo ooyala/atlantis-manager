@@ -102,7 +102,6 @@ func GetDependerAppData(w http.ResponseWriter, r *http.Request) {
 
 func AddDependerEnvData(w http.ResponseWriter, r *http.Request) {
 	var err error
-	var sg []string
 	vars := mux.Vars(r)
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
 	data := map[string]interface{}{}
@@ -113,8 +112,13 @@ func AddDependerEnvData(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	sg := map[string][]uint16{}
 	if r.FormValue("SecurityGroup") != "" {
-		sg = strings.Split(r.FormValue("SecurityGroup"), ",")
+		err = json.Unmarshal([]byte(r.FormValue("SecurityGroup")), &sg)
+		if err != nil {
+			fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Status": StatusError}, err))
+			return
+		}
 	}
 	arg := ManagerAddDependerEnvDataArg{
 		ManagerAuthArg: auth,
@@ -165,7 +169,6 @@ func GetDependerEnvData(w http.ResponseWriter, r *http.Request) {
 
 func AddDependerEnvDataForDependerApp(w http.ResponseWriter, r *http.Request) {
 	var err error
-	var sg []string
 	vars := mux.Vars(r)
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
 	data := map[string]interface{}{}
@@ -176,8 +179,13 @@ func AddDependerEnvDataForDependerApp(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	sg := map[string][]uint16{}
 	if r.FormValue("SecurityGroup") != "" {
-		sg = strings.Split(r.FormValue("SecurityGroup"), ",")
+		err = json.Unmarshal([]byte(r.FormValue("SecurityGroup")), &sg)
+		if err != nil {
+			fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Status": StatusError}, err))
+			return
+		}
 	}
 	arg := ManagerAddDependerEnvDataForDependerAppArg{
 		ManagerAuthArg: auth,

@@ -16,6 +16,7 @@ import (
 	. "atlantis/manager/constant"
 	"atlantis/manager/datamodel"
 	"atlantis/manager/manager"
+	"atlantis/manager/netsec"
 	"atlantis/manager/router"
 	. "atlantis/manager/rpc/types"
 	"atlantis/manager/supervisor"
@@ -61,11 +62,19 @@ func (e *RegisterRouterExecutor) Execute(t *Task) error {
 	routerObj, err := router.Register(e.arg.Internal, e.arg.Zone, e.arg.Host, e.arg.IP)
 	if err != nil {
 		e.reply.Status = StatusError
+		return err
+	}
+	if e.arg.Internal {
+		// update internal router ipgroup
+		if err := netsec.AddIPToGroup(netsec.InternalRouterIPGroup, e.arg.IP); err != nil {
+			e.reply.Status = StatusError
+			return err
+		}
 	}
 	castedRouter := Router(*routerObj)
 	e.reply.Router = &castedRouter
 	e.reply.Status = StatusOk
-	return err
+	return nil
 }
 
 func (m *ManagerRPC) RegisterRouterResult(id string, result *ManagerRegisterRouterReply) error {
@@ -127,9 +136,17 @@ func (e *UnregisterRouterExecutor) Execute(t *Task) error {
 	err := router.Unregister(e.arg.Internal, e.arg.Zone, e.arg.Host)
 	if err != nil {
 		e.reply.Status = StatusError
+		return err
+	}
+	if e.arg.Internal {
+		// update internal router ipgroup
+		if err := netsec.RemoveIPFromGroup(netsec.InternalRouterIPGroup, e.arg.IP); err != nil {
+			e.reply.Status = StatusError
+			return err
+		}
 	}
 	e.reply.Status = StatusOk
-	return err
+	return nil
 }
 
 func (m *ManagerRPC) UnregisterRouterResult(id string, result *ManagerRegisterRouterReply) error {
