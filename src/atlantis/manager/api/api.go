@@ -185,6 +185,7 @@ func Init(listenAddr string) error {
 	gmux.HandleFunc("/ipgroups/{Name}", GetIPGroup).Methods("GET")
 	gmux.HandleFunc("/ipgroups/{Name}", UpdateIPGroup).Methods("PUT")
 	gmux.HandleFunc("/ipgroups/{Name}", DeleteIPGroup).Methods("DELETE")
+	gmux.HandleFunc("/ipgroups", ListIPGroups).Methods("GET")
 
 	// Static Assets
 	staticPath := "/" + staticDir + "/"

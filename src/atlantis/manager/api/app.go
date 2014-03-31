@@ -116,11 +116,7 @@ func AddDependerEnvData(w http.ResponseWriter, r *http.Request) {
 	}
 	sgRaw := []string{}
 	if r.FormValue("SecurityGroup") != "" {
-		err = json.Unmarshal([]byte(r.FormValue("SecurityGroup")), &sgRaw)
-		if err != nil {
-			fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Status": StatusError}, err))
-			return
-		}
+		sgRaw = strings.Split(r.FormValue("SecurityGroup"), ",")
 	}
 	// convert []string -> map[string][]uint16
 	sg := map[string][]uint16{}
@@ -205,11 +201,7 @@ func AddDependerEnvDataForDependerApp(w http.ResponseWriter, r *http.Request) {
 	}
 	sgRaw := []string{}
 	if r.FormValue("SecurityGroup") != "" {
-		err = json.Unmarshal([]byte(r.FormValue("SecurityGroup")), &sgRaw)
-		if err != nil {
-			fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Status": StatusError}, err))
-			return
-		}
+		sgRaw = strings.Split(r.FormValue("SecurityGroup"), ",")
 	}
 	// convert []string -> map[string][]uint16
 	sg := map[string][]uint16{}
