@@ -181,6 +181,11 @@ func Init(listenAddr string) error {
 	gmux.HandleFunc("/envs/{Env}", DeleteEnv).Methods("DELETE")
 	gmux.HandleFunc("/envs", ListEnvs).Methods("GET")
 
+	// IP Group Managerment
+	gmux.HandleFunc("/ipgroups/{Name}", GetIPGroup).Methods("GET")
+	gmux.HandleFunc("/ipgroups/{Name}", UpdateIPGroup).Methods("PUT")
+	gmux.HandleFunc("/ipgroups/{Name}", DeleteIPGroup).Methods("DELETE")
+
 	// Static Assets
 	staticPath := "/" + staticDir + "/"
 	fileServer := http.StripPrefix(staticPath, http.FileServer(http.Dir("./"+staticDir)))
