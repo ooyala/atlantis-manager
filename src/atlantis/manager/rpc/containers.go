@@ -19,6 +19,7 @@ import (
 	. "atlantis/supervisor/rpc/types"
 	"errors"
 	"fmt"
+	"sort"
 )
 
 type GetContainerExecutor struct {
@@ -110,6 +111,7 @@ func (e *ListContainersExecutor) Execute(t *Task) error {
 	if err != nil {
 		e.reply.Status = StatusError
 	} else {
+		sort.Strings(e.reply.ContainerIDs)
 		e.reply.Status = StatusOk
 	}
 	return err
@@ -157,6 +159,7 @@ func (e *ListEnvsExecutor) Execute(t *Task) error {
 	if err != nil {
 		e.reply.Status = StatusError
 	} else {
+		sort.Strings(e.reply.Envs)
 		e.reply.Status = StatusOk
 	}
 	return err
@@ -199,6 +202,7 @@ func (e *ListShasExecutor) Execute(t *Task) error {
 	if err != nil {
 		e.reply.Status = StatusError
 	} else {
+		sort.Strings(e.reply.Shas)
 		e.reply.Status = StatusOk
 	}
 	return err
@@ -249,6 +253,7 @@ func (e *ListAppsExecutor) Execute(t *Task) error {
 	if err != nil {
 		e.reply.Status = StatusError
 	} else {
+		sort.Strings(e.reply.Apps)
 		e.reply.Status = StatusOk
 	}
 	return err

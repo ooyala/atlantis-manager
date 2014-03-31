@@ -18,6 +18,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/mavricknz/ldap"
+	"sort"
 	"strings"
 )
 
@@ -446,6 +447,9 @@ func (e *ListTeamsExecutor) Description() string {
 
 func (e *ListTeamsExecutor) Execute(t *Task) (err error) {
 	e.reply.Teams, err = ListTeams(&e.arg.ManagerAuthArg)
+	if err == nil {
+		sort.Strings(e.reply.Teams)
+	}
 	return err
 }
 
@@ -476,6 +480,9 @@ func (e *ListTeamEmailsExecutor) Description() string {
 
 func (e *ListTeamEmailsExecutor) Execute(t *Task) (err error) {
 	e.reply.TeamEmails, err = ListTeamEmails(e.arg.Team, &e.arg.ManagerAuthArg)
+	if err == nil {
+		sort.Strings(e.reply.TeamEmails)
+	}
 	return err
 }
 
@@ -506,6 +513,9 @@ func (e *ListTeamAdminsExecutor) Description() string {
 
 func (e *ListTeamAdminsExecutor) Execute(t *Task) (err error) {
 	e.reply.TeamAdmins, err = ListTeamAdmins(e.arg.Team, &e.arg.ManagerAuthArg)
+	if err == nil {
+		sort.Strings(e.reply.TeamAdmins)
+	}
 	return err
 }
 
@@ -536,6 +546,9 @@ func (e *ListTeamMembersExecutor) Description() string {
 
 func (e *ListTeamMembersExecutor) Execute(t *Task) (err error) {
 	e.reply.TeamMembers, err = ListTeamMembers(e.arg.Team, &e.arg.ManagerAuthArg)
+	if err == nil {
+		sort.Strings(e.reply.TeamMembers)
+	}
 	return err
 }
 
@@ -566,6 +579,9 @@ func (e *ListTeamAppsExecutor) Description() string {
 
 func (e *ListTeamAppsExecutor) Execute(t *Task) (err error) {
 	e.reply.TeamApps, err = ListTeamApps(e.arg.Team, &e.arg.ManagerAuthArg)
+	if err == nil {
+		sort.Strings(e.reply.TeamApps)
+	}
 	return err
 }
 
@@ -765,7 +781,7 @@ func (e *ListAllowedAppsExecutor) Execute(t *Task) error {
 			e.reply.Apps = append(e.reply.Apps, app)
 		}
 	}
-
+	sort.Strings(e.reply.Apps)
 	return nil
 }
 
