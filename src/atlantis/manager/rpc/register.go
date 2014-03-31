@@ -16,11 +16,13 @@ import (
 	. "atlantis/manager/constant"
 	"atlantis/manager/datamodel"
 	"atlantis/manager/manager"
+	"atlantis/manager/netsec"
 	"atlantis/manager/router"
 	. "atlantis/manager/rpc/types"
 	"atlantis/manager/supervisor"
 	"errors"
 	"fmt"
+	"sort"
 )
 
 // ----------------------------------------------------------------------------------------------------------
@@ -61,11 +63,19 @@ func (e *RegisterRouterExecutor) Execute(t *Task) error {
 	routerObj, err := router.Register(e.arg.Internal, e.arg.Zone, e.arg.Host, e.arg.IP)
 	if err != nil {
 		e.reply.Status = StatusError
+		return err
+	}
+	if e.arg.Internal {
+		// update internal router ipgroup
+		if err := netsec.AddIPToGroup(netsec.InternalRouterIPGroup, e.arg.IP); err != nil {
+			e.reply.Status = StatusError
+			return err
+		}
 	}
 	castedRouter := Router(*routerObj)
 	e.reply.Router = &castedRouter
 	e.reply.Status = StatusOk
-	return err
+	return nil
 }
 
 func (m *ManagerRPC) RegisterRouterResult(id string, result *ManagerRegisterRouterReply) error {
@@ -127,9 +137,17 @@ func (e *UnregisterRouterExecutor) Execute(t *Task) error {
 	err := router.Unregister(e.arg.Internal, e.arg.Zone, e.arg.Host)
 	if err != nil {
 		e.reply.Status = StatusError
+		return err
+	}
+	if e.arg.Internal {
+		// update internal router ipgroup
+		if err := netsec.RemoveIPFromGroup(netsec.InternalRouterIPGroup, e.arg.IP); err != nil {
+			e.reply.Status = StatusError
+			return err
+		}
 	}
 	e.reply.Status = StatusOk
-	return err
+	return nil
 }
 
 func (m *ManagerRPC) UnregisterRouterResult(id string, result *ManagerRegisterRouterReply) error {
@@ -185,8 +203,12 @@ func (e *ListRoutersExecutor) Execute(t *Task) (err error) {
 	e.reply.Routers, err = datamodel.ListRouters(e.arg.Internal)
 	if err != nil {
 		e.reply.Status = StatusError
+	} else {
+		for _, routers := range e.reply.Routers {
+			sort.Strings(routers)
+		}
+		e.reply.Status = StatusOk
 	}
-	e.reply.Status = StatusOk
 	return err
 }
 
@@ -422,6 +444,7 @@ func (e *ListRegisteredAppsExecutor) Execute(t *Task) (err error) {
 	if err != nil {
 		e.reply.Status = StatusError
 	} else {
+		sort.Strings(e.reply.Apps)
 		e.reply.Status = StatusOk
 	}
 	return err
@@ -461,6 +484,7 @@ func (e *ListAuthorizedRegisteredAppsExecutor) Execute(t *Task) (err error) {
 			authdApps = append(authdApps, app)
 		}
 	}
+	sort.Strings(authdApps)
 	e.reply.Apps = authdApps
 	return err
 }
@@ -634,6 +658,7 @@ func (e *ListSupervisorsExecutor) Execute(t *Task) (err error) {
 	if err != nil {
 		e.reply.Status = StatusError
 	} else {
+		sort.Strings(e.reply.Supervisors)
 		e.reply.Status = StatusOk
 	}
 	return err
@@ -801,6 +826,9 @@ func (e *ListManagersExecutor) Execute(t *Task) (err error) {
 	if err != nil {
 		e.reply.Status = StatusError
 	} else {
+		for _, managers := range e.reply.Managers {
+			sort.Strings(managers)
+		}
 		e.reply.Status = StatusOk
 	}
 	return

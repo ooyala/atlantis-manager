@@ -15,9 +15,11 @@ import (
 	. "atlantis/common"
 	. "atlantis/manager/rpc/types"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -102,7 +104,6 @@ func GetDependerAppData(w http.ResponseWriter, r *http.Request) {
 
 func AddDependerEnvData(w http.ResponseWriter, r *http.Request) {
 	var err error
-	var sg []string
 	vars := mux.Vars(r)
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
 	data := map[string]interface{}{}
@@ -113,8 +114,31 @@ func AddDependerEnvData(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	sgRaw := []string{}
 	if r.FormValue("SecurityGroup") != "" {
-		sg = strings.Split(r.FormValue("SecurityGroup"), ",")
+		sgRaw = strings.Split(r.FormValue("SecurityGroup"), ",")
+	}
+	// convert []string -> map[string][]uint16
+	sg := map[string][]uint16{}
+	for _, groupAndPort := range sgRaw {
+		parts := strings.SplitN(groupAndPort, ":", 2)
+		if len(parts) != 2 {
+			fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Status": StatusError},
+				errors.New("Invalid Security Group entry: "+groupAndPort)))
+			return
+		}
+		group := parts[0]
+		port, err := strconv.ParseUint(parts[1], 10, 16)
+		if err != nil {
+			fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Status": StatusError},
+				errors.New("Invalid Security Group entry: "+groupAndPort)))
+			return
+		}
+		if existing, exists := sg[group]; !exists {
+			sg[group] = []uint16{uint16(port)}
+		} else {
+			sg[group] = append(existing, uint16(port))
+		}
 	}
 	arg := ManagerAddDependerEnvDataArg{
 		ManagerAuthArg: auth,
@@ -165,7 +189,6 @@ func GetDependerEnvData(w http.ResponseWriter, r *http.Request) {
 
 func AddDependerEnvDataForDependerApp(w http.ResponseWriter, r *http.Request) {
 	var err error
-	var sg []string
 	vars := mux.Vars(r)
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
 	data := map[string]interface{}{}
@@ -176,8 +199,31 @@ func AddDependerEnvDataForDependerApp(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	sgRaw := []string{}
 	if r.FormValue("SecurityGroup") != "" {
-		sg = strings.Split(r.FormValue("SecurityGroup"), ",")
+		sgRaw = strings.Split(r.FormValue("SecurityGroup"), ",")
+	}
+	// convert []string -> map[string][]uint16
+	sg := map[string][]uint16{}
+	for _, groupAndPort := range sgRaw {
+		parts := strings.SplitN(groupAndPort, ":", 2)
+		if len(parts) != 2 {
+			fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Status": StatusError},
+				errors.New("Invalid Security Group entry: "+groupAndPort)))
+			return
+		}
+		group := parts[0]
+		port, err := strconv.ParseUint(parts[1], 10, 16)
+		if err != nil {
+			fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Status": StatusError},
+				errors.New("Invalid Security Group entry: "+groupAndPort)))
+			return
+		}
+		if existing, exists := sg[group]; !exists {
+			sg[group] = []uint16{uint16(port)}
+		} else {
+			sg[group] = append(existing, uint16(port))
+		}
 	}
 	arg := ManagerAddDependerEnvDataForDependerAppArg{
 		ManagerAuthArg: auth,

@@ -15,6 +15,7 @@ import (
 	. "atlantis/common"
 	. "atlantis/manager/rpc/types"
 	"errors"
+	"sort"
 )
 
 func (m *ManagerRPC) Status(id string, status *TaskStatus) error {
@@ -47,5 +48,6 @@ func (m *ManagerRPC) ListTaskIDs(arg ManagerAuthArg, ids *[]string) error {
 		}...)
 	}
 	*ids = Tracker.ListIDs(types)
+	sort.Strings(*ids)
 	return nil
 }

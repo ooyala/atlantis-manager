@@ -63,6 +63,18 @@ func DeauthorizeSSH(host, containerID, user string) (*SupervisorDeauthorizeSSHRe
 	return &reply, NewSupervisorRPCClient(host+":"+Port).Call("DeauthorizeSSH", args, &reply)
 }
 
+func UpdateIPGroup(host, name string, ips []string) (*SupervisorUpdateIPGroupReply, error) {
+	args := SupervisorUpdateIPGroupArg{Name: name, IPs: ips}
+	var reply SupervisorUpdateIPGroupReply
+	return &reply, NewSupervisorRPCClient(host+":"+Port).Call("UpdateIPGroup", args, &reply)
+}
+
+func DeleteIPGroup(host, name string) (*SupervisorDeleteIPGroupReply, error) {
+	args := SupervisorDeleteIPGroupArg{Name: name}
+	var reply SupervisorDeleteIPGroupReply
+	return &reply, NewSupervisorRPCClient(host+":"+Port).Call("DeleteIPGroup", args, &reply)
+}
+
 func ContainerMaintenance(host, containerID string, maint bool) (*SupervisorContainerMaintenanceReply, error) {
 	args := SupervisorContainerMaintenanceArg{containerID, maint}
 	var reply SupervisorContainerMaintenanceReply

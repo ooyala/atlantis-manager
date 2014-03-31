@@ -39,6 +39,11 @@ func JoinWithBase(base string, args ...string) string {
 	return path.Join(base, path.Join(args...))
 }
 
+func GetBaseIPGroupPath(args ...string) string {
+	base := fmt.Sprintf("/atlantis/ip_groups/%s", Region)
+	return JoinWithBase(base, args...)
+}
+
 // get path to node in /apps
 func GetBaseAppPath(args ...string) string {
 	base := fmt.Sprintf("/atlantis/apps/%s", Region)

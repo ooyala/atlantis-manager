@@ -170,9 +170,9 @@ func (e *AddDependerAppDataExecutor) Execute(t *Task) error {
 	}
 	// verify SecurityGroups are valid
 	for _, envData := range e.arg.DependerAppData.DependerEnvData {
-		for _, addr := range envData.SecurityGroup {
-			if !SecurityGroupRegexp.MatchString(addr) {
-				return errors.New("Invalid Address in Security Group: " + addr)
+		for ipGroup, _ := range envData.SecurityGroup {
+			if _, err := datamodel.GetIPGroup(ipGroup); err != nil {
+				return errors.New("Invalid IP Group in Security Group: " + ipGroup)
 			}
 		}
 	}
@@ -327,9 +327,9 @@ func (e *AddDependerEnvDataExecutor) Execute(t *Task) error {
 		return errors.New("Please specify name for the env")
 	}
 	// verify SecurityGroups are valid
-	for _, addr := range e.arg.DependerEnvData.SecurityGroup {
-		if !SecurityGroupRegexp.MatchString(addr) {
-			return errors.New("Invalid Address in Security Group: " + addr)
+	for ipGroup, _ := range e.arg.DependerEnvData.SecurityGroup {
+		if _, err := datamodel.GetIPGroup(ipGroup); err != nil {
+			return errors.New("Invalid IP Group in Security Group: " + ipGroup)
 		}
 	}
 	zkApp, err := datamodel.GetApp(e.arg.App)
@@ -485,9 +485,9 @@ func (e *AddDependerEnvDataForDependerAppExecutor) Execute(t *Task) error {
 		return errors.New("Please specify name for the env")
 	}
 	// verify SecurityGroups are valid
-	for _, addr := range e.arg.DependerEnvData.SecurityGroup {
-		if !SecurityGroupRegexp.MatchString(addr) {
-			return errors.New("Invalid Address in Security Group: " + addr)
+	for ipGroup, _ := range e.arg.DependerEnvData.SecurityGroup {
+		if _, err := datamodel.GetIPGroup(ipGroup); err != nil {
+			return errors.New("Invalid IP Group in Security Group: " + ipGroup)
 		}
 	}
 	zkApp, err := datamodel.GetApp(e.arg.App)

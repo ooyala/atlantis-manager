@@ -17,12 +17,14 @@ import (
 	"atlantis/manager/datamodel"
 	"atlantis/manager/dns"
 	"atlantis/manager/helper"
+	"atlantis/manager/netsec"
 	. "atlantis/manager/rpc/types"
 	"atlantis/manager/supervisor"
 	"atlantis/supervisor/crypto"
 	. "atlantis/supervisor/rpc/types"
 	"errors"
 	"fmt"
+	"strconv"
 )
 
 //
@@ -106,7 +108,11 @@ func ResolveDepValuesForZone(app string, zkEnv *datamodel.ZkEnv, zone string, na
 			appDep.DataMap["address"] = helper.GetZoneRouterCName(true, zone, suffix) + ":" + port
 
 			// auto-populate SecurityGroup
-			appDep.SecurityGroup = []string{"internal-router:" + port}
+			portUint, err := strconv.ParseUint(port, 10, 16)
+			if err != nil {
+				return deps, err
+			}
+			appDep.SecurityGroup = map[string][]uint16{netsec.InternalRouterIPGroup: []uint16{uint16(portUint)}}
 		}
 		deps[name] = appDep
 	}

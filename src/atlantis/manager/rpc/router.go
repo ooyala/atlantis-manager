@@ -22,6 +22,7 @@ import (
 	routerzk "atlantis/router/zk"
 	"errors"
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -74,6 +75,18 @@ func (e *GetAppEnvPortExecutor) Authorize() error {
 	return SimpleAuthorize(&e.arg.ManagerAuthArg)
 }
 
+type AppEnvSortable []AppEnv
+
+func (a AppEnvSortable) Len() int {
+	return len(a)
+}
+func (a AppEnvSortable) Swap(i, j int) {
+	a[i], a[j] = a[j], a[i]
+}
+func (a AppEnvSortable) Less(i, j int) bool {
+	return a[i].App < a[j].App || (a[i].App == a[j].App && a[i].Env < a[j].Env)
+}
+
 type ListAppEnvsWithPortExecutor struct {
 	arg   ManagerListAppEnvsWithPortArg
 	reply *ManagerListAppEnvsWithPortReply
@@ -97,6 +110,7 @@ func (e *ListAppEnvsWithPortExecutor) Execute(t *Task) (err error) {
 	for _, appEnv := range zrp.PortMap {
 		e.reply.AppEnvs = append(e.reply.AppEnvs, appEnv)
 	}
+	sort.Sort(AppEnvSortable(e.reply.AppEnvs))
 	return err
 }
 
@@ -213,9 +227,24 @@ func (e *ListPortsExecutor) Description() string {
 	return "ListPorts"
 }
 
+type PortSortable []uint16
+
+func (p PortSortable) Len() int {
+	return len(p)
+}
+func (p PortSortable) Swap(i, j int) {
+	p[i], p[j] = p[j], p[i]
+}
+func (p PortSortable) Less(i, j int) bool {
+	return p[i] < p[j]
+}
+
 func (e *ListPortsExecutor) Execute(t *Task) (err error) {
 	helper.SetRouterRoot(e.arg.Internal)
 	e.reply.Ports, err = routerzk.ListPorts(datamodel.Zk.Conn)
+	if err == nil {
+		sort.Sort(PortSortable(e.reply.Ports))
+	}
 	return err
 }
 
@@ -413,6 +442,7 @@ func (e *ListPoolsExecutor) Execute(t *Task) (err error) {
 	if err != nil {
 		e.reply.Status = StatusError
 	} else {
+		sort.Strings(e.reply.Pools)
 		e.reply.Status = StatusOk
 	}
 	return err
@@ -586,6 +616,7 @@ func (e *ListRulesExecutor) Execute(t *Task) (err error) {
 	if err != nil {
 		e.reply.Status = StatusError
 	} else {
+		sort.Strings(e.reply.Rules)
 		e.reply.Status = StatusOk
 	}
 	return err
@@ -743,6 +774,7 @@ func (e *ListTriesExecutor) Execute(t *Task) (err error) {
 	if err != nil {
 		e.reply.Status = StatusError
 	} else {
+		sort.Strings(e.reply.Tries)
 		e.reply.Status = StatusOk
 	}
 	return err
