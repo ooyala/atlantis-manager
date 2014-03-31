@@ -15,9 +15,11 @@ import (
 	. "atlantis/common"
 	. "atlantis/manager/rpc/types"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -112,12 +114,34 @@ func AddDependerEnvData(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	sg := map[string][]uint16{}
+	sgRaw := []string{}
 	if r.FormValue("SecurityGroup") != "" {
-		err = json.Unmarshal([]byte(r.FormValue("SecurityGroup")), &sg)
+		err = json.Unmarshal([]byte(r.FormValue("SecurityGroup")), &sgRaw)
 		if err != nil {
 			fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Status": StatusError}, err))
 			return
+		}
+	}
+	// convert []string -> map[string][]uint16
+	sg := map[string][]uint16{}
+	for _, groupAndPort := range sgRaw {
+		parts := strings.SplitN(groupAndPort, ":", 2)
+		if len(parts) != 2 {
+			fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Status": StatusError},
+				errors.New("Invalid Security Group entry: "+groupAndPort)))
+			return
+		}
+		group := parts[0]
+		port, err := strconv.ParseUint(parts[1], 10, 16)
+		if err != nil {
+			fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Status": StatusError},
+				errors.New("Invalid Security Group entry: "+groupAndPort)))
+			return
+		}
+		if existing, exists := sg[group]; !exists {
+			sg[group] = []uint16{uint16(port)}
+		} else {
+			sg[group] = append(existing, uint16(port))
 		}
 	}
 	arg := ManagerAddDependerEnvDataArg{
@@ -179,12 +203,34 @@ func AddDependerEnvDataForDependerApp(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	sg := map[string][]uint16{}
+	sgRaw := []string{}
 	if r.FormValue("SecurityGroup") != "" {
-		err = json.Unmarshal([]byte(r.FormValue("SecurityGroup")), &sg)
+		err = json.Unmarshal([]byte(r.FormValue("SecurityGroup")), &sgRaw)
 		if err != nil {
 			fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Status": StatusError}, err))
 			return
+		}
+	}
+	// convert []string -> map[string][]uint16
+	sg := map[string][]uint16{}
+	for _, groupAndPort := range sgRaw {
+		parts := strings.SplitN(groupAndPort, ":", 2)
+		if len(parts) != 2 {
+			fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Status": StatusError},
+				errors.New("Invalid Security Group entry: "+groupAndPort)))
+			return
+		}
+		group := parts[0]
+		port, err := strconv.ParseUint(parts[1], 10, 16)
+		if err != nil {
+			fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Status": StatusError},
+				errors.New("Invalid Security Group entry: "+groupAndPort)))
+			return
+		}
+		if existing, exists := sg[group]; !exists {
+			sg[group] = []uint16{uint16(port)}
+		} else {
+			sg[group] = append(existing, uint16(port))
 		}
 	}
 	arg := ManagerAddDependerEnvDataForDependerAppArg{
