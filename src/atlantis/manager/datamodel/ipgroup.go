@@ -14,6 +14,7 @@ package datamodel
 import (
 	"atlantis/manager/helper"
 	"atlantis/manager/rpc/types"
+	"log"
 )
 
 type ZkIPGroup types.IPGroup
@@ -37,4 +38,16 @@ func (zig *ZkIPGroup) Save() error {
 		return err
 	}
 	return nil
+}
+
+func ListIPGroups() (groups []string, err error) {
+	groups, _, err = Zk.VisibleChildren(helper.GetBaseIPGroupPath())
+	if err != nil {
+		log.Printf("Error getting list of ip groups. Error: %s.", err.Error())
+	}
+	if groups == nil {
+		log.Println("No ip groups found. Returning empty list.")
+		groups = []string{}
+	}
+	return
 }

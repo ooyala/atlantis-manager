@@ -133,3 +133,38 @@ func (e *GetIPGroupExecutor) Execute(t *Task) (err error) {
 func (m *ManagerRPC) GetIPGroup(arg ManagerGetIPGroupArg, reply *ManagerGetIPGroupReply) error {
 	return NewTask("GetIPGroup", &GetIPGroupExecutor{arg, reply}).Run()
 }
+
+type ListIPGroupsExecutor struct {
+	arg   ManagerListIPGroupsArg
+	reply *ManagerListIPGroupsReply
+}
+
+func (e *ListIPGroupsExecutor) Request() interface{} {
+	return e.arg
+}
+
+func (e *ListIPGroupsExecutor) Result() interface{} {
+	return e.reply
+}
+
+func (e *ListIPGroupsExecutor) Description() string {
+	return fmt.Sprintf("ALL")
+}
+
+func (e *ListIPGroupsExecutor) Authorize() error {
+	return SimpleAuthorize(&e.arg.ManagerAuthArg)
+}
+
+func (e *ListIPGroupsExecutor) Execute(t *Task) (err error) {
+	e.reply.IPGroups, err = netsec.ListIPGroups()
+	if err != nil {
+		e.reply.Status = StatusError
+		return err
+	}
+	e.reply.Status = StatusOk
+	return nil
+}
+
+func (m *ManagerRPC) ListIPGroups(arg ManagerListIPGroupsArg, reply *ManagerListIPGroupsReply) error {
+	return NewTask("ListIPGroups", &ListIPGroupsExecutor{arg, reply}).Run()
+}

@@ -134,3 +134,13 @@ func GetIPGroup(name string) (*IPGroup, error) {
 	typedGroup := IPGroup(*group)
 	return &typedGroup, nil
 }
+
+func ListIPGroups() ([]string, error) {
+	lock.RLock()
+	defer lock.RUnlock()
+	groups, err := datamodel.ListIPGroups()
+	if err != nil {
+		return nil, err
+	}
+	return groups, nil
+}

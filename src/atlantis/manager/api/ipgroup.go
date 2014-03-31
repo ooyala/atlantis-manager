@@ -60,3 +60,12 @@ func GetIPGroup(w http.ResponseWriter, r *http.Request) {
 	err = manager.GetIPGroup(arg, &reply)
 	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Status": reply.Status, "IPGroup": reply.IPGroup}, err))
 }
+
+func ListIPGroups(w http.ResponseWriter, r *http.Request) {
+	var err error
+	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
+	arg := ManagerListIPGroupsArg{auth}
+	var reply ManagerListIPGroupsReply
+	err = manager.ListIPGroups(arg, &reply)
+	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Status": reply.Status, "IPGroups": reply.IPGroups}, err))
+}

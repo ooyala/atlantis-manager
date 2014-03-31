@@ -993,6 +993,16 @@ type ManagerGetIPGroupReply struct {
 	Status  string
 }
 
+// ------------ List IP Groups ------------
+type ManagerListIPGroupsArg struct {
+	ManagerAuthArg
+}
+
+type ManagerListIPGroupsReply struct {
+	IPGroups []string
+	Status   string
+}
+
 // ------------ ContainerMaintenance ------------
 // Set Container Maintenance Mode
 type ManagerContainerMaintenanceArg struct {
