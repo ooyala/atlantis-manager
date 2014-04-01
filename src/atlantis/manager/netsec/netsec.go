@@ -36,6 +36,42 @@ func updateSupervisors(name string, ips []string) error {
 	return nil
 }
 
+func UpdateSupervisor(host string) error {
+	lock.RLock()
+	defer lock.RUnlock()
+	groups, err := datamodel.ListIPGroups()
+	if err != nil {
+		return err
+	}
+	for _, name := range groups {
+		group, err := datamodel.GetIPGroup(name)
+		if err != nil {
+			return err
+		}
+		if _, err := supervisor.UpdateIPGroup(host, group.Name, group.IPs); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func UpdateSupervisors() error {
+	lock.RLock()
+	defer lock.RUnlock()
+	groups, err := datamodel.ListIPGroups()
+	if err != nil {
+		return err
+	}
+	for _, name := range groups {
+		group, err := datamodel.GetIPGroup(name)
+		if err != nil {
+			return err
+		}
+		updateSupervisors(group.Name, group.IPs)
+	}
+	return nil
+}
+
 func UpdateIPGroup(name string, ips []string) error {
 	lock.Lock()
 	defer lock.Unlock()

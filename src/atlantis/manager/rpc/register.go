@@ -533,6 +533,10 @@ func (e *RegisterSupervisorExecutor) Execute(t *Task) error {
 		e.reply.Status = StatusError
 		return err
 	}
+	// try to push all ip groups to this new supervisor
+	if err := netsec.UpdateSupervisor(e.arg.Host); err != nil {
+		return err
+	}
 	if err == nil {
 		e.reply.Status = StatusOk
 	} else {
