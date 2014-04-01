@@ -79,6 +79,7 @@ func AddIPToGroup(name, ip string) error {
 		for _, theIP := range group.IPs {
 			ipsMap[theIP] = true
 		}
+		ipsMap[ip] = true
 		group.IPs = make([]string, len(ipsMap))
 		i := 0
 		for ip, _ := range ipsMap {
