@@ -55,23 +55,6 @@ func UpdateSupervisor(host string) error {
 	return nil
 }
 
-func UpdateSupervisors() error {
-	lock.RLock()
-	defer lock.RUnlock()
-	groups, err := datamodel.ListIPGroups()
-	if err != nil {
-		return err
-	}
-	for _, name := range groups {
-		group, err := datamodel.GetIPGroup(name)
-		if err != nil {
-			return err
-		}
-		updateSupervisors(group.Name, group.IPs)
-	}
-	return nil
-}
-
 func UpdateIPGroup(name string, ips []string) error {
 	lock.Lock()
 	defer lock.Unlock()
@@ -88,18 +71,20 @@ func AddIPToGroup(name, ip string) error {
 	defer lock.Unlock()
 	group, err := datamodel.GetIPGroup(name)
 	if err != nil {
-		return err
-	}
-	// dedup
-	ipsMap := map[string]bool{}
-	for _, theIP := range group.IPs {
-		ipsMap[theIP] = true
-	}
-	group.IPs = make([]string, len(ipsMap))
-	i := 0
-	for ip, _ := range ipsMap {
-		group.IPs[i] = ip
-		i++
+		// no group exists, create it
+		group = &datamodel.ZkIPGroup{Name: name, IPs: []string{ip}}
+	} else {
+		// dedup
+		ipsMap := map[string]bool{}
+		for _, theIP := range group.IPs {
+			ipsMap[theIP] = true
+		}
+		group.IPs = make([]string, len(ipsMap))
+		i := 0
+		for ip, _ := range ipsMap {
+			group.IPs[i] = ip
+			i++
+		}
 	}
 
 	if err := group.Save(); err != nil {
@@ -113,20 +98,21 @@ func RemoveIPFromGroup(name, ip string) error {
 	defer lock.Unlock()
 	group, err := datamodel.GetIPGroup(name)
 	if err != nil {
-		return err
-	}
-
-	// dedup
-	ipsMap := map[string]bool{}
-	for _, theIP := range group.IPs {
-		ipsMap[theIP] = true
-	}
-	delete(ipsMap, ip) // delete the ip we want to remove
-	group.IPs = make([]string, len(ipsMap))
-	i := 0
-	for ip, _ := range ipsMap {
-		group.IPs[i] = ip
-		i++
+		// no group exists, create it
+		group = &datamodel.ZkIPGroup{Name: name, IPs: []string{}}
+	} else {
+		// dedup
+		ipsMap := map[string]bool{}
+		for _, theIP := range group.IPs {
+			ipsMap[theIP] = true
+		}
+		delete(ipsMap, ip) // delete the ip we want to remove
+		group.IPs = make([]string, len(ipsMap))
+		i := 0
+		for ip, _ := range ipsMap {
+			group.IPs[i] = ip
+			i++
+		}
 	}
 
 	if err := group.Save(); err != nil {
