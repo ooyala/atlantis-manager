@@ -37,7 +37,7 @@ func (e *ContainerMaintenanceExecutor) Result() interface{} {
 }
 
 func (e *ContainerMaintenanceExecutor) Description() string {
-	return fmt.Sprintf("%s : %t", e.arg.ContainerID, e.arg.Maintenance)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] %s : %t", e.arg.ContainerID, e.arg.Maintenance)
 }
 
 func (e *ContainerMaintenanceExecutor) Execute(t *Task) error {

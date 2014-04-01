@@ -30,7 +30,7 @@ func (e *LoginExecutor) Result() interface{} {
 }
 
 func (e *LoginExecutor) Description() string {
-	return "Login"
+	return "[" + e.arg.User + "] Login"
 }
 
 func (e *LoginExecutor) Execute(t *Task) error {

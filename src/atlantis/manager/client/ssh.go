@@ -28,15 +28,15 @@ type SSHCommand struct {
 	PseudoTTY bool   `short:"t" long:"pseudo-tty" description:"force pseudo-tty allocation"`
 }
 
-func authorize(container, user, publicKey string) (host, port string, err error) {
-	arg := ManagerAuthorizeSSHArg{container, user, publicKey}
+func authorize(auth *ManagerAuthArg, container, publicKey string) (host, port string, err error) {
+	arg := ManagerAuthorizeSSHArg{*auth, container, publicKey}
 	var reply ManagerAuthorizeSSHReply
 	err = rpcClient.Call("AuthorizeSSH", arg, &reply)
 	return reply.Host, fmt.Sprintf("%d", reply.Port), err
 }
 
-func deauthorize(container, user string) (err error) {
-	arg := ManagerDeauthorizeSSHArg{container, user}
+func deauthorize(auth *ManagerAuthArg, container string) (err error) {
+	arg := ManagerDeauthorizeSSHArg{*auth, container}
 	var reply ManagerDeauthorizeSSHReply
 	return rpcClient.Call("DeauthorizeSSH", arg, &reply)
 }
@@ -52,17 +52,18 @@ func (c *SSHCommand) ExecuteRaw(args []string) error {
 	} else {
 		c.Identity = strings.Replace(c.Identity, "~", os.Getenv("HOME"), 1)
 	}
-	user, _, err := GetSecret()
+	user, secret, err := GetSecret()
 	if err != nil {
 		return err
 	}
+	auth := &ManagerAuthArg{User: user, Secret: secret}
 	// fetch public key
 	publicKeyBytes, err := ioutil.ReadFile(c.Identity + ".pub")
 	if err != nil {
 		return err
 	}
 	// ask manager to authorize ssh
-	host, port, err := authorize(c.Container, user, strings.TrimSpace(string(publicKeyBytes)))
+	host, port, err := authorize(auth, c.Container, strings.TrimSpace(string(publicKeyBytes)))
 	if err != nil {
 		return err
 	}
@@ -82,15 +83,15 @@ func (c *SSHCommand) ExecuteRaw(args []string) error {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	if err := cmd.Start(); err != nil {
-		deauthorize(c.Container, user)
+		deauthorize(auth, c.Container)
 		return err
 	}
 	if err := cmd.Wait(); err != nil {
-		deauthorize(c.Container, user)
+		deauthorize(auth, c.Container)
 		return err
 	}
 	// ask manager to deauthorize ssh
-	deauthorize(c.Container, user)
+	deauthorize(auth, c.Container)
 	// don't really care about error here
 	Log("SSH connection closed.")
 	return nil

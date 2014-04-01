@@ -33,7 +33,8 @@ func (e *AddRoleExecutor) Result() interface{} {
 }
 
 func (e *AddRoleExecutor) Description() string {
-	return fmt.Sprintf("%s in %s -> %s + %s", e.arg.Host, e.arg.Region, e.arg.Role, e.arg.Type)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] %s in %s -> %s + %s", e.arg.Host, e.arg.Region,
+		e.arg.Role, e.arg.Type)
 }
 
 func (e *AddRoleExecutor) Authorize() error {
@@ -84,7 +85,8 @@ func (e *RemoveRoleExecutor) Result() interface{} {
 }
 
 func (e *RemoveRoleExecutor) Description() string {
-	return fmt.Sprintf("%s in %s -> %s - %s", e.arg.Host, e.arg.Region, e.arg.Role, e.arg.Type)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] %s in %s -> %s - %s", e.arg.Host, e.arg.Region,
+		e.arg.Role, e.arg.Type)
 }
 
 func (e *RemoveRoleExecutor) Authorize() error {
@@ -135,7 +137,8 @@ func (e *HasRoleExecutor) Result() interface{} {
 }
 
 func (e *HasRoleExecutor) Description() string {
-	return fmt.Sprintf("%s in %s -> %s ? %s", e.arg.Host, e.arg.Region, e.arg.Role, e.arg.Type)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] %s in %s -> %s ? %s", e.arg.Host, e.arg.Region,
+		e.arg.Role, e.arg.Type)
 }
 
 func (e *HasRoleExecutor) Authorize() error {

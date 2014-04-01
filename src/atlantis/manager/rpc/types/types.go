@@ -875,8 +875,8 @@ type ManagerAppReply struct {
 // ------------ Authorize SSH ------------
 // Authorize SSH
 type ManagerAuthorizeSSHArg struct {
+	ManagerAuthArg
 	ContainerID string
-	User        string
 	PublicKey   string
 }
 
@@ -889,8 +889,8 @@ type ManagerAuthorizeSSHReply struct {
 // ------------ Deauthorize SSH ------------
 // Deauthorize SSH
 type ManagerDeauthorizeSSHArg struct {
+	ManagerAuthArg
 	ContainerID string
-	User        string
 }
 
 type ManagerDeauthorizeSSHReply struct {

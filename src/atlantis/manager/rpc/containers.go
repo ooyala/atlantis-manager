@@ -36,7 +36,7 @@ func (e *GetContainerExecutor) Result() interface{} {
 }
 
 func (e *GetContainerExecutor) Description() string {
-	return e.arg.ContainerID
+	return "[" + e.arg.ManagerAuthArg.User + "] " + e.arg.ContainerID
 }
 
 func (e *GetContainerExecutor) Execute(t *Task) (err error) {
@@ -83,7 +83,7 @@ func (e *ListContainersExecutor) Result() interface{} {
 }
 
 func (e *ListContainersExecutor) Description() string {
-	return fmt.Sprintf("%s @ %s in %s", e.arg.App, e.arg.Sha, e.arg.Env)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] %s @ %s in %s", e.arg.App, e.arg.Sha, e.arg.Env)
 }
 
 func (e *ListContainersExecutor) Execute(t *Task) error {
@@ -144,9 +144,9 @@ func (e *ListEnvsExecutor) Result() interface{} {
 
 func (e *ListEnvsExecutor) Description() string {
 	if e.arg.App == "" || e.arg.Sha == "" {
-		return fmt.Sprintf("%s @ %s", e.arg.App, e.arg.Sha)
+		return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] %s @ %s", e.arg.App, e.arg.Sha)
 	}
-	return "All"
+	return "[" + e.arg.ManagerAuthArg.User + "] All"
 }
 
 func (e *ListEnvsExecutor) Execute(t *Task) error {
@@ -190,7 +190,7 @@ func (e *ListShasExecutor) Result() interface{} {
 }
 
 func (e *ListShasExecutor) Description() string {
-	return e.arg.App
+	return "[" + e.arg.ManagerAuthArg.User + "] " + e.arg.App
 }
 
 func (e *ListShasExecutor) Execute(t *Task) error {
@@ -229,7 +229,7 @@ func (e *ListAppsExecutor) Result() interface{} {
 }
 
 func (e *ListAppsExecutor) Description() string {
-	return "ListApps"
+	return "[" + e.arg.ManagerAuthArg.User + "] ListApps"
 }
 
 func (e *ListAppsExecutor) Execute(t *Task) error {

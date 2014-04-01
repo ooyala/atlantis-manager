@@ -37,7 +37,7 @@ func (e *DeployExecutor) Result() interface{} {
 }
 
 func (e *DeployExecutor) Description() string {
-	return fmt.Sprintf("%s @ %s in %s", e.arg.App, e.arg.Sha, e.arg.Env)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] %s @ %s in %s", e.arg.App, e.arg.Sha, e.arg.Env)
 }
 
 func (e *DeployExecutor) Authorize() error {
@@ -127,7 +127,7 @@ func (e *DeployContainerExecutor) Result() interface{} {
 }
 
 func (e *DeployContainerExecutor) Description() string {
-	return fmt.Sprintf("%s x%d", e.arg.ContainerID, e.arg.Instances)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] %s x%d", e.arg.ContainerID, e.arg.Instances)
 }
 
 func (e *DeployContainerExecutor) Authorize() error {
@@ -175,7 +175,7 @@ func (e *CopyContainerExecutor) Result() interface{} {
 }
 
 func (e *CopyContainerExecutor) Description() string {
-	return fmt.Sprintf("%s -> %s", e.arg.ContainerID, e.arg.ToHost)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] %s -> %s", e.arg.ContainerID, e.arg.ToHost)
 }
 
 func (e *CopyContainerExecutor) Authorize() error {
@@ -242,7 +242,7 @@ func (e *ResolveDepsExecutor) Result() interface{} {
 }
 
 func (e *ResolveDepsExecutor) Description() string {
-	return fmt.Sprintf("%s in %s -> %v", e.arg.App, e.arg.Env, e.arg.DepNames)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] %s in %s -> %v", e.arg.App, e.arg.Env, e.arg.DepNames)
 }
 
 func (e *ResolveDepsExecutor) Authorize() error {
@@ -280,8 +280,8 @@ func (e *TeardownExecutor) Result() interface{} {
 }
 
 func (e *TeardownExecutor) Description() string {
-	return fmt.Sprintf("app: %s, sha: %s, env: %s, container: %s (all:%t)", e.arg.App, e.arg.Sha, e.arg.Env,
-		e.arg.ContainerID, e.arg.All)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] app: %s, sha: %s, env: %s, container: %s (all:%t)",
+		e.arg.App, e.arg.Sha, e.arg.Env, e.arg.ContainerID, e.arg.All)
 }
 
 func (e *TeardownExecutor) Authorize() error {

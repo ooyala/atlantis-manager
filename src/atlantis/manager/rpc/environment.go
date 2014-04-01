@@ -114,7 +114,7 @@ func (e *UpdateEnvExecutor) Result() interface{} {
 }
 
 func (e *UpdateEnvExecutor) Description() string {
-	return fmt.Sprintf("%s", e.arg.Name)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] %s", e.arg.Name)
 }
 
 func (e *UpdateEnvExecutor) Execute(t *Task) error {
@@ -151,7 +151,7 @@ func (e *DeleteEnvExecutor) Result() interface{} {
 }
 
 func (e *DeleteEnvExecutor) Description() string {
-	return fmt.Sprintf("%s", e.arg.Name)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] %s", e.arg.Name)
 }
 
 func (e *DeleteEnvExecutor) Execute(t *Task) (err error) {
