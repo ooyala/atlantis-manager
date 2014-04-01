@@ -15,6 +15,7 @@ import (
 	"atlantis/manager/datamodel"
 	. "atlantis/manager/rpc/types"
 	"atlantis/manager/supervisor"
+	"log"
 	"sync"
 )
 
@@ -58,6 +59,7 @@ func UpdateSupervisor(host string) error {
 func UpdateIPGroup(name string, ips []string) error {
 	lock.Lock()
 	defer lock.Unlock()
+	log.Printf("[UpdateIPGroup] Updating "+name+" -> %v", ips)
 	// save the IP group
 	group := datamodel.ZkIPGroup{Name: name, IPs: ips}
 	if err := group.Save(); err != nil {
@@ -69,6 +71,7 @@ func UpdateIPGroup(name string, ips []string) error {
 func AddIPToGroup(name, ip string) error {
 	lock.Lock()
 	defer lock.Unlock()
+	log.Printf("[AddIPToGroup] Adding " + ip + " to " + name)
 	group, err := datamodel.GetIPGroup(name)
 	if err != nil {
 		// no group exists, create it
@@ -80,11 +83,9 @@ func AddIPToGroup(name, ip string) error {
 			ipsMap[theIP] = true
 		}
 		ipsMap[ip] = true
-		group.IPs = make([]string, len(ipsMap))
-		i := 0
-		for ip, _ := range ipsMap {
-			group.IPs[i] = ip
-			i++
+		group.IPs = []string{}
+		for theIP, _ := range ipsMap {
+			group.IPs = append(group.IPs, theIP)
 		}
 	}
 
@@ -97,6 +98,7 @@ func AddIPToGroup(name, ip string) error {
 func RemoveIPFromGroup(name, ip string) error {
 	lock.Lock()
 	defer lock.Unlock()
+	log.Printf("[RemoveIPFromGroup] Removing " + ip + " from " + name)
 	group, err := datamodel.GetIPGroup(name)
 	if err != nil {
 		// no group exists, create it
@@ -125,6 +127,7 @@ func RemoveIPFromGroup(name, ip string) error {
 func DeleteIPGroup(name string) error {
 	lock.Lock()
 	defer lock.Unlock()
+	log.Printf("[DeleteIPGroup] Deleting " + name)
 	// delete the IP group
 	group, err := datamodel.GetIPGroup(name)
 	if err != nil {
