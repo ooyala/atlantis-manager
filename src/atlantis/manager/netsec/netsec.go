@@ -110,11 +110,9 @@ func RemoveIPFromGroup(name, ip string) error {
 			ipsMap[theIP] = true
 		}
 		delete(ipsMap, ip) // delete the ip we want to remove
-		group.IPs = make([]string, len(ipsMap))
-		i := 0
-		for ip, _ := range ipsMap {
-			group.IPs[i] = ip
-			i++
+		group.IPs = []string{}
+		for theIP, _ := range ipsMap {
+			group.IPs = append(group.IPs, theIP)
 		}
 	}
 
