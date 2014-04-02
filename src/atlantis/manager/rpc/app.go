@@ -49,7 +49,7 @@ func (e *RequestAppDependencyExecutor) Result() interface{} {
 }
 
 func (e *RequestAppDependencyExecutor) Description() string {
-	return fmt.Sprintf("[?] %s depender %s", e.arg.Dependency, e.arg.App)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] [?] %s depender %s", e.arg.Dependency, e.arg.App)
 }
 
 func (e *RequestAppDependencyExecutor) Authorize() error {
@@ -152,7 +152,7 @@ func (e *AddDependerAppDataExecutor) Result() interface{} {
 }
 
 func (e *AddDependerAppDataExecutor) Description() string {
-	return fmt.Sprintf("[+] %s depender %+v", e.arg.App, e.arg.DependerAppData)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] [+] %s depender %+v", e.arg.App, e.arg.DependerAppData)
 }
 
 func (e *AddDependerAppDataExecutor) Authorize() error {
@@ -211,7 +211,7 @@ func (e *RemoveDependerAppDataExecutor) Result() interface{} {
 }
 
 func (e *RemoveDependerAppDataExecutor) Description() string {
-	return fmt.Sprintf("[-] %s depender %s", e.arg.App, e.arg.Depender)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] [-] %s depender %s", e.arg.App, e.arg.Depender)
 }
 
 func (e *RemoveDependerAppDataExecutor) Authorize() error {
@@ -259,7 +259,7 @@ func (e *GetDependerAppDataExecutor) Result() interface{} {
 }
 
 func (e *GetDependerAppDataExecutor) Description() string {
-	return fmt.Sprintf("GET %s depender %s", e.arg.App, e.arg.Depender)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] GET %s depender %s", e.arg.App, e.arg.Depender)
 }
 
 func (e *GetDependerAppDataExecutor) Authorize() error {
@@ -310,7 +310,7 @@ func (e *AddDependerEnvDataExecutor) Result() interface{} {
 }
 
 func (e *AddDependerEnvDataExecutor) Description() string {
-	return fmt.Sprintf("[+] %s env %+v", e.arg.App, e.arg.DependerEnvData)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] [+] %s env %+v", e.arg.App, e.arg.DependerEnvData)
 }
 
 func (e *AddDependerEnvDataExecutor) Authorize() error {
@@ -366,7 +366,7 @@ func (e *RemoveDependerEnvDataExecutor) Result() interface{} {
 }
 
 func (e *RemoveDependerEnvDataExecutor) Description() string {
-	return fmt.Sprintf("[-] %s env %s", e.arg.App, e.arg.Env)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] [-] %s env %s", e.arg.App, e.arg.Env)
 }
 
 func (e *RemoveDependerEnvDataExecutor) Authorize() error {
@@ -414,7 +414,7 @@ func (e *GetDependerEnvDataExecutor) Result() interface{} {
 }
 
 func (e *GetDependerEnvDataExecutor) Description() string {
-	return fmt.Sprintf("GET %s env %s", e.arg.App, e.arg.Env)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] GET %s env %s", e.arg.App, e.arg.Env)
 }
 
 func (e *GetDependerEnvDataExecutor) Authorize() error {
@@ -465,7 +465,7 @@ func (e *AddDependerEnvDataForDependerAppExecutor) Result() interface{} {
 }
 
 func (e *AddDependerEnvDataForDependerAppExecutor) Description() string {
-	return fmt.Sprintf("[+] %s depender %s env %+v", e.arg.App, e.arg.Depender, e.arg.DependerEnvData)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] [+] %s depender %s env %+v", e.arg.App, e.arg.Depender, e.arg.DependerEnvData)
 }
 
 func (e *AddDependerEnvDataForDependerAppExecutor) Authorize() error {
@@ -525,7 +525,7 @@ func (e *RemoveDependerEnvDataForDependerAppExecutor) Result() interface{} {
 }
 
 func (e *RemoveDependerEnvDataForDependerAppExecutor) Description() string {
-	return fmt.Sprintf("[-] %s depender %s env %s", e.arg.App, e.arg.Depender, e.arg.Env)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] [-] %s depender %s env %s", e.arg.App, e.arg.Depender, e.arg.Env)
 }
 
 func (e *RemoveDependerEnvDataForDependerAppExecutor) Authorize() error {
@@ -577,7 +577,7 @@ func (e *GetDependerEnvDataForDependerAppExecutor) Result() interface{} {
 }
 
 func (e *GetDependerEnvDataForDependerAppExecutor) Description() string {
-	return fmt.Sprintf("GET %s depender %s env %s", e.arg.App, e.arg.Depender, e.arg.Env)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] GET %s depender %s env %s", e.arg.App, e.arg.Depender, e.arg.Env)
 }
 
 func (e *GetDependerEnvDataForDependerAppExecutor) Authorize() error {

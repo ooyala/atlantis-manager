@@ -40,7 +40,7 @@ func (e *CreateTeamExecutor) Result() interface{} {
 }
 
 func (e *CreateTeamExecutor) Description() string {
-	return fmt.Sprintf("%s : %s", e.arg.User, e.arg.Team)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] %s : %s", e.arg.User, e.arg.Team)
 }
 
 func (e *CreateTeamExecutor) Execute(t *Task) error {
@@ -103,7 +103,7 @@ func (e *DeleteTeamExecutor) Result() interface{} {
 }
 
 func (e *DeleteTeamExecutor) Description() string {
-	return fmt.Sprintf("%s", e.arg.Team)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] %s", e.arg.Team)
 }
 
 func (e *DeleteTeamExecutor) Execute(t *Task) error {
@@ -153,7 +153,7 @@ func (e *AddTeamEmailExecutor) Result() interface{} {
 }
 
 func (e *AddTeamEmailExecutor) Description() string {
-	return fmt.Sprintf("%s : %s", e.arg.Email, e.arg.Team)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] %s : %s", e.arg.Email, e.arg.Team)
 }
 
 func (e *AddTeamEmailExecutor) Execute(t *Task) error {
@@ -181,7 +181,7 @@ func (e *RemoveTeamEmailExecutor) Result() interface{} {
 }
 
 func (e *RemoveTeamEmailExecutor) Description() string {
-	return fmt.Sprintf("%s : %s", e.arg.Email, e.arg.Team)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] %s : %s", e.arg.Email, e.arg.Team)
 }
 
 func (e *RemoveTeamEmailExecutor) Execute(t *Task) error {
@@ -246,7 +246,7 @@ func (e *AddTeamAdminExecutor) Result() interface{} {
 }
 
 func (e *AddTeamAdminExecutor) Description() string {
-	return fmt.Sprintf("%s : %s", e.arg.User, e.arg.Team)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] %s : %s", e.arg.User, e.arg.Team)
 }
 
 func (e *AddTeamAdminExecutor) Execute(t *Task) error {
@@ -280,7 +280,7 @@ func (e *RemoveTeamAdminExecutor) Result() interface{} {
 }
 
 func (e *RemoveTeamAdminExecutor) Description() string {
-	return fmt.Sprintf("%s : %s", e.arg.User, e.arg.Team)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] %s : %s", e.arg.User, e.arg.Team)
 }
 
 func (e *RemoveTeamAdminExecutor) Execute(t *Task) error {
@@ -349,7 +349,7 @@ func (e *AddTeamMemberExecutor) Result() interface{} {
 }
 
 func (e *AddTeamMemberExecutor) Description() string {
-	return fmt.Sprintf("%s : %s", e.arg.User, e.arg.Team)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] %s : %s", e.arg.User, e.arg.Team)
 }
 
 func (e *AddTeamMemberExecutor) Execute(t *Task) error {
@@ -377,7 +377,7 @@ func (e *RemoveTeamMemberExecutor) Result() interface{} {
 }
 
 func (e *RemoveTeamMemberExecutor) Description() string {
-	return fmt.Sprintf("%s : %s", e.arg.User, e.arg.Team)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] %s : %s", e.arg.User, e.arg.Team)
 }
 
 func (e *RemoveTeamMemberExecutor) Execute(t *Task) error {
@@ -611,7 +611,7 @@ func (e *AllowAppExecutor) Result() interface{} {
 }
 
 func (e *AllowAppExecutor) Description() string {
-	return fmt.Sprintf("%s : %s", e.arg.App, e.arg.Team)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] %s : %s", e.arg.App, e.arg.Team)
 }
 
 func (e *AllowAppExecutor) Execute(t *Task) error {
@@ -667,7 +667,7 @@ func (e *DisallowAppExecutor) Result() interface{} {
 }
 
 func (e *DisallowAppExecutor) Description() string {
-	return fmt.Sprintf("%s : %s", e.arg.App, e.arg.Team)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] %s : %s", e.arg.App, e.arg.Team)
 }
 
 func (e *DisallowAppExecutor) Execute(t *Task) error {
@@ -715,7 +715,7 @@ func (e *IsAppAllowedExecutor) Result() interface{} {
 }
 
 func (e *IsAppAllowedExecutor) Description() string {
-	return fmt.Sprintf("%s : %s", e.arg.App, e.arg.User)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] %s : %s", e.arg.App, e.arg.User)
 }
 
 func (e *IsAppAllowedExecutor) Execute(t *Task) error {
@@ -756,7 +756,7 @@ func (e *ListAllowedAppsExecutor) Result() interface{} {
 }
 
 func (e *ListAllowedAppsExecutor) Description() string {
-	return fmt.Sprintf("%s: %s", e.arg.ManagerAuthArg.User, e.arg.User)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] %s: %s", e.arg.ManagerAuthArg.User, e.arg.User)
 }
 
 func (e *ListAllowedAppsExecutor) Execute(t *Task) error {
@@ -844,7 +844,7 @@ func (e *IsTeamAdminExecutor) Result() interface{} {
 }
 
 func (e *IsTeamAdminExecutor) Description() string {
-	return fmt.Sprintf("%s : %s", e.arg.User, e.arg.Team)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] %s : %s", e.arg.User, e.arg.Team)
 }
 
 func (e *IsTeamAdminExecutor) Execute(t *Task) error {
@@ -912,7 +912,7 @@ func (e *IsSuperUserExecutor) Result() interface{} {
 }
 
 func (e *IsSuperUserExecutor) Description() string {
-	return fmt.Sprintf("%s", e.arg.User)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] %s", e.arg.User)
 }
 
 func (e *IsSuperUserExecutor) Execute(t *Task) error {

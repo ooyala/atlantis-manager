@@ -45,7 +45,7 @@ func (e *GetAppEnvPortExecutor) Result() interface{} {
 }
 
 func (e *GetAppEnvPortExecutor) Description() string {
-	return fmt.Sprintf("%s in %s", e.arg.App, e.arg.Env)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] %s in %s", e.arg.App, e.arg.Env)
 }
 
 func (e *GetAppEnvPortExecutor) Execute(t *Task) (err error) {
@@ -101,7 +101,7 @@ func (e *ListAppEnvsWithPortExecutor) Result() interface{} {
 }
 
 func (e *ListAppEnvsWithPortExecutor) Description() string {
-	return fmt.Sprintf("internal: %t", e.arg.Internal)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] internal: %t", e.arg.Internal)
 }
 
 func (e *ListAppEnvsWithPortExecutor) Execute(t *Task) (err error) {
@@ -132,7 +132,7 @@ func (e *UpdatePortExecutor) Result() interface{} {
 }
 
 func (e *UpdatePortExecutor) Description() string {
-	return fmt.Sprintf("%+v", e.arg.Port)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] %+v", e.arg.Port)
 }
 
 func (e *UpdatePortExecutor) Execute(t *Task) (err error) {
@@ -164,7 +164,7 @@ func (e *DeletePortExecutor) Result() interface{} {
 }
 
 func (e *DeletePortExecutor) Description() string {
-	return fmt.Sprintf("port: %d, internal: %t", e.arg.Port, e.arg.Internal)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] port: %d, internal: %t", e.arg.Port, e.arg.Internal)
 }
 
 func (e *DeletePortExecutor) Execute(t *Task) (err error) {
@@ -194,7 +194,7 @@ func (e *GetPortExecutor) Result() interface{} {
 }
 
 func (e *GetPortExecutor) Description() string {
-	return fmt.Sprintf("port: %d, internal: %t", e.arg.Port, e.arg.Internal)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] port: %d, internal: %t", e.arg.Port, e.arg.Internal)
 }
 
 func (e *GetPortExecutor) Execute(t *Task) (err error) {
@@ -224,7 +224,7 @@ func (e *ListPortsExecutor) Result() interface{} {
 }
 
 func (e *ListPortsExecutor) Description() string {
-	return "ListPorts"
+	return "[" + e.arg.ManagerAuthArg.User + "] ListPorts"
 }
 
 type PortSortable []uint16
@@ -294,7 +294,7 @@ func (e *UpdatePoolExecutor) Result() interface{} {
 }
 
 func (e *UpdatePoolExecutor) Description() string {
-	return fmt.Sprintf("%+v", e.arg.Pool)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] %+v", e.arg.Pool)
 }
 
 func (e *UpdatePoolExecutor) Execute(t *Task) error {
@@ -363,7 +363,7 @@ func (e *DeletePoolExecutor) Result() interface{} {
 }
 
 func (e *DeletePoolExecutor) Description() string {
-	return fmt.Sprintf("%s", e.arg.Name)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] %s", e.arg.Name)
 }
 
 func (e *DeletePoolExecutor) Execute(t *Task) (err error) {
@@ -398,7 +398,7 @@ func (e *GetPoolExecutor) Result() interface{} {
 }
 
 func (e *GetPoolExecutor) Description() string {
-	return fmt.Sprintf("%s", e.arg.Name)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] %s", e.arg.Name)
 }
 
 func (e *GetPoolExecutor) Execute(t *Task) (err error) {
@@ -433,7 +433,7 @@ func (e *ListPoolsExecutor) Result() interface{} {
 }
 
 func (e *ListPoolsExecutor) Description() string {
-	return "ListPools"
+	return "[" + e.arg.ManagerAuthArg.User + "] ListPools"
 }
 
 func (e *ListPoolsExecutor) Execute(t *Task) (err error) {
@@ -486,7 +486,7 @@ func (e *UpdateRuleExecutor) Result() interface{} {
 }
 
 func (e *UpdateRuleExecutor) Description() string {
-	return fmt.Sprintf("%+v", e.arg.Rule)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] %+v", e.arg.Rule)
 }
 
 func (e *UpdateRuleExecutor) Execute(t *Task) (err error) {
@@ -537,7 +537,7 @@ func (e *DeleteRuleExecutor) Result() interface{} {
 }
 
 func (e *DeleteRuleExecutor) Description() string {
-	return fmt.Sprintf("%s", e.arg.Name)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] %s", e.arg.Name)
 }
 
 func (e *DeleteRuleExecutor) Execute(t *Task) (err error) {
@@ -572,7 +572,7 @@ func (e *GetRuleExecutor) Result() interface{} {
 }
 
 func (e *GetRuleExecutor) Description() string {
-	return fmt.Sprintf("%s", e.arg.Name)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] %s", e.arg.Name)
 }
 
 func (e *GetRuleExecutor) Execute(t *Task) (err error) {
@@ -607,7 +607,7 @@ func (e *ListRulesExecutor) Result() interface{} {
 }
 
 func (e *ListRulesExecutor) Description() string {
-	return "ListRules"
+	return "[" + e.arg.ManagerAuthArg.User + "] ListRules"
 }
 
 func (e *ListRulesExecutor) Execute(t *Task) (err error) {
@@ -660,7 +660,7 @@ func (e *UpdateTrieExecutor) Result() interface{} {
 }
 
 func (e *UpdateTrieExecutor) Description() string {
-	return fmt.Sprintf("%+v", e.arg.Trie)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] %+v", e.arg.Trie)
 }
 
 func (e *UpdateTrieExecutor) Execute(t *Task) (err error) {
@@ -695,7 +695,7 @@ func (e *DeleteTrieExecutor) Result() interface{} {
 }
 
 func (e *DeleteTrieExecutor) Description() string {
-	return fmt.Sprintf("%s", e.arg.Name)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] %s", e.arg.Name)
 }
 
 func (e *DeleteTrieExecutor) Execute(t *Task) (err error) {
@@ -730,7 +730,7 @@ func (e *GetTrieExecutor) Result() interface{} {
 }
 
 func (e *GetTrieExecutor) Description() string {
-	return fmt.Sprintf("%s", e.arg.Name)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] %s", e.arg.Name)
 }
 
 func (e *GetTrieExecutor) Execute(t *Task) (err error) {
@@ -765,7 +765,7 @@ func (e *ListTriesExecutor) Result() interface{} {
 }
 
 func (e *ListTriesExecutor) Description() string {
-	return "ListTries"
+	return "[" + e.arg.ManagerAuthArg.User + "] ListTries"
 }
 
 func (e *ListTriesExecutor) Execute(t *Task) (err error) {

@@ -36,7 +36,8 @@ func (e *AuthorizeSSHExecutor) Result() interface{} {
 }
 
 func (e *AuthorizeSSHExecutor) Description() string {
-	return fmt.Sprintf("%s @ %s : \n%s", e.arg.User, e.arg.ContainerID, e.arg.PublicKey)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] %s @ %s : \n%s", e.arg.User, e.arg.ContainerID,
+		e.arg.PublicKey)
 }
 
 func (e *AuthorizeSSHExecutor) Execute(t *Task) error {
@@ -65,7 +66,12 @@ func (e *AuthorizeSSHExecutor) Execute(t *Task) error {
 }
 
 func (e *AuthorizeSSHExecutor) Authorize() error {
-	return nil
+	// get app for container ID
+	instance, err := datamodel.GetInstance(e.arg.ContainerID)
+	if err != nil {
+		return err
+	}
+	return AuthorizeApp(&e.arg.ManagerAuthArg, instance.App)
 }
 
 type DeauthorizeSSHExecutor struct {
@@ -82,7 +88,7 @@ func (e *DeauthorizeSSHExecutor) Result() interface{} {
 }
 
 func (e *DeauthorizeSSHExecutor) Description() string {
-	return fmt.Sprintf("%s @ %s", e.arg.User, e.arg.ContainerID)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] %s @ %s", e.arg.User, e.arg.ContainerID)
 }
 
 func (e *DeauthorizeSSHExecutor) Execute(t *Task) error {
@@ -102,7 +108,12 @@ func (e *DeauthorizeSSHExecutor) Execute(t *Task) error {
 }
 
 func (e *DeauthorizeSSHExecutor) Authorize() error {
-	return nil
+	// get app for container ID
+	instance, err := datamodel.GetInstance(e.arg.ContainerID)
+	if err != nil {
+		return err
+	}
+	return AuthorizeApp(&e.arg.ManagerAuthArg, instance.App)
 }
 
 func (m *ManagerRPC) AuthorizeSSH(arg ManagerAuthorizeSSHArg, reply *ManagerAuthorizeSSHReply) error {

@@ -33,7 +33,7 @@ func (e *UpdateIPGroupExecutor) Result() interface{} {
 }
 
 func (e *UpdateIPGroupExecutor) Description() string {
-	return fmt.Sprintf("%s -> %v", e.arg.Name, e.arg.IPs)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] %s -> %v", e.arg.Name, e.arg.IPs)
 }
 
 func (e *UpdateIPGroupExecutor) Authorize() error {
@@ -73,7 +73,7 @@ func (e *DeleteIPGroupExecutor) Result() interface{} {
 }
 
 func (e *DeleteIPGroupExecutor) Description() string {
-	return fmt.Sprintf("%s", e.arg.Name)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] %s", e.arg.Name)
 }
 
 func (e *DeleteIPGroupExecutor) Authorize() error {
@@ -110,7 +110,7 @@ func (e *GetIPGroupExecutor) Result() interface{} {
 }
 
 func (e *GetIPGroupExecutor) Description() string {
-	return fmt.Sprintf("%s", e.arg.Name)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] %s", e.arg.Name)
 }
 
 func (e *GetIPGroupExecutor) Authorize() error {
@@ -148,7 +148,7 @@ func (e *ListIPGroupsExecutor) Result() interface{} {
 }
 
 func (e *ListIPGroupsExecutor) Description() string {
-	return fmt.Sprintf("ALL")
+	return fmt.Sprintf("[" + e.arg.ManagerAuthArg.User + "] ALL")
 }
 
 func (e *ListIPGroupsExecutor) Authorize() error {

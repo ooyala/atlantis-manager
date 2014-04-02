@@ -43,7 +43,8 @@ func (e *RegisterRouterExecutor) Result() interface{} {
 }
 
 func (e *RegisterRouterExecutor) Description() string {
-	return fmt.Sprintf("%s in %s with ip %s, internal: %t", e.arg.Host, e.arg.Zone, e.arg.IP, e.arg.Internal)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] %s in %s with ip %s, internal: %t", e.arg.Host,
+		e.arg.Zone, e.arg.IP, e.arg.Internal)
 }
 
 func (e *RegisterRouterExecutor) Authorize() error {
@@ -120,7 +121,8 @@ func (e *UnregisterRouterExecutor) Result() interface{} {
 }
 
 func (e *UnregisterRouterExecutor) Description() string {
-	return fmt.Sprintf("%s in %s, internal: %t", e.arg.Host, e.arg.Zone, e.arg.Internal)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] %s in %s, internal: %t", e.arg.Host, e.arg.Zone,
+		e.arg.Internal)
 }
 
 func (e *UnregisterRouterExecutor) Authorize() error {
@@ -192,7 +194,7 @@ func (e *ListRoutersExecutor) Result() interface{} {
 }
 
 func (e *ListRoutersExecutor) Description() string {
-	return "ListRouters"
+	return "[" + e.arg.ManagerAuthArg.User + "] ListRouters"
 }
 
 func (e *ListRoutersExecutor) Authorize() error {
@@ -226,7 +228,7 @@ func (e *GetRouterExecutor) Result() interface{} {
 }
 
 func (e *GetRouterExecutor) Description() string {
-	return fmt.Sprintf("%s in %s", e.arg.Host, e.arg.Zone)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] %s in %s", e.arg.Host, e.arg.Zone)
 }
 
 func (e *GetRouterExecutor) Authorize() error {
@@ -262,8 +264,8 @@ func (e *RegisterAppExecutor) Result() interface{} {
 }
 
 func (e *RegisterAppExecutor) Description() string {
-	return fmt.Sprintf("%s -> %s:%s, non-atlantis: %t, internal: %t", e.arg.Name, e.arg.Repo, e.arg.Root,
-		e.arg.NonAtlantis, e.arg.Internal)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] %s -> %s:%s, non-atlantis: %t, internal: %t",
+		e.arg.Name, e.arg.Repo, e.arg.Root, e.arg.NonAtlantis, e.arg.Internal)
 }
 
 func (e *RegisterAppExecutor) Authorize() error {
@@ -312,7 +314,8 @@ func (e *UpdateAppExecutor) Result() interface{} {
 }
 
 func (e *UpdateAppExecutor) Description() string {
-	return fmt.Sprintf("%s -> %s:%s, non-atlantis: %t", e.arg.Name, e.arg.Repo, e.arg.Root, e.arg.NonAtlantis)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] %s -> %s:%s, non-atlantis: %t", e.arg.Name, e.arg.Repo,
+		e.arg.Root, e.arg.NonAtlantis)
 }
 
 func (e *UpdateAppExecutor) Authorize() error {
@@ -358,7 +361,7 @@ func (e *UnregisterAppExecutor) Result() interface{} {
 }
 
 func (e *UnregisterAppExecutor) Description() string {
-	return fmt.Sprintf("%s", e.arg.Name)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] %s", e.arg.Name)
 }
 
 func (e *UnregisterAppExecutor) Authorize() error {
@@ -396,7 +399,7 @@ func (e *GetAppExecutor) Result() interface{} {
 }
 
 func (e *GetAppExecutor) Description() string {
-	return fmt.Sprintf("%s", e.arg.Name)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] %s", e.arg.Name)
 }
 
 func (e *GetAppExecutor) Authorize() error {
@@ -432,7 +435,7 @@ func (e *ListRegisteredAppsExecutor) Result() interface{} {
 }
 
 func (e *ListRegisteredAppsExecutor) Description() string {
-	return "ListRegisteredApps"
+	return "[" + e.arg.ManagerAuthArg.User + "] ListRegisteredApps"
 }
 
 func (e *ListRegisteredAppsExecutor) Authorize() error {
@@ -464,7 +467,7 @@ func (e *ListAuthorizedRegisteredAppsExecutor) Result() interface{} {
 }
 
 func (e *ListAuthorizedRegisteredAppsExecutor) Description() string {
-	return "ListAuthorizedRegisteredApps"
+	return "[" + e.arg.ManagerAuthArg.User + "] ListAuthorizedRegisteredApps"
 }
 
 func (e *ListAuthorizedRegisteredAppsExecutor) Authorize() error {
@@ -507,7 +510,7 @@ func (e *RegisterSupervisorExecutor) Result() interface{} {
 }
 
 func (e *RegisterSupervisorExecutor) Description() string {
-	return fmt.Sprintf("%s:%s", e.arg.Host, supervisor.Port)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] %s:%s", e.arg.Host, supervisor.Port)
 }
 
 func (e *RegisterSupervisorExecutor) Execute(t *Task) error {
@@ -591,7 +594,7 @@ func (e *UnregisterSupervisorExecutor) Result() interface{} {
 }
 
 func (e *UnregisterSupervisorExecutor) Description() string {
-	return fmt.Sprintf("%s:%s", e.arg.Host, supervisor.Port)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] %s:%s", e.arg.Host, supervisor.Port)
 }
 
 func (e *UnregisterSupervisorExecutor) Execute(t *Task) error {
@@ -654,7 +657,7 @@ func (e *ListSupervisorsExecutor) Result() interface{} {
 }
 
 func (e *ListSupervisorsExecutor) Description() string {
-	return "ListSupervisors"
+	return "[" + e.arg.ManagerAuthArg.User + "] ListSupervisors"
 }
 
 func (e *ListSupervisorsExecutor) Execute(t *Task) (err error) {
@@ -690,7 +693,7 @@ func (e *RegisterManagerExecutor) Result() interface{} {
 }
 
 func (e *RegisterManagerExecutor) Description() string {
-	return fmt.Sprintf("%s:%s in %s", e.arg.Host, lPort, e.arg.Region)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] %s:%s in %s", e.arg.Host, lPort, e.arg.Region)
 }
 
 func (e *RegisterManagerExecutor) Execute(t *Task) error {
@@ -757,7 +760,7 @@ func (e *UnregisterManagerExecutor) Result() interface{} {
 }
 
 func (e *UnregisterManagerExecutor) Description() string {
-	return fmt.Sprintf("%s:%s in %s", e.arg.Host, lPort, e.arg.Region)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] %s:%s in %s", e.arg.Host, lPort, e.arg.Region)
 }
 
 func (e *UnregisterManagerExecutor) Execute(t *Task) error {
@@ -822,7 +825,7 @@ func (e *ListManagersExecutor) Result() interface{} {
 }
 
 func (e *ListManagersExecutor) Description() string {
-	return "ListManagers"
+	return "[" + e.arg.ManagerAuthArg.User + "] ListManagers"
 }
 
 func (e *ListManagersExecutor) Execute(t *Task) (err error) {
@@ -856,7 +859,7 @@ func (e *GetManagerExecutor) Result() interface{} {
 }
 
 func (e *GetManagerExecutor) Description() string {
-	return fmt.Sprintf("%s in %s", e.arg.Host, e.arg.Region)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] %s in %s", e.arg.Host, e.arg.Region)
 }
 
 func (e *GetManagerExecutor) Authorize() error {
@@ -888,7 +891,7 @@ func (e *GetSelfExecutor) Result() interface{} {
 }
 
 func (e *GetSelfExecutor) Description() string {
-	return fmt.Sprintf("%s in %s", Host, Region)
+	return fmt.Sprintf("["+e.arg.ManagerAuthArg.User+"] %s in %s", Host, Region)
 }
 
 func (e *GetSelfExecutor) Authorize() error {
