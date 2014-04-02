@@ -90,13 +90,29 @@ func (e *ListContainersExecutor) Execute(t *Task) error {
 	var err error
 	if e.arg.App == "" && e.arg.Sha == "" && e.arg.Env == "" {
 		// try to list all instances
-		e.reply.ContainerIDs, err = datamodel.ListAllInstances()
+		allContainerIDs, err := datamodel.ListAllInstances()
 		if err != nil {
 			e.reply.Status = StatusError
+			return err
 		} else {
 			e.reply.Status = StatusOk
 		}
-		return err
+		// filter by allowed app
+		if err := AuthorizeSuperUser(&e.arg.ManagerAuthArg); err == nil {
+			// if superuser, show everything
+			e.reply.ContainerIDs = allContainerIDs
+		} else {
+			// else only show what is allowed
+			allowedApps := GetAllowedApps(&e.arg.ManagerAuthArg, e.arg.ManagerAuthArg.User)
+			e.reply.ContainerIDs = []string{}
+			for _, cid := range allContainerIDs {
+				if inst, err := datamodel.GetInstance(cid); err != nil && allowedApps[inst.App] {
+					e.reply.ContainerIDs = append(e.reply.ContainerIDs, cid)
+				}
+			}
+		}
+		sort.Strings(e.reply.ContainerIDs)
+		return nil
 	}
 	if e.arg.App == "" {
 		return errors.New("App is empty")
@@ -119,8 +135,8 @@ func (e *ListContainersExecutor) Execute(t *Task) error {
 
 func (e *ListContainersExecutor) Authorize() error {
 	if e.arg.App == "" && e.arg.Sha == "" && e.arg.Env == "" {
-		// list all containers
-		return AuthorizeSuperUser(&e.arg.ManagerAuthArg)
+		// execute will filter based on allowed apps
+		return SimpleAuthorize(&e.arg.ManagerAuthArg)
 	}
 	return AuthorizeApp(&e.arg.ManagerAuthArg, e.arg.App)
 }
