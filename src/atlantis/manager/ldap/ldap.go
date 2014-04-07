@@ -120,7 +120,7 @@ func SessionExpiryRoutine() {
 
 func Login(user, pass, secret string) (string, error) {
 	if skipLogin {
-		return "", nil // just let everything pass
+		return "dummysecret", nil // just let everything pass
 	}
 	// Checking if we are already logged in
 	var LDAPConn *ldap.LDAPConnection
