@@ -217,6 +217,8 @@ func New() *ManagerClient {
 	o.AddCommand("list-managers", "list available managers", "", &ListManagersCommand{})
 	o.AddCommand("get-manager", "get manager", "", &GetManagerCommand{})
 	o.AddCommand("get-self", "get this manager", "", &GetSelfCommand{})
+	o.AddCommand("add-role", "add role to manager", "", &AddRoleCommand{})
+	o.AddCommand("remove-role", "remove role from manager", "", &RemoveRoleCommand{})
 
 	// Supervisor Management
 	o.AddCommand("register-supervisor", "register an supervisor", "", &RegisterSupervisorCommand{})
