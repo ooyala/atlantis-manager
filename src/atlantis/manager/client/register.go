@@ -661,6 +661,7 @@ func (c *GetSelfCommand) Execute(args []string) error {
 }
 
 type RegisterSupervisorCommand struct {
+	Wait bool   `long:"wait" description:"wait until done before exiting"`
 	Host string `short:"H" long:"host" description:"the supervisor host to register"`
 }
 
@@ -677,16 +678,20 @@ func (c *RegisterSupervisorCommand) Execute(args []string) error {
 	}
 	authArg := ManagerAuthArg{user, "", secret}
 	arg := ManagerRegisterSupervisorArg{authArg, c.Host}
-	var reply ManagerRegisterSupervisorReply
+	var reply atlantis.AsyncReply
 	err = rpcClient.Call("RegisterSupervisor", arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}
-	Log("-> status: %s", reply.Status)
-	return Output(map[string]interface{}{"status": reply.Status}, nil, nil)
+	Log("-> ID: %s", reply.ID)
+	if !c.Wait {
+		return Output(map[string]interface{}{"id": reply.ID}, reply.ID, nil)
+	}
+	return (&WaitCommand{reply.ID}).Execute(args)
 }
 
 type UnregisterSupervisorCommand struct {
+	Wait bool   `long:"wait" description:"wait until done before exiting"`
 	Host string `short:"H" long:"host" description:"the supervisor host to register"`
 }
 
@@ -703,13 +708,16 @@ func (c *UnregisterSupervisorCommand) Execute(args []string) error {
 	}
 	authArg := ManagerAuthArg{user, "", secret}
 	arg := ManagerRegisterSupervisorArg{authArg, c.Host}
-	var reply ManagerRegisterSupervisorReply
+	var reply atlantis.AsyncReply
 	err = rpcClient.Call("UnregisterSupervisor", arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}
-	Log("-> status: %s", reply.Status)
-	return Output(map[string]interface{}{"status": reply.Status}, nil, nil)
+	Log("-> ID: %s", reply.ID)
+	if !c.Wait {
+		return Output(map[string]interface{}{"id": reply.ID}, reply.ID, nil)
+	}
+	return (&WaitCommand{reply.ID}).Execute(args)
 }
 
 func OutputRegisterSupervisorReply(reply *ManagerRegisterSupervisorReply) error {
