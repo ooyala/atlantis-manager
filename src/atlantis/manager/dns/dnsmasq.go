@@ -13,6 +13,7 @@ package dns
 
 import (
 	"bufio"
+	"errors"
 	"io"
 	"os"
 )
@@ -20,9 +21,11 @@ import (
 const fileHeaderString = "## The following records are managed by Atlantis ##\n"
 const fileFooterString = "## The preceding records are managed by Atlantis ##\n"
 
+// TODO(edanaher): The records should be stored (as comments) in the hosts file to persist across master
+// restarts.
 type DnsmasqProvider struct {
-	file  string
-	hosts map[string]int
+	file    string
+	records []Record
 }
 
 func readUntil(marker string, from *bufio.Reader, to *os.File) error {
@@ -57,7 +60,13 @@ func (d *DnsmasqProvider) rewriteHosts() error {
 	readUntil("eof", oldReader, newFile)
 
 	io.WriteString(newFile, fileHeaderString)
-	io.WriteString(newFile, "127.0.0.1 magic\n")
+	hosts, err := d.getHosts()
+	if err != nil {
+		return err
+	}
+	for host, ip := range hosts {
+		io.WriteString(newFile, ip+" "+host+"\n")
+	}
 	io.WriteString(newFile, fileFooterString)
 
 	if err := os.Rename(d.file+".new", d.file); err != nil {
@@ -67,8 +76,62 @@ func (d *DnsmasqProvider) rewriteHosts() error {
 	return nil
 }
 
-func (d *DnsmasqProvider) CreateRecords(region, comment string, records []Record) error {
+func (d *DnsmasqProvider) getHosts() (map[string]string, error) {
+	// TODO(edanaher): This code is copied from route53.  Is it worth pulling out?
+	aliases := []*Alias{}
+	cnames := []*CName{}
+	arecords := []*ARecord{}
+	for _, record := range d.records {
+		switch typedRecord := record.(type) {
+		case *Alias:
+			aliases = append(aliases, typedRecord)
+		case *CName:
+			cnames = append(cnames, typedRecord)
+		case *ARecord:
+			arecords = append(arecords, typedRecord)
+		default:
+			return nil, errors.New("Unsupported record type")
+		}
+	}
+	hosts := map[string]string{}
+	for _, arecord := range arecords {
+		hosts[arecord.Name] = arecord.IP
+	}
+	// Loop until fixed point to handle recursive cnames and aliases.
+	for len(cnames) > 0 {
+		unknownNames := []*CName{}
+		for _, cname := range cnames {
+			if target, ok := hosts[cname.Original]; ok {
+				hosts[cname.Name] = target
+			} else {
+				unknownNames = append(unknownNames, cname)
+			}
+		}
+		if len(cnames) == len(unknownNames) {
+			break // Should this be an error?  Unclear.
+		}
+		cnames = unknownNames
+	}
+	for len(aliases) > 0 {
+		unknownAliases := []*Alias{}
+		for _, alias := range aliases {
+			if target, ok := hosts[alias.Original]; ok {
+				hosts[alias.Alias] = target
+			} else {
+				unknownAliases = append(unknownAliases, alias)
+			}
+		}
+		if len(aliases) == len(unknownAliases) {
+			break // Should this be an error?  Unclear.
+		}
+		aliases = unknownAliases
+	}
+	return hosts, nil
+}
 
+func (d *DnsmasqProvider) CreateRecords(region, comment string, records []Record) error {
+	d.records = append(d.records, records...)
+	d.rewriteHosts()
 	return nil
 }
 
