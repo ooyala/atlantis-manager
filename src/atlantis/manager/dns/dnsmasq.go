@@ -140,7 +140,20 @@ func (d *DnsmasqProvider) GetRecordsForValue(region, value string) ([]string, er
 }
 
 func (d *DnsmasqProvider) DeleteRecords(region, comment string, ids ...string) (error, chan error) {
-	return nil, nil
+	idsMap := map[string]bool{}
+	for _, id := range ids {
+		idsMap[id] = true
+	}
+	for i, record := range d.records {
+		if _, exists := idsMap[record.ID()]; exists {
+			d.records = append(d.records[:i], d.records[i+1:]...)
+		}
+	}
+
+	d.rewriteHosts()
+	errChan := make(chan error)
+	go func() { errChan <- nil }()
+	return nil, errChan
 }
 
 func (d *DnsmasqProvider) Suffix(region string) (string, error) {
