@@ -170,7 +170,7 @@ func (d *DnsmasqProvider) DeleteRecords(region, comment string, ids ...string) (
 }
 
 func (d *DnsmasqProvider) Suffix(region string) (string, error) {
-	return "", nil
+	return "aquarium", nil
 }
 
 func NewDnsmasqProvider(file string) (*DnsmasqProvider, error) {
