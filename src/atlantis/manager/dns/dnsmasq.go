@@ -136,7 +136,26 @@ func (d *DnsmasqProvider) CreateRecords(region, comment string, records []Record
 }
 
 func (d *DnsmasqProvider) GetRecordsForValue(region, value string) ([]string, error) {
-	return nil, nil
+	records := []string{}
+	for _, r := range d.records {
+		switch typedRecord := r.(type) {
+		case *ARecord:
+			if typedRecord.IP == value {
+				records = append(records, typedRecord.IP)
+			}
+		case *CName:
+			if typedRecord.Original == value {
+				records = append(records, typedRecord.Name)
+			}
+		case *Alias:
+			if typedRecord.Original == value {
+				records = append(records, typedRecord.Alias)
+			}
+		default:
+			return nil, errors.New("Unsupported record type")
+		}
+	}
+	return records, nil
 }
 
 func (d *DnsmasqProvider) DeleteRecords(region, comment string, ids ...string) (error, chan error) {
