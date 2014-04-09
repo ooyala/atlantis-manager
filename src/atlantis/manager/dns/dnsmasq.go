@@ -18,8 +18,7 @@ import (
 	"os"
 )
 
-const fileHeaderString = "## The following records are managed by Atlantis ##\n"
-const fileFooterString = "## The preceding records are managed by Atlantis ##\n"
+const fileHeaderString = "## This file managed by Atlantis manager.  DO NOT EDIT ##\n"
 
 // TODO(edanaher): The records should be stored (as comments) in the hosts file to persist across master
 // restarts.
@@ -42,22 +41,19 @@ func readUntil(marker string, from *bufio.Reader, to *os.File) error {
 }
 
 func (d *DnsmasqProvider) rewriteHosts() error {
-	oldFile, err := os.Open(d.file)
+  // TODO(edanaher): This will be the code for reading the existing dns state.
+	/*oldFile, err := os.Open(d.file)
 	if err != nil {
 		return err
 	}
 	defer oldFile.Close()
-	oldReader := bufio.NewReader(oldFile)
+	oldReader := bufio.NewReader(oldFile) */
 
 	newFile, err := os.Create(d.file + ".new")
 	if err != nil {
 		return err
 	}
 	defer newFile.Close()
-
-	readUntil(fileHeaderString, oldReader, newFile)
-	readUntil(fileFooterString, oldReader, nil)
-	readUntil("eof", oldReader, newFile)
 
 	io.WriteString(newFile, fileHeaderString)
 	hosts, err := d.getHosts()
@@ -67,8 +63,6 @@ func (d *DnsmasqProvider) rewriteHosts() error {
 	for host, ip := range hosts {
 		io.WriteString(newFile, ip+" "+host+"\n")
 	}
-	io.WriteString(newFile, fileFooterString)
-
 	if err := os.Rename(d.file+".new", d.file); err != nil {
 		return err
 	}
