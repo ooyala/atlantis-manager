@@ -41,7 +41,7 @@ func readUntil(marker string, from *bufio.Reader, to *os.File) error {
 }
 
 func (d *DnsmasqProvider) rewriteHosts() error {
-  // TODO(edanaher): This will be the code for reading the existing dns state.
+	// TODO(edanaher): This will be the code for reading the existing dns state.
 	/*oldFile, err := os.Open(d.file)
 	if err != nil {
 		return err
