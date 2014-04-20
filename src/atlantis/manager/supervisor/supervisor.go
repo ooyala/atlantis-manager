@@ -51,6 +51,12 @@ func Get(host, containerID string) (*SupervisorGetReply, error) {
 	return &reply, NewSupervisorRPCClient(host+":"+Port).Call("Get", args, &reply)
 }
 
+func List(host string) (*SupervisorListReply, error) {
+	args := SupervisorListArg{}
+	var reply SupervisorListReply
+	return &reply, NewSupervisorRPCClient(host+":"+Port).Call("List", args, &reply)
+}
+
 func AuthorizeSSH(host, containerID, user, publicKey string) (*SupervisorAuthorizeSSHReply, error) {
 	args := SupervisorAuthorizeSSHArg{containerID, user, publicKey}
 	var reply SupervisorAuthorizeSSHReply

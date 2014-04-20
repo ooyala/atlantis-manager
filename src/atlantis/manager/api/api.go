@@ -74,6 +74,7 @@ func Init(listenAddr string) error {
 
 	// Manager Management
 	gmux.HandleFunc("/health", Health).Methods("GET")
+	gmux.HandleFunc("/usage", Usage).Methods("GET")
 	gmux.HandleFunc("/managers", ListManagers).Methods("GET")
 	gmux.HandleFunc("/managers/{Region}/{Host}", GetManager).Methods("GET")
 	gmux.HandleFunc("/managers/{Region}/{Host}", RegisterManager).Methods("PUT")
