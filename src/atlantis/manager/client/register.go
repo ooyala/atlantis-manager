@@ -435,7 +435,7 @@ func (c *HealthCommand) Execute(args []string) error {
 	Log("Manager Health Check...")
 	arg := ManagerHealthCheckArg{}
 	var reply ManagerHealthCheckReply
-	err := rpcClient.Call("HealthCheck", arg, &reply)
+	err := rpcClient.CallWithTimeout("HealthCheck", arg, &reply, 5)
 	if err != nil {
 		return OutputError(err)
 	}
