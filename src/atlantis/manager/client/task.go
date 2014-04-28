@@ -15,7 +15,10 @@ import (
 	. "atlantis/common"
 	. "atlantis/manager/rpc/types"
 	"errors"
+	"time"
 )
+
+const waitPollInterval = 3 * time.Second
 
 type StatusCommand struct {
 	ID string `short:"i" long:"id" description:"the task ID to fetch the status for"`
@@ -94,6 +97,7 @@ func (c *WaitCommand) Execute(args []string) error {
 		return OutputError(err)
 	}
 	for !statusReply.Done {
+		time.Sleep(waitPollInterval)
 		if currentStatus != statusReply.Status {
 			currentStatus = statusReply.Status
 			Log(currentStatus)
