@@ -66,6 +66,10 @@ func quietOutput(prefix string, val interface{}) {
 		for _, value := range t {
 			quietOutput(prefix, value)
 		}
+	case []uint16:
+		for _, value := range t {
+			quietOutput(prefix, value)
+		}
 	case []interface{}:
 		for _, value := range t {
 			quietOutput(prefix, destructify(value))
