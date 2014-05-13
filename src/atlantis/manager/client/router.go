@@ -468,7 +468,7 @@ func (c *ListPortsCommand) Execute(args []string) error {
 	Log("-> status: %s", reply.Status)
 	Log("-> ports:")
 	for _, port := range reply.Ports {
-		Log("->   %s", port)
+		Log("->   %d", port)
 	}
 	return Output(map[string]interface{}{"status": reply.Status, "ports": reply.Ports}, reply.Ports, nil)
 }
