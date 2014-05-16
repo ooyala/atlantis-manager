@@ -29,8 +29,8 @@ type SimpleBuilder struct {
 	BuildTimeout time.Duration
 }
 
-func NewSimpleBuilder(url string) *SimpleBuilder {
-	return &SimpleBuilder{URL: url}
+func NewSimpleBuilder(url string, timeout time.Duration) *SimpleBuilder {
+  return &SimpleBuilder{URL: url, BuildTimeout: timeout}
 }
 
 func decodeBuildResp(resp *http.Response) (*types.Build, error) {
