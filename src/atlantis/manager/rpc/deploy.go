@@ -87,7 +87,16 @@ func (e *DeployExecutor) Execute(t *Task) error {
 		return err
 	}
 	if e.arg.App != manifest.Name {
-		return errors.New("The app name you specified does not match the manifest")
+		// NOTE(edanaher): If we kick off two jobs simultaneously, they will assume they have the same job id, so
+		// one of them will get the manifest from the other one's Jenkins job.  Unfortunately, Jenkins doesn't
+		// give back any sort of useful information when you create the job, so we can't just use an ID easily.
+		// Moreover, the API may not in any way acknowledge the job for several seconds, meaning that we can't
+		// even scan the jobs created during a brief time interval for the job in question.  Rather, we have to
+		// poll Jenkins until we find the job we're looking for.  This is sufficiently terrible that I'm just
+		// erroring out and blaming Jenkins rather than adding a giant pile of code to handle that case.  We could
+		// retry the job ourself, but after a day trying to beat Jenkins into submission, I have no interest in
+		// applying further hacks.
+		return errors.New("The app name you specified does not match the manifest.  This is probably due to an unavoidable race condition in Jenkin's RESTless API.  Please try again.")
 	}
 	if e.arg.CPUShares > 0 {
 		manifest.CPUShares = e.arg.CPUShares
