@@ -457,11 +457,27 @@ func cleanupZk(inst *datamodel.ZkInstance, t *Task) {
 // Teardown Stuff
 //
 
-func getContainerIDsOfEnv(t *Task, app, sha, env string) ([]string, error) {
+func getContainerIDsOfShaEnv(t *Task, app, sha, env string) ([]string, error) {
 	containerIDs, err := datamodel.ListInstances(app, sha, env)
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("Error listing instances of %s @ %s in %s: %s", app, sha, env,
 			err.Error()))
+	}
+	return containerIDs, nil
+}
+
+func getContainerIDsOfEnv(t *Task, app, env string) ([]string, error) {
+	containerIDs := []string{}
+	shas, err := datamodel.ListShas(app)
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("Error listing shas of %s : %s", app, err.Error()))
+	}
+	for _, sha := range shas {
+		containerIDs, err = datamodel.ListInstances(app, sha, env)
+		if err != nil {
+			return nil, errors.New(fmt.Sprintf("Error listing instances of %s @ %s in %s: %s", app, sha, env,
+				err.Error()))
+		}
 	}
 	return containerIDs, nil
 }
@@ -473,7 +489,7 @@ func getContainerIDsOfSha(t *Task, app, sha string) ([]string, error) {
 		return nil, errors.New(fmt.Sprintf("Error listing environments of %s @ %s: %s", app, sha, err.Error()))
 	}
 	for _, env := range envs {
-		tmpContainerIDs, err := getContainerIDsOfEnv(t, app, sha, env)
+		tmpContainerIDs, err := getContainerIDsOfShaEnv(t, app, sha, env)
 		if err != nil {
 			return nil, err
 		}
@@ -500,6 +516,9 @@ func getContainerIDsOfApp(t *Task, app string) ([]string, error) {
 
 func getContainerIDsToTeardown(t *Task, arg ManagerTeardownArg) (hostMap map[string][]string, err error) {
 	hostMap = map[string][]string{} // map of host -> []string container ids
+	// TODO(edanaher,2014-07-02): This pile of conditionals is braindead and caused us to ignore an environment
+	// with no sha, tearing down all of of an app instead of just one environment.
+	// We really need to fix this to be reasonable, but for the moment, to fix it, I'm just adding another case.
 	if arg.All {
 		var hosts []string
 		hosts, err = datamodel.ListSupervisors()
@@ -522,7 +541,7 @@ func getContainerIDsToTeardown(t *Task, arg ManagerTeardownArg) (hostMap map[str
 		containerIDs := []string{}
 		if arg.Sha != "" {
 			if arg.Env != "" {
-				if containerIDs, err = getContainerIDsOfEnv(t, arg.App, arg.Sha, arg.Env); err != nil {
+				if containerIDs, err = getContainerIDsOfShaEnv(t, arg.App, arg.Sha, arg.Env); err != nil {
 					return nil, err
 				}
 			} else {
@@ -531,8 +550,14 @@ func getContainerIDsToTeardown(t *Task, arg ManagerTeardownArg) (hostMap map[str
 				}
 			}
 		} else {
-			if containerIDs, err = getContainerIDsOfApp(t, arg.App); err != nil {
-				return nil, err
+			if arg.Env != "" {
+				if containerIDs, err = getContainerIDsOfEnv(t, arg.App, arg.Env); err != nil {
+					return nil, err
+				}
+			} else {
+				if containerIDs, err = getContainerIDsOfApp(t, arg.App); err != nil {
+					return nil, err
+				}
 			}
 		}
 		for _, containerID := range containerIDs {
