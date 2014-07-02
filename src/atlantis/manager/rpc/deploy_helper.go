@@ -457,7 +457,7 @@ func cleanupZk(inst *datamodel.ZkInstance, t *Task) {
 // Teardown Stuff
 //
 
-func getContainerIDsOfEnv(t *Task, app, sha, env string) ([]string, error) {
+func getContainerIDsOfShaEnv(t *Task, app, sha, env string) ([]string, error) {
 	containerIDs, err := datamodel.ListInstances(app, sha, env)
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("Error listing instances of %s @ %s in %s: %s", app, sha, env,
@@ -473,7 +473,7 @@ func getContainerIDsOfSha(t *Task, app, sha string) ([]string, error) {
 		return nil, errors.New(fmt.Sprintf("Error listing environments of %s @ %s: %s", app, sha, err.Error()))
 	}
 	for _, env := range envs {
-		tmpContainerIDs, err := getContainerIDsOfEnv(t, app, sha, env)
+		tmpContainerIDs, err := getContainerIDsOfShaEnv(t, app, sha, env)
 		if err != nil {
 			return nil, err
 		}
@@ -522,7 +522,7 @@ func getContainerIDsToTeardown(t *Task, arg ManagerTeardownArg) (hostMap map[str
 		containerIDs := []string{}
 		if arg.Sha != "" {
 			if arg.Env != "" {
-				if containerIDs, err = getContainerIDsOfEnv(t, arg.App, arg.Sha, arg.Env); err != nil {
+				if containerIDs, err = getContainerIDsOfShaEnv(t, arg.App, arg.Sha, arg.Env); err != nil {
 					return nil, err
 				}
 			} else {
