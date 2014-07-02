@@ -160,7 +160,9 @@ func (m *ManagerServer) AddCommand(cmd, desc, longDesc string, data interface{})
 func (m *ManagerServer) Run(bldr builder.Builder) {
 	builder.DefaultBuilder = bldr
 	smtp.Init(m.Config.SMTPAddr, m.Config.SMTPFrom, strings.Split(m.Config.SMTPCC, ","))
-	crypto.Init()
+	if err := crypto.Init(); err != nil {
+		panic(fmt.Sprintf("Error initializing crypto: %s", err.Error()))
+	}
 	log.Println("Fate rarely calls upon us at a moment of our choosing.")
 	log.Println("                                                       -- Manager\n")
 	ldap.Init(m.Config.LdapHost, m.Config.LdapPort, m.Config.LdapBaseDomain)
