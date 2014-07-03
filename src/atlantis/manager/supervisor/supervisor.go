@@ -37,7 +37,7 @@ func Teardown(host string, containerIDs []string, all bool) (*SupervisorTeardown
 func HealthCheck(host string) (*SupervisorHealthCheckReply, error) {
 	args := SupervisorHealthCheckArg{}
 	var reply SupervisorHealthCheckReply
-	return &reply, NewSupervisorRPCClient(host+":"+Port).Call("HealthCheck", args, &reply)
+	return &reply, NewSupervisorRPCClient(host+":"+Port).CallWithTimeout("HealthCheck", args, &reply, 5)
 }
 
 func GetZone(host string) (string, error) {
