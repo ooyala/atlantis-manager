@@ -28,7 +28,7 @@ func (e *UsageExecutor) Request() interface{} {
 }
 
 func (e *UsageExecutor) Result() interface{} {
-	return e.reply
+	return e.reply.Json
 }
 
 func (e *UsageExecutor) Description() string {
@@ -41,7 +41,8 @@ func (e *UsageExecutor) Execute(t *Task) (err error) {
 	if err != nil {
 		return err
 	}
-	t.Log("[RPC][Usage] -> %s", b)
+	e.reply.Json = b
+	t.Log("[RPC][Usage] -> %s", e.reply.Json)
 	return
 }
 

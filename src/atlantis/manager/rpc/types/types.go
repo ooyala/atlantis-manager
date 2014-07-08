@@ -117,6 +117,7 @@ type ManagerUsageArg struct {
 
 type ManagerUsageReply struct {
 	Usage map[string]*SupervisorUsage
+	Json  []byte
 }
 
 // ------------ Register Supervisor ------------
