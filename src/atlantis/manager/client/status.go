@@ -34,6 +34,6 @@ func (c *UsageCommand) Execute(args []string) error {
 	if err != nil {
 		return OutputError(err)
 	}
-	Log("-> %+v", reply.Json)
+	Log("-> %s", reply.Json)
 	return Output(map[string]interface{}{"usage": reply.Json}, reply.Json, nil)
 }
