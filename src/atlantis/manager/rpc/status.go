@@ -16,6 +16,7 @@ import (
 	. "atlantis/manager/rpc/types"
 	"atlantis/manager/status"
 	"encoding/json"
+	"log"
 )
 
 type UsageExecutor struct {
@@ -39,10 +40,10 @@ func (e *UsageExecutor) Execute(t *Task) (err error) {
 	e.reply.Usage, err = status.GetUsage()
 	b, err := json.Marshal(e.reply.Usage)
 	if err != nil {
-		log.Println("error:", err)
-		return
+		return err
 	}
 	t.Log("[RPC][Usage] -> %s", b)
+	return
 }
 
 func (e *UsageExecutor) Authorize() error {
