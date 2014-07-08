@@ -16,7 +16,6 @@ import (
 	. "atlantis/manager/rpc/types"
 	"atlantis/manager/status"
 	"encoding/json"
-	"log"
 )
 
 type UsageExecutor struct {
