@@ -51,6 +51,7 @@ func GetUsage() (map[string]*SupervisorUsage, error) {
 				Memory:    cont.Manifest.MemoryLimit,
 			}
 		}
+		usageMap[super] = usage
 	}
 	return usageMap, nil
 }
