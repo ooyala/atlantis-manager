@@ -493,7 +493,7 @@ func CleanupCreatedPoolRefs(internal bool, app, sha, env string) error {
 	newRules := []string{}
 	for _, rule := range trie.Rules {
 		if rule != ruleName {
-			newRules = append(newRules, ruleName)
+			newRules = append(newRules, rule)
 		}
 	}
 	if len(trie.Rules) != len(newRules) {

@@ -12,8 +12,8 @@
 package builder
 
 import (
-	. "atlantis/common"
 	"atlantis/builder/api/types"
+	. "atlantis/common"
 	"bytes"
 	"encoding/json"
 	"errors"
@@ -30,7 +30,7 @@ type SimpleBuilder struct {
 }
 
 func NewSimpleBuilder(url string, timeout time.Duration) *SimpleBuilder {
-  return &SimpleBuilder{URL: url, BuildTimeout: timeout}
+	return &SimpleBuilder{URL: url, BuildTimeout: timeout}
 }
 
 func decodeBuildResp(resp *http.Response) (*types.Build, error) {
@@ -41,7 +41,7 @@ func decodeBuildResp(resp *http.Response) (*types.Build, error) {
 		if err != nil {
 			return nil, err
 		}
-		return nil, errors.New("Bad Status: "+string(bodyBytes))
+		return nil, errors.New("Bad Status: " + string(bodyBytes))
 	}
 	var build types.Build
 	if err := json.NewDecoder(resp.Body).Decode(&build); err != nil {
@@ -60,7 +60,7 @@ func (b *SimpleBuilder) Build(t *Task, repo, root, sha string) (io.ReadCloser, e
 	}
 	resp, err := http.Post(b.URL+"/build", "application/json", bytes.NewBuffer(jsonBytes))
 	if err != nil {
-		return nil, errors.New("Builder Error: "+err.Error())
+		return nil, errors.New("Builder Error: " + err.Error())
 	}
 	build, err := decodeBuildResp(resp)
 	if err != nil {
@@ -73,9 +73,9 @@ func (b *SimpleBuilder) Build(t *Task, repo, root, sha string) (io.ReadCloser, e
 			// timeout
 			return nil, errors.New("Build Timeout.")
 		}
-		resp, err := http.Get(b.URL+"/build/"+build.ID)
+		resp, err := http.Get(b.URL + "/build/" + build.ID)
 		if err != nil {
-			return nil, errors.New("Builder Error: "+err.Error())
+			return nil, errors.New("Builder Error: " + err.Error())
 		}
 		if build, err = decodeBuildResp(resp); err != nil {
 			return nil, err
@@ -86,9 +86,9 @@ func (b *SimpleBuilder) Build(t *Task, repo, root, sha string) (io.ReadCloser, e
 	}
 
 	// must be status done, fetch manifest
-	resp, err = http.Get(b.URL+"/build/"+build.ID+"/manifest")
+	resp, err = http.Get(b.URL + "/build/" + build.ID + "/manifest")
 	if err != nil {
-		return nil, errors.New("Builder Error: "+err.Error())
+		return nil, errors.New("Builder Error: " + err.Error())
 	}
 	return resp.Body, nil
 }
