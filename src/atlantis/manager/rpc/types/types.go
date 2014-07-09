@@ -80,10 +80,15 @@ type Manager struct {
 
 type SupervisorUsage struct {
 	Host            string
-	Price           float64
+	UsedContainers  uint
+	UsedCPUShares   uint
+	UsedMemory      uint
+	UsedCPUPrice    float64
+	UsedMemPrice    float64
 	TotalContainers uint
 	TotalCPUShares  uint
 	TotalMemory     uint
+	TotalPrice      float64
 	Containers      map[string]*ContainerUsage
 }
 
@@ -94,6 +99,8 @@ type ContainerUsage struct {
 	Env       string
 	CPUShares uint
 	Memory    uint
+	CPUPrice  float64
+	MemPrice  float64
 }
 
 // Manager RPC Types
