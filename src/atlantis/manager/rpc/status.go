@@ -34,10 +34,10 @@ func (e *UsageExecutor) Description() string {
 	return "Usage"
 }
 
-func (e *UsageExecutor) Execute(t *Task) error {
-	e.reply.Usage, err := status.GetUsage()
+func (e *UsageExecutor) Execute(t *Task) (err error) {
+	e.reply.Usage, err = status.GetUsage()
 	t.Log("[RPC][Usage] -> %+v", e.reply.Usage)
-	return err
+	return
 }
 
 func (e *UsageExecutor) Authorize() error {
