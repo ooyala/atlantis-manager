@@ -58,6 +58,8 @@ func (c *ResultCommand) Execute(args []string) error {
 		return OutputError(err)
 	}
 	switch reply.Name {
+	case "CopyContainer":
+		return (&DeployResultCommand{c.ID}).Execute(args)
 	case "Deploy":
 		return (&DeployResultCommand{c.ID}).Execute(args)
 	case "Teardown":
