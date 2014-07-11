@@ -21,8 +21,9 @@ import (
 )
 
 func Log(format string, args ...interface{}) {
+	logger := log.New(os.Stdout, "", 0)
 	if !IsJson() && !clientOpts.Quiet {
-		log.Printf(format, args...)
+		logger.Printf(format, args...)
 	}
 }
 
