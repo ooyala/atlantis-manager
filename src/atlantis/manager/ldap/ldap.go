@@ -22,6 +22,11 @@ import (
 	"time"
 )
 
+const (
+	UserTypeHuman = 0 
+	UserTypeRole = 1 
+)
+
 var (
 	SessionDestroyChan   chan *Request
 	BaseDomain           string
@@ -37,12 +42,14 @@ var (
 	AllowedAppCommonName string
 	TeamClass            string
 	UserOu               string
+	RoleUserOu	     string
 	TeamOu               string
 	UserCommonName       string
 	TeamCommonName       string
 	SuperUserGroup       string
 	UserClass            string
 	UserClassAttr        string
+	UserType	     int
 	SkipAuthorization    bool
 )
 
@@ -167,3 +174,4 @@ func LoginBind(user, pass string, lc *ldap.LDAPConnection) error {
 	}
 	return nil
 }
+

@@ -54,6 +54,10 @@ func (e *CreateTeamExecutor) Execute(t *Task) error {
 	}
 
 	var addDNs []string = []string{aldap.TeamCommonName + "=" + e.arg.Team + "," + aldap.TeamOu}
+	userOuStr,err := GetUserOuString(e.arg.User, e.arg.ManagerAuthArg)
+	if err != nil {
+		return err
+	}
 	var Attrs []ldap.EntryAttribute = []ldap.EntryAttribute{
 		ldap.EntryAttribute{
 			Name:   "objectclass",
@@ -61,7 +65,7 @@ func (e *CreateTeamExecutor) Execute(t *Task) error {
 		},
 		ldap.EntryAttribute{
 			Name:   aldap.TeamAdminAttr,
-			Values: []string{aldap.UserCommonName + "=" + e.arg.User + "," + aldap.UserOu},
+			Values: []string{aldap.UserCommonName + "=" + e.arg.User + "," + userOuStr},
 		},
 		ldap.EntryAttribute{
 			Name:   aldap.TeamCommonName,
@@ -69,7 +73,7 @@ func (e *CreateTeamExecutor) Execute(t *Task) error {
 		},
 		ldap.EntryAttribute{
 			Name:   aldap.UsernameAttr,
-			Values: []string{aldap.UserCommonName + "=" + e.arg.User + "," + aldap.UserOu},
+			Values: []string{aldap.UserCommonName + "=" + e.arg.User + "," + userOuStr},
 		},
 	}
 	addReq := ldap.NewAddRequest(addDNs[0])
@@ -313,10 +317,10 @@ func ModifyTeamAdmin(action int, arg ManagerModifyTeamAdminArg, reply *ManagerMo
 	if !TeamExists(arg.Team, &arg.ManagerAuthArg) {
 		return errors.New("Team Does Not Exist")
 	}
-
+	userOuStr := GetUserOuString(arg.User, &arg.ManagerAuthArg)
 	var modDNs []string = []string{aldap.TeamCommonName + "=" + arg.Team + "," + aldap.TeamOu}
 	var Attrs []string = []string{aldap.TeamAdminAttr}
-	var vals []string = []string{aldap.UserCommonName + "=" + arg.User + "," + aldap.UserOu}
+	var vals []string = []string{aldap.UserCommonName + "=" + arg.User + "," + userOuStr}
 	modReq := ldap.NewModifyRequest(modDNs[0])
 	mod := ldap.NewMod(uint8(action), Attrs[0], vals)
 	modReq.AddMod(mod)
@@ -403,9 +407,28 @@ func ModifyTeamMember(action int, arg ManagerTeamMemberArg, reply *ManagerTeamMe
 	if !TeamExists(arg.Team, &arg.ManagerAuthArg) {
 		return errors.New("Team Does Not Exist")
 	}
+	
 	var modDNs []string = []string{aldap.TeamCommonName + "=" + arg.Team + "," + aldap.TeamOu}
 	var Attrs []string = []string{aldap.UsernameAttr}
-	var vals []string = []string{aldap.UserCommonName + "=" + arg.User + "," + aldap.UserOu}
+
+	var vals []string
+	var userType int
+	if action != ldap.ModAdd {
+		userType, err := GetUserType(arg.User, arg.ManagerAuthArg) 
+		if err != nil {
+			return err			
+		}
+	} else {
+		userType = arg.UserType
+	}
+
+	//check if user type is RoleUser, if not just default to using Human
+	if userType == aldap.UserTypeRole {
+		vals = []string{aldap.UserCommonName + "=" + arg.User + "," + aldap.RoleUserOu}			
+	} else {
+		vals = []string{aldap.UserCommonName + "=" + arg.User + "," + aldap.UserOu}
+	}
+
 	modReq := ldap.NewModifyRequest(modDNs[0])
 	mod := ldap.NewMod(uint8(action), Attrs[0], vals)
 	modReq.AddMod(mod)
@@ -791,8 +814,13 @@ func (e *ListAllowedAppsExecutor) Authorize() error {
 
 func GetAllowedApps(auth *ManagerAuthArg, user string) map[string]bool {
 	result := map[string]bool{}
+	userOuStr, err := GetUserOuString(user, auth)
+	if err != nil {
+		return err
+	}
+
 	filterStr := "(&(objectClass=" + aldap.TeamClass + ")(" + aldap.UsernameAttr + "=" + aldap.UserCommonName + "=" + user +
-		"," + aldap.UserOu + "))"
+		"," + userOuStr + "))"
 	sr, err := NewSearchReq(filterStr, []string{aldap.TeamCommonName}, auth)
 	if err != nil {
 		return result
@@ -878,7 +906,12 @@ func (e *IsTeamAdminExecutor) Execute(t *Task) error {
 		e.reply.IsAdmin = false
 		return errors.New("Could not list team admin attribute")
 	}
-	e.reply.IsAdmin = ProcessTeamAdmin(aldap.UserCommonName+"="+e.arg.User+","+aldap.UserOu, sr)
+
+	userOuStr, err := GetUserOuString(e.arg.User, e.arg.ManagerAuthArg)
+	if err != nil {
+		return err
+	}
+	e.reply.IsAdmin = ProcessTeamAdmin(aldap.UserCommonName+"="+e.arg.User+","+ userOuStr, sr)
 	return nil
 }
 
@@ -924,7 +957,13 @@ func (e *IsSuperUserExecutor) Execute(t *Task) error {
 		e.reply.IsSuperUser = false
 		return nil
 	}
-	filterStr := "(&(objectClass=" + aldap.TeamClass + ")(" + aldap.SuperUserGroup + ")(" + aldap.UsernameAttr + "=" + aldap.UserCommonName + "=" + e.arg.User + "," + aldap.UserOu + "))"
+
+	userOuStr, err := GetUserOuString(e.arg.User, e.arg.ManagerAuthArg)
+	if err != nil {
+		return err
+	}
+
+	filterStr := "(&(objectClass=" + aldap.TeamClass + ")(" + aldap.SuperUserGroup + ")(" + aldap.UsernameAttr + "=" + aldap.UserCommonName + "=" + e.arg.User + "," + userOuStr + "))"
 	sr, err := NewSearchReq(filterStr, []string{aldap.TeamCommonName}, &e.arg.ManagerAuthArg)
 	if err != nil {
 		return err
@@ -1057,8 +1096,52 @@ func EmailExists(email string, team string, auth *ManagerAuthArg) bool {
 	return true
 }
 
+func GetUserType(name string, auth *ManagerAuthArg) (int, error) {
+
+	filterStr := "(&(objectClass=" + aldap.UserClass + ")(" + aldap.UserClass + "=" + name + ")(" + aldap.RoleUserOu + "))"
+	sr, err := NewSearchReq(filterStr, []string{aldap.UserClassAttr}, auth)
+	if err != nil {
+		return -1, err
+	}
+
+	//For now if the user is a Role user return Role user otherwise they are considered Human
+	//TODO: if a new usertype is added this will have to be made generic. For simplicity I did
+	//	it this way for now.
+	if len(sr.Entries) > 0 {
+		return aldap.UserTypeRole, nil
+	}
+
+	return aldap.UserTypeHuman, nil
+
+}
+
+func GetUserOuString(name string, auth *ManagerAuthArg) (string, error) {
+
+	uType, err := GetUserType(name, auth)
+	if err != nil {
+		return err
+	}
+
+	switch uType {
+
+		case aldap.UserTypeRole:
+			return aldap.RoleUserOu
+		case aldap.UserTypeHuman:
+			return aldap.UserOu
+		default:
+			//default to return human for now
+			return aldap.UserOu
+	}	
+}
+
 func ExtractUsername(fullname string) string {
-	return strings.Replace(strings.Replace(fullname, ","+aldap.UserOu, "", 1), aldap.UserCommonName+"=", "", 1)
+	//TODO: kind of hack-y fix as well, defeats the purpose
+	//	of attempting to make things generic but it needs a refactor  
+	if strings.Contains(fullname, aldap.RoleUserOu) {
+		return strings.Replace(strings.Replace(fullname, ","+aldap.RoleUserOu, "", 1), aldap.UserCommonName+"=", "", 1)
+	} else {
+		return strings.Replace(strings.Replace(fullname, ","+aldap.UserOu, "", 1), aldap.UserCommonName+"=", "", 1)
+	}
 }
 
 // ----------------------------------------------------------------------------------------------------------
