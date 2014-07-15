@@ -382,7 +382,7 @@ func (m *ManagerRPC) DeployResult(id string, result *ManagerDeployReply) error {
 	if status.Status == StatusUnknown {
 		return errors.New("Unknown ID.")
 	}
-	if status.Name != "Deploy"  && status.Name != "CopyContainer" {
+	if status.Name != "Deploy" && status.Name != "CopyContainer" {
 		return errors.New("ID is not a Deploy.")
 	}
 	if !status.Done {
