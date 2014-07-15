@@ -78,10 +78,35 @@ type Manager struct {
 	Roles            map[string]map[string]bool
 }
 
+type SupervisorUsage struct {
+	Host            string
+	UsedContainers  uint
+	UsedCPUShares   uint
+	UsedMemory      uint
+	UsedCPUPrice    float64
+	UsedMemPrice    float64
+	TotalContainers uint
+	TotalCPUShares  uint
+	TotalMemory     uint
+	TotalPrice      float64
+	Containers      map[string]*ContainerUsage
+}
+
+type ContainerUsage struct {
+	ID        string
+	App       string
+	Sha       string
+	Env       string
+	CPUShares uint
+	Memory    uint
+	CPUPrice  float64
+	MemPrice  float64
+}
+
 // Manager RPC Types
 
 // ------------ Health Check ------------
-// Used to check the health and stats of Manager
+// Used to check the health of Manager
 type ManagerHealthCheckArg struct {
 }
 
@@ -89,6 +114,16 @@ type ManagerHealthCheckReply struct {
 	Region string
 	Zone   string
 	Status string
+}
+
+// ------------ Usage ------------
+// Used to check the usage stats of Manager
+type ManagerUsageArg struct {
+	ManagerAuthArg
+}
+
+type ManagerUsageReply struct {
+	Usage map[string]*SupervisorUsage
 }
 
 // ------------ Register Supervisor ------------

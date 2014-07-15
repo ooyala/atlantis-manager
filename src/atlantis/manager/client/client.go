@@ -213,8 +213,9 @@ func New() *ManagerClient {
 
 	// Manager Management
 	o.AddCommand("login", "login to the system", "", &LoginCommand{})
-	o.AddCommand("version", "check manager' client and server versions", "", &VersionCommand{})
-	o.AddCommand("health", "check manager' health", "", &HealthCommand{})
+	o.AddCommand("version", "check manager client and server versions", "", &VersionCommand{})
+	o.AddCommand("health", "check manager health", "", &HealthCommand{})
+	o.AddCommand("usage", "check manager usage stats", "", &UsageCommand{})
 	o.AddCommand("idle", "check if manager is idle", "", &IdleCommand{})
 	o.AddCommand("register-manager", "[async] register an manager", "", &RegisterManagerCommand{})
 	o.AddCommand("unregister-manager", "[async] unregister an manager", "", &UnregisterManagerCommand{})
