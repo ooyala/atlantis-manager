@@ -15,7 +15,13 @@ import (
 	"atlantis/manager/datamodel"
 	. "atlantis/manager/rpc/types"
 	"atlantis/manager/supervisor"
+	"strconv"
 )
+
+func toPrice(price float64) float64 {
+	p, _ := strconv.ParseFloat(strconv.FormatFloat(price, 'f', 2, 64), 64)
+	return p
+}
 
 func GetUsage() (map[string]*SupervisorUsage, error) {
 	// for each supervisor
@@ -65,15 +71,15 @@ func GetUsage() (map[string]*SupervisorUsage, error) {
 				Env:       cont.Env,
 				CPUShares: cont.Manifest.CPUShares,
 				Memory:    cont.Manifest.MemoryLimit,
-				CPUPrice:  c,
-				MemPrice:  m,
+				CPUPrice:  toPrice(c),
+				MemPrice:  toPrice(m),
 			}
 		}
 		usage.UsedContainers = conts
 		usage.UsedCPUShares = cpu
 		usage.UsedMemory = mem
-		usage.UsedCPUPrice = cpu_price
-		usage.UsedMemPrice = mem_price
+		usage.UsedCPUPrice = toPrice(cpu_price)
+		usage.UsedMemPrice = toPrice(mem_price)
 		usageMap[super] = usage
 	}
 	return usageMap, nil
