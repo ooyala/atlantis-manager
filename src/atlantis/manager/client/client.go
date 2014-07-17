@@ -24,14 +24,21 @@ import (
 )
 
 func Log(format string, args ...interface{}) {
-	logger := log.New(os.Stdout, "", 0)
 	if !IsJson() && !clientOpts.Quiet {
-		logger.Printf(format, args...)
+		//the standard logger which log.Printf uses
+		//defaults to stderr, set out to stdout before
+		//printing
+		log.SetOutput(os.Stdout)
+		log.Printf(format, args...)
 	}
 }
 
 func Fatal(format string, args ...interface{}) {
 	if !IsJson() && !clientOpts.Quiet {
+		//the Log function above changes where the
+		//standard logger prints to, thus reset it
+		//to stderr before calling fatal
+		log.SetOutput(os.Stderr)
 		log.Fatalf(format, args...)
 	}
 }
