@@ -417,6 +417,12 @@ func ModifyTeamMember(action int, arg ManagerTeamMemberArg, reply *ManagerTeamMe
 			return err			
 		}
 	} else {
+
+		//if the user type is not set
+		//default to human for now
+		if arg.UserType == "" {
+			arg.UserType = "human"
+		}
 		uTypeInt, err := GetUserTypeFromParam(arg.UserType) 
 		if err != nil{
 			return err

@@ -263,7 +263,7 @@ func (c *ListTeamAppsCommand) Execute(args []string) error {
 type AddTeamMemberCommand struct {
 	User string `short:"u" long:"user" description:"the name of the user"`
 	Team string `short:"t" long:"team" description:"the name of the team"`
-	UserType string `short:"o" long:"user-type" description:"the type of user to add (human or role-user)"`
+	UserType string `short:"o" long:"user-type" description:"the type of user to add (human or role)"`
 }
 
 func (c *AddTeamMemberCommand) Execute(args []string) error {
