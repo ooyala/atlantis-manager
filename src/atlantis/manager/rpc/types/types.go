@@ -891,7 +891,6 @@ type ManagerTeamMemberArg struct {
 	ManagerAuthArg
 	Team string
 	User string
-	UserType string 
 }
 
 type ManagerTeamMemberReply struct {

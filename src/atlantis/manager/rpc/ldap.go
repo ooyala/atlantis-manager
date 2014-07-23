@@ -54,7 +54,10 @@ func (e *CreateTeamExecutor) Execute(t *Task) error {
 	}
 
 	var addDNs []string = []string{aldap.TeamCommonName + "=" + e.arg.Team + "," + aldap.TeamOu}
-	userOuStr := GetUserOuString()
+	userOuStr, err := LookupUserOu(e.arg.User, e.arg.ManagerAuthArg)
+	if err != nil {
+		return err
+	}
 	
 	var Attrs []ldap.EntryAttribute = []ldap.EntryAttribute{
 		ldap.EntryAttribute{
@@ -315,7 +318,10 @@ func ModifyTeamAdmin(action int, arg ManagerModifyTeamAdminArg, reply *ManagerMo
 	if !TeamExists(arg.Team, &arg.ManagerAuthArg) {
 		return errors.New("Team Does Not Exist")
 	}
-	userOuStr := GetUserOuString()
+	userOuStr, err := LookupUserOu(arg.User, arg.ManagerAuthArg) 
+	if err != nil {
+		return err
+	}
 	var modDNs []string = []string{aldap.TeamCommonName + "=" + arg.Team + "," + aldap.TeamOu}
 	var Attrs []string = []string{aldap.TeamAdminAttr}
 	var vals []string = []string{aldap.UserCommonName + "=" + arg.User + "," + userOuStr}
@@ -408,31 +414,11 @@ func ModifyTeamMember(action int, arg ManagerTeamMemberArg, reply *ManagerTeamMe
 	
 	var modDNs []string = []string{aldap.TeamCommonName + "=" + arg.Team + "," + aldap.TeamOu}
 	var Attrs []string = []string{aldap.UsernameAttr}
-
-	var userOu string 
-	if action != ldap.ModAdd {
-		//if not adding user then user already exists, go get their userou
-		userOu, err := LookupUserOu(arg.User, arg.ManagerAuthArg) 
-		if err != nil {
-			return err			
-		}
-	} else {
-
-		//if the user type is not set
-		//default to human for now
-		if arg.UserType == "" {
-			arg.UserType = "human"
-		}
-		uTypeInt, err := GetUserTypeFromParam(arg.UserType) 
-		if err != nil{
-			return err
-		}
-		userOuStr, err = GetUserOuStringFromUserType(uTypeInt)
-		if err != nil{
-			return err
-		}
-	}
-
+	
+	userOuStr, err = LookupUserOu(arg.User, arg.ManagerAuthArg)
+	if err != nil {
+		return err
+	}		
 	var vals = []string{aldap.UserCommonName + "=" + arg.User + "," + userOuStr}			
 
 	modReq := ldap.NewModifyRequest(modDNs[0])
@@ -820,7 +806,7 @@ func (e *ListAllowedAppsExecutor) Authorize() error {
 
 func GetAllowedApps(auth *ManagerAuthArg, user string) map[string]bool {
 	result := map[string]bool{}
-	userOuStr := GetUserOuString()
+	userOuStr, err := LookupUserOu(user, auth) 
 	if err != nil {
 		return err
 	}
@@ -913,12 +899,19 @@ func (e *IsTeamAdminExecutor) Execute(t *Task) error {
 		return errors.New("Could not list team admin attribute")
 	}
 
-	userOuStr := GetUserOuString()
+	userOuStr, err := LookupUserOu(e.arg.User, e.arg.ManagerAuthArg) 
+	if err != nil {
+		return err
+	}
 	
 	e.reply.IsAdmin = ProcessTeamAdmin(aldap.UserCommonName+"="+e.arg.User+","+ userOuStr, sr)
 	return nil
 }
 
+
+//TODO: could possibly cause problems. If an existing role-user has been made
+//  	a member of the team and then an admin, this admin check will fail for
+//
 func ProcessTeamAdmin(userdn string, sr *ldap.SearchResult) bool {
 	srTeamAdmin := sr.Entries[0].GetAttributeValues(aldap.TeamAdminAttr)
 	teamAdminCount := len(srTeamAdmin)
@@ -962,7 +955,10 @@ func (e *IsSuperUserExecutor) Execute(t *Task) error {
 		return nil
 	}
 
-	userOuStr := GetUserOuString()
+	userOuStr, err := LookupUserOu(e.arg.User, e.arg.ManagerAuthArg) 
+	if err != nil {
+		return err
+	}
 
 	filterStr := "(&(objectClass=" + aldap.TeamClass + ")(" + aldap.SuperUserGroup + ")(" + aldap.UsernameAttr + "=" + aldap.UserCommonName + "=" + e.arg.User + "," + userOuStr + "))"
 	sr, err := NewSearchReq(filterStr, []string{aldap.TeamCommonName}, &e.arg.ManagerAuthArg)
@@ -1099,20 +1095,30 @@ func EmailExists(email string, team string, auth *ManagerAuthArg) bool {
 
 func GetUserType(name string, auth *ManagerAuthArg) (int, error) {
 
-	filterStr := "(&(objectClass=" + aldap.UserClass + ")(" + aldap.UserClass + "=" + name + ")(" + aldap.RoleUserOu + "))"
+	filterStr := "(&(objectClass=" + aldap.UserClass + ")(" + aldap.UserClassAttr + "=" + name + "))"
 	sr, err := NewSearchReq(filterStr, []string{aldap.UserClassAttr}, auth)
 	if err != nil {
 		return -1, err
 	}
 
-	//For now if the user is a Role user return Role user otherwise they are considered Human
-	//TODO: if a new usertype is added this will have to be made generic. For simplicity I did
-	//	it this way for now.
-	if len(sr.Entries) > 0 {
-		return aldap.UserTypeRole, nil
+	//User doesn't exist throw error
+	if len(sr.Entries) < 1 {
+		return -1, errors.New("User: " + name + ", does not exist. Cannot get user type") 
+	}else if len(sr.Entries) > 1 {
+		return -1, errors.New("Multiple entries returned for user: " + name + ", cannot distinguish")
 	}
 
-	return aldap.UserTypeHuman, nil
+	fullDn := sr.Entries[0].DN
+
+	switch {
+		case strings.Contains(fullDn, alap.UserOuVal):
+			return aldap.UserTypeHuman, nil
+		case strings.Contains(fullDn, aldap.RoleUserOuVal): 
+			return aldap.UserTypeRole, nil
+	}
+
+	return -1, errors.New("User: " + fullDn + " does not have a recognizable user type.")
+
 
 }
 
@@ -1140,32 +1146,6 @@ func GetUserOuStringFromUserType(userType int) (string, error){
 
 	return nil, errors.New("Could not convert UserType int to Ou String.")
 }
-
-func GetUserTypeFromParam(userTypeStrParm string) (int, error){
-
-	switch userTypeStrParm {
-		
-		case "human":
-			return aldap.UserTypeHuman, nil
-		case "role":
-			return aldap.UserTypeRole, nil
-	}
-	
-	return (nil, errors.New("Could not parse UserType param: " + userTypeStrParm))	
-
-}
-
-
-//This function is kind of hacky, just combines the two types of Ou strings into
-//one OR'd string. Now that there are two different userou strings and since for
-//almost all of the commands we do not know the user's ou or we want to include 
-//all users from both ou's we do it this way. I figured I would do it this way
-//in case in the future we can change this functions implementation to do it better
-func GetUserOuString() string {
-
-	return "(|(" + aldap.UserOu + ")(" + aldap.RoleUserOu + "))"
-}
-
 
 func ExtractUsername(fullname string) string {
 	//TODO: kind of hack-y fix as well, defeats the purpose
