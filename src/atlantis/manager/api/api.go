@@ -170,7 +170,7 @@ func Init(listenAddr string) error {
 	gmux.HandleFunc("/teams/{Team}/emails/{Email}", AddTeamEmail).Methods("PUT")
 	gmux.HandleFunc("/teams/{Team}/emails/{Email}", RemoveTeamEmail).Methods("DELETE")
 	gmux.HandleFunc("/teams/{Team}/members", ListTeamMembers).Methods("GET")
-	gmux.HandleFunc("/teams/{Team}/members/{Member}/userType/{UserType}", AddTeamMember).Methods("PUT")
+	gmux.HandleFunc("/teams/{Team}/members/{Member}", AddTeamMember).Methods("PUT")
 	gmux.HandleFunc("/teams/{Team}/members/{Member}", RemoveTeamMember).Methods("DELETE")
 	gmux.HandleFunc("/teams/{Team}", CreateTeam).Methods("PUT")
 	gmux.HandleFunc("/teams/{Team}", DeleteTeam).Methods("DELETE")

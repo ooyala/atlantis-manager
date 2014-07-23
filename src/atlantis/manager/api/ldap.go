@@ -112,7 +112,7 @@ func ListTeamMembers(w http.ResponseWriter, r *http.Request) {
 func AddTeamMember(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
-	arg := ManagerTeamMemberArg{auth, vars["Team"], vars["Member"], vars["UserType"]}
+	arg := ManagerTeamMemberArg{auth, vars["Team"], vars["Member"]}
 	var reply ManagerTeamMemberReply
 	err := manager.AddTeamMember(arg, &reply)
 	fmt.Fprintf(w, "%s", Output(map[string]interface{}{}, err))
@@ -121,8 +121,7 @@ func AddTeamMember(w http.ResponseWriter, r *http.Request) {
 func RemoveTeamMember(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
-	//TODO: last param below
-	arg := ManagerTeamMemberArg{auth, vars["Team"], vars["Member"], ""}
+	arg := ManagerTeamMemberArg{auth, vars["Team"], vars["Member"]}
 	var reply ManagerTeamMemberReply
 	err := manager.RemoveTeamMember(arg, &reply)
 	fmt.Fprintf(w, "%s", Output(map[string]interface{}{}, err))

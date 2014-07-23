@@ -43,6 +43,8 @@ var (
 	TeamClass            string
 	UserOu               string
 	RoleUserOu	     string
+	UserOuVal	     string
+	RoleUserOuVal	     string
 	TeamOu               string
 	UserCommonName       string
 	TeamCommonName       string

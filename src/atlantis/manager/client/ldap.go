@@ -263,11 +263,10 @@ func (c *ListTeamAppsCommand) Execute(args []string) error {
 type AddTeamMemberCommand struct {
 	User string `short:"u" long:"user" description:"the name of the user"`
 	Team string `short:"t" long:"team" description:"the name of the team"`
-	UserType string `short:"o" long:"user-type" description:"the type of user to add (human or role)"`
 }
 
 func (c *AddTeamMemberCommand) Execute(args []string) error {
-	if err := ModifyTeamMember("AddTeamMember", c.Team, c.User, c.UserType); err != nil {
+	if err := ModifyTeamMember("AddTeamMember", c.Team, c.User); err != nil {
 		return OutputError(err)
 	}
 	Log(c.User + " added to team : " + c.Team)
@@ -281,15 +280,14 @@ type RemoveTeamMemberCommand struct {
 }
 
 func (c *RemoveTeamMemberCommand) Execute(args []string) error {
-	//TODO: fix last param
-	if err := ModifyTeamMember("RemoveTeamMember", c.Team, c.User, ""); err != nil {
+	if err := ModifyTeamMember("RemoveTeamMember", c.Team, c.User); err != nil {
 		return OutputError(err)
 	}
 	Log(c.User + " removed to team : " + c.Team)
 	return OutputEmpty()
 }
 
-func ModifyTeamMember(action, team, user, userType string) error {
+func ModifyTeamMember(action, team, user string) error {
 	if err := Init(); err != nil {
 		return err
 	}
@@ -308,7 +306,7 @@ func ModifyTeamMember(action, team, user, userType string) error {
 		return errors.New("Missing User/Team Arguments")
 	}
 	auth := ManagerAuthArg{cuser, "", secret}
-	arg := ManagerTeamMemberArg{auth, team, user, userType}
+	arg := ManagerTeamMemberArg{auth, team, user}
 	var reply ManagerTeamMemberReply
 	if err := rpcClient.Call(action, arg, &reply); err != nil {
 		return err
