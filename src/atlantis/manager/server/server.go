@@ -48,7 +48,6 @@ type ServerConfig struct {
 	MemoryLimitIncrement       uint   `toml:"memory_limit_increment"`
 	ResultDuration             string `toml:"result_duration"`
 	LdapUserSearchBase         string `toml:"ldap_user_search_base"`
-	LdapRoleUserSearchBase	   string `toml:"ldap_role_user_search_base"`
 	LdapTeamSearchBase         string `toml:"ldap_team_search_base"`
 	LdapUsernameAttr           string `toml:"ldap_username_attr"`
 	LdapAppClass               string `toml:"ldap_app_class"`
@@ -302,13 +301,6 @@ func (m *ManagerServer) LDAPInit() error {
 		}
 	}
 	ldap.UserOu = m.Config.LdapUserSearchBase
-	ldap.RoleUserOu = m.Config.LdapRoleUserSearchBase
-	/*
-	//TODO: either send these in via the cookbook or change the existing to be 
-	// what they are named as, then combine userou/roleuserou with basedn when needed
-	ldap.UserOuVal = strings.Split(strings.Split(ldap.UserOu, ",")[0], "=")[1]
-	ldapRoleUserOuVal = strings.Split(strings.Split(ldap.RoleUserOu, ",")[0], "=")[1]
-	*/
 	ldap.TeamOu = m.Config.LdapTeamSearchBase
 	ldap.UsernameAttr = m.Config.LdapUsernameAttr
 	ldap.TeamClass = m.Config.LdapTeamClass
