@@ -22,10 +22,12 @@ import (
 	"time"
 )
 
+/*
 const (
 	UserTypeHuman = 0 
 	UserTypeRole = 1 
 )
+*/
 
 var (
 	SessionDestroyChan   chan *Request
@@ -43,8 +45,6 @@ var (
 	TeamClass            string
 	UserOu               string
 	RoleUserOu	     string
-	UserOuVal	     string
-	RoleUserOuVal	     string
 	TeamOu               string
 	UserCommonName       string
 	TeamCommonName       string

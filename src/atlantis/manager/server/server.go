@@ -303,10 +303,12 @@ func (m *ManagerServer) LDAPInit() error {
 	}
 	ldap.UserOu = m.Config.LdapUserSearchBase
 	ldap.RoleUserOu = m.Config.LdapRoleUserSearchBase
+	/*
 	//TODO: either send these in via the cookbook or change the existing to be 
 	// what they are named as, then combine userou/roleuserou with basedn when needed
 	ldap.UserOuVal = strings.Split(strings.Split(ldap.UserOu, ",")[0], "=")[1]
 	ldapRoleUserOuVal = strings.Split(strings.Split(ldap.RoleUserOu, ",")[0], "=")[1]
+	*/
 	ldap.TeamOu = m.Config.LdapTeamSearchBase
 	ldap.UsernameAttr = m.Config.LdapUsernameAttr
 	ldap.TeamClass = m.Config.LdapTeamClass
