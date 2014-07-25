@@ -808,7 +808,7 @@ func GetAllowedApps(auth *ManagerAuthArg, user string) map[string]bool {
 	result := map[string]bool{}
 	userOuStr, err := LookupUserOu(user, auth) 
 	if err != nil {
-		return err
+		return result 
 	}
 
 	filterStr := "(&(objectClass=" + aldap.TeamClass + ")(" + aldap.UsernameAttr + "=" + aldap.UserCommonName + "=" + user +
@@ -1134,8 +1134,12 @@ func ExtractUsername(fullname string) string {
 	//get the first attribute which will be in the format
 	//aldap.UserClassAttr=username
 	fullUserStr := strings.SplitN(fullname, ",", 1)
-	name := strings.Replace(fullUserStr, aldap.UserClassAttr + "=", "", 1)
-	return name
+	if len(fullUserStr) > 0{
+		name := strings.Replace(fullUserStr[0], aldap.UserClassAttr + "=", "", 1)
+		return name
+	}
+
+	return ""
 }
 
 // ----------------------------------------------------------------------------------------------------------
