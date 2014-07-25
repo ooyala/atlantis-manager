@@ -54,7 +54,7 @@ func (e *CreateTeamExecutor) Execute(t *Task) error {
 	}
 
 	var addDNs []string = []string{aldap.TeamCommonName + "=" + e.arg.Team + "," + aldap.TeamOu}
-	userOuStr, err := LookupUserOu(e.arg.User, e.arg.ManagerAuthArg)
+	userOuStr, err := LookupUserOu(e.arg.User, &e.arg.ManagerAuthArg)
 	if err != nil {
 		return err
 	}
@@ -318,7 +318,7 @@ func ModifyTeamAdmin(action int, arg ManagerModifyTeamAdminArg, reply *ManagerMo
 	if !TeamExists(arg.Team, &arg.ManagerAuthArg) {
 		return errors.New("Team Does Not Exist")
 	}
-	userOuStr, err := LookupUserOu(arg.User, arg.ManagerAuthArg) 
+	userOuStr, err := LookupUserOu(arg.User, &arg.ManagerAuthArg) 
 	if err != nil {
 		return err
 	}
@@ -415,7 +415,7 @@ func ModifyTeamMember(action int, arg ManagerTeamMemberArg, reply *ManagerTeamMe
 	var modDNs []string = []string{aldap.TeamCommonName + "=" + arg.Team + "," + aldap.TeamOu}
 	var Attrs []string = []string{aldap.UsernameAttr}
 	
-	userOuStr, err = LookupUserOu(arg.User, arg.ManagerAuthArg)
+	userOuStr, err := LookupUserOu(arg.User, &arg.ManagerAuthArg)
 	if err != nil {
 		return err
 	}		
@@ -899,7 +899,7 @@ func (e *IsTeamAdminExecutor) Execute(t *Task) error {
 		return errors.New("Could not list team admin attribute")
 	}
 
-	userOuStr, err := LookupUserOu(e.arg.User, e.arg.ManagerAuthArg) 
+	userOuStr, err := LookupUserOu(e.arg.User, &e.arg.ManagerAuthArg) 
 	if err != nil {
 		return err
 	}
@@ -955,7 +955,7 @@ func (e *IsSuperUserExecutor) Execute(t *Task) error {
 		return nil
 	}
 
-	userOuStr, err := LookupUserOu(e.arg.User, e.arg.ManagerAuthArg) 
+	userOuStr, err := LookupUserOu(e.arg.User, &e.arg.ManagerAuthArg) 
 	if err != nil {
 		return err
 	}
@@ -1093,68 +1093,49 @@ func EmailExists(email string, team string, auth *ManagerAuthArg) bool {
 	return true
 }
 
-func GetUserType(name string, auth *ManagerAuthArg) (int, error) {
+func LookupUserOu(name string, auth *ManagerAuthArg) (string, error) {
 
 	filterStr := "(&(objectClass=" + aldap.UserClass + ")(" + aldap.UserClassAttr + "=" + name + "))"
 	sr, err := NewSearchReq(filterStr, []string{aldap.UserClassAttr}, auth)
 	if err != nil {
-		return -1, err
+		return "", err
 	}
 
 	//User doesn't exist throw error
 	if len(sr.Entries) < 1 {
-		return -1, errors.New("User: " + name + ", does not exist. Cannot get user type") 
+		return "", errors.New("User: " + name + ", does not exist. Cannot get user type") 
 	}else if len(sr.Entries) > 1 {
-		return -1, errors.New("Multiple entries returned for user: " + name + ", cannot distinguish")
+		return "", errors.New("Multiple entries returned for user: " + name + ", cannot distinguish")
 	}
 
 	fullDn := sr.Entries[0].DN
-
-	switch {
-		case strings.Contains(fullDn, alap.UserOuVal):
-			return aldap.UserTypeHuman, nil
-		case strings.Contains(fullDn, aldap.RoleUserOuVal): 
-			return aldap.UserTypeRole, nil
-	}
-
-	return -1, errors.New("User: " + fullDn + " does not have a recognizable user type.")
-
-
-}
-
-func LookupUserOu(name string, auth *ManagerAuthArg) (string, error) {
-
-	uType, err := GetUserType(name, auth)
-	if err != nil {
-		return nil, err
-	}
-
-	return GetUserOuStringFromUserType(uType)
 	
-		
-}
+	fullOuDnStr := strings.Replace(fullDn, aldap.UserClassAttr + "=" + name + ",", "", 1)
 
-func GetUserOuStringFromUserType(userType int) (string, error){
-
-	switch userType {
-
-		case aldap.UserTypeRole:
-			return aldap.RoleUserOu, nil
-		case aldap.UserTypeHuman:
-			return aldap.UserOu, nil
+	//Make sure the OuDn is not empty, also sanity check to be sure it is the base domain
+	if len(fullOuDnStr) < 0 || !strings.Contains(fullOuDnStr, aldap.BaseDomain) {
+		return "", errors.New("User: " + name + " cannot be found or is not in the right domain")
+	}
+	
+	//Make sure the account is not apart of any retired OU's
+	if strings.Contains(fullOuDnStr, "retired"){
+		return "", errors.New("User: " + fullDn + " is retired, cannot use")
 	}
 
-	return nil, errors.New("Could not convert UserType int to Ou String.")
+	//otherwise return the OUDn str
+	return fullOuDnStr, nil
+
+
 }
+
 
 func ExtractUsername(fullname string) string {
-	//TODO: kind of hack-y fix as well, defeats the purpose
-	//	of attempting to make things generic but it needs a refactor  
-	if strings.Contains(fullname, aldap.RoleUserOu) {
-		return strings.Replace(strings.Replace(fullname, ","+aldap.RoleUserOu, "", 1), aldap.UserCommonName+"=", "", 1)
-	} else {
-		return strings.Replace(strings.Replace(fullname, ","+aldap.UserOu, "", 1), aldap.UserCommonName+"=", "", 1)
-	}
+
+	//get the first attribute which will be in the format
+	//aldap.UserClassAttr=username
+	fullUserStr := strings.SplitN(fullname, ",", 1)
+	name := strings.Replace(fullUserStr, aldap.UserClassAttr + "=", "", 1)
+	return name
 }
 
 // ----------------------------------------------------------------------------------------------------------
