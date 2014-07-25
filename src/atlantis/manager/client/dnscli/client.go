@@ -32,7 +32,7 @@ func Log(format string, args ...interface{}) {
 func Fatal(format string, args ...interface{}) {
 	if !IsJson() && !clientOpts.Quiet {
 		//Reset out to stderr in case the Log func
-		//above has changed it to stderr	
+		//above has changed it to stderr
 		log.SetOutput(os.Stderr)
 		log.Fatalf(format, args...)
 	}

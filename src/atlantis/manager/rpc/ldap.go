@@ -879,7 +879,6 @@ func (e *IsTeamAdminExecutor) Execute(t *Task) error {
 	return nil
 }
 
-
 //TODO: could possibly cause problems. If an existing role-user has been made
 //  	a member of the team and then an admin, this admin check will fail for
 //
