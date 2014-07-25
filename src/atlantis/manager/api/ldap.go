@@ -128,7 +128,6 @@ func RemoveTeamMember(w http.ResponseWriter, r *http.Request) {
 }
 
 func AddTeamEmail(w http.ResponseWriter, r *http.Request) {
-	tstart := time.Now()
 	vars := mux.Vars(r)
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
 	arg := ManagerEmailArg{auth, vars["Team"], vars["Email"]}

@@ -313,6 +313,7 @@ func ModifyTeamAdmin(action int, arg ManagerModifyTeamAdminArg, reply *ManagerMo
 	if !TeamExists(arg.Team, &arg.ManagerAuthArg) {
 		return errors.New("Team Does Not Exist")
 	}
+
 	var modDNs []string = []string{aldap.TeamCommonName + "=" + arg.Team + "," + aldap.TeamOu}
 	var Attrs []string = []string{aldap.TeamAdminAttr}
 	var vals []string = []string{aldap.UserCommonName + "=" + arg.User + "," + aldap.UserOu}
@@ -404,6 +405,7 @@ func ModifyTeamMember(action int, arg ManagerTeamMemberArg, reply *ManagerTeamMe
 	}
 	var modDNs []string = []string{aldap.TeamCommonName + "=" + arg.Team + "," + aldap.TeamOu}
 	var Attrs []string = []string{aldap.UsernameAttr}
+	var vals []string = []string{aldap.UserCommonName + "=" + arg.User + "," + aldap.UserOu}
 	modReq := ldap.NewModifyRequest(modDNs[0])
 	mod := ldap.NewMod(uint8(action), Attrs[0], vals)
 	modReq.AddMod(mod)
@@ -876,12 +878,10 @@ func (e *IsTeamAdminExecutor) Execute(t *Task) error {
 		e.reply.IsAdmin = false
 		return errors.New("Could not list team admin attribute")
 	}
+	e.reply.IsAdmin = ProcessTeamAdmin(aldap.UserCommonName+"="+e.arg.User+","+aldap.UserOu, sr)
 	return nil
 }
 
-//TODO: could possibly cause problems. If an existing role-user has been made
-//  	a member of the team and then an admin, this admin check will fail for
-//
 func ProcessTeamAdmin(userdn string, sr *ldap.SearchResult) bool {
 	srTeamAdmin := sr.Entries[0].GetAttributeValues(aldap.TeamAdminAttr)
 	teamAdminCount := len(srTeamAdmin)
@@ -924,6 +924,7 @@ func (e *IsSuperUserExecutor) Execute(t *Task) error {
 		e.reply.IsSuperUser = false
 		return nil
 	}
+	filterStr := "(&(objectClass=" + aldap.TeamClass + ")(" + aldap.SuperUserGroup + ")(" + aldap.UsernameAttr + "=" + aldap.UserCommonName + "=" + e.arg.User + "," + aldap.UserOu + "))"
 	sr, err := NewSearchReq(filterStr, []string{aldap.TeamCommonName}, &e.arg.ManagerAuthArg)
 	if err != nil {
 		return err
