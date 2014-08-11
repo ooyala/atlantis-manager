@@ -30,9 +30,12 @@ import (
 
 type RequestAppDependencyTemplate struct {
 	App          string
+	AppTeam      string
 	Dependency   string
+	DepTeam      string
 	Envs         string
 	ManagerCName string
+	User         string
 }
 
 type RequestAppDependencyExecutor struct {
@@ -101,14 +104,19 @@ func (e *RequestAppDependencyExecutor) Execute(t *Task) error {
 		return errors.New(fmt.Sprintf("Your app already has access to the dependency %s in envs %v",
 			e.arg.Dependency, e.arg.Envs))
 	}
+
 	// load template, format body, and set up subject
-	subject := fmt.Sprintf("[Atlantis] '%s' is requesting your app '%s' as a dependency in envs %s", e.arg.App,
+	subject := fmt.Sprintf("[Atlantis] '%s' is requesting '%s' as a dependency in envs %s", e.arg.App,
 		e.arg.Dependency, strings.Join(e.arg.Envs, ","))
 
 	tmpl := template.Must(template.New("request_dependency").Parse(`
-The app '{{.App}}' is requesting that you add it as a depender of your app '{{.Dependency}}' in the the environments '{{.Envs}}'.
+{{.DepTeam}},
+
+{{.User}} has requested that you add '{{.App}}' as a depender of your app '{{.Dependency}}' in the the environment(s) '{{.Envs}}'.
 
 Please visit this page to do so: https://{{.ManagerCName}}/static/dashboard/#addAppDepender/{{.Dependency}}/{{.App}}/{{.Envs}}
+
+If you wish to discuss this dependency, {{.AppTeam}} is included in this thread for your convenience.
 `))
 	myself, err := datamodel.GetManager(Region, Host)
 	if err != nil {
@@ -117,9 +125,12 @@ Please visit this page to do so: https://{{.ManagerCName}}/static/dashboard/#add
 	buf := bytes.NewBuffer([]byte{})
 	tmpl.Execute(buf, RequestAppDependencyTemplate{
 		App:          e.arg.App,
+		AppTeam:      strings.SplitN(zkApp.Email, "@", 2)[0],
 		Dependency:   e.arg.Dependency,
+		DepTeam:      strings.SplitN(zkDep.Email, "@", 2)[0],
 		Envs:         strings.Join(e.arg.Envs, ","),
 		ManagerCName: myself.ManagerCName,
+		User:         e.arg.ManagerAuthArg.User,
 	})
 	// send email requesting dependency
 	if err := smtp.SendMail([]string{zkDep.Email, zkApp.Email}, subject, buf.String()); err != nil {
