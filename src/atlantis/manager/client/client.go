@@ -381,8 +381,8 @@ func overlayConfig() {
 	if clientOpts.Config != "" {
 		_, err := toml.DecodeFile(clientOpts.Config, cfg)
 		if err != nil {
-			Log(err.Error())
-			// no need to panic here. we have reasonable defaults.
+			fmt.Print("Error parsing config file " + clientOpts.Config + ":\n" + err.Error() + "\n")
+			os.Exit(1)
 		}
 	} else if clientOpts.Region != "" {
 		for _, path := range configDirs {
@@ -390,15 +390,16 @@ func overlayConfig() {
 			if ok, _ := exists(filename); ok {
 				_, err := toml.DecodeFile(filename, cfg)
 				if err != nil {
-					Log(err.Error())
-					// no need to panic here. we have reasonable defaults.
+					fmt.Print("Error parsing config file " + filename + ":\n" + err.Error() + "\n")
+					os.Exit(1)
 				}
 				configFileFound = true
 				break
 			}
 		}
 		if !configFileFound {
-			Log("could not find config file for " + clientOpts.Region + ". using defaults.")
+			fmt.Print("Error: could not find config file for " + clientOpts.Region + "\n")
+			os.Exit(1)
 		}
 	}
 	if clientOpts.Host != "" {
