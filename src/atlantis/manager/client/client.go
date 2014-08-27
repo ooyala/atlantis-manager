@@ -23,6 +23,13 @@ import (
 	"reflect"
 )
 
+// Directories to be searched for client configuration files.
+var configDirs = []string{
+	"/usr/local/etc/atlantis/manager/", // brew config path
+	"/etc/atlantis/manager/",           // deb package config path
+	"/opt/atlantis/manager/etc",        // just in case config path
+}
+
 func Log(format string, args ...interface{}) {
 	if !IsJson() && !clientOpts.Quiet {
 		//the standard logger which log.Printf uses
@@ -370,36 +377,29 @@ func exists(path string) (bool, error) {
 }
 
 func overlayConfig() {
+	configFileFound := false
 	if clientOpts.Config != "" {
 		_, err := toml.DecodeFile(clientOpts.Config, cfg)
 		if err != nil {
-			Log(err.Error())
-			// no need to panic here. we have reasonable defaults.
+			fmt.Print("Error parsing config file " + clientOpts.Config + ":\n" + err.Error() + "\n")
+			os.Exit(1)
 		}
 	} else if clientOpts.Region != "" {
-		if ok, _ := exists("/usr/local/etc/atlantis/manager/client." + clientOpts.Region + ".toml"); ok {
-			// brew config path
-			_, err := toml.DecodeFile("/usr/local/etc/atlantis/manager/client."+clientOpts.Region+".toml", cfg)
-			if err != nil {
-				Log(err.Error())
-				// no need to panic here. we have reasonable defaults.
+		for _, path := range configDirs {
+			filename := path + "client." + clientOpts.Region + ".toml"
+			if ok, _ := exists(filename); ok {
+				_, err := toml.DecodeFile(filename, cfg)
+				if err != nil {
+					fmt.Print("Error parsing config file " + filename + ":\n" + err.Error() + "\n")
+					os.Exit(1)
+				}
+				configFileFound = true
+				break
 			}
-		} else if ok, _ := exists("/etc/atlantis/manager/client." + clientOpts.Region + ".toml"); ok {
-			// deb package config path
-			_, err := toml.DecodeFile("/etc/atlantis/manager/client."+clientOpts.Region+".toml", cfg)
-			if err != nil {
-				Log(err.Error())
-				// no need to panic here. we have reasonable defaults.
-			}
-		} else if ok, _ := exists("/opt/atlantis/manager/etc/client." + clientOpts.Region + ".toml"); ok {
-			// just in case config path
-			_, err := toml.DecodeFile("/opt/atlantis/manager/etc/client."+clientOpts.Region+".toml", cfg)
-			if err != nil {
-				Log(err.Error())
-				// no need to panic here. we have reasonable defaults.
-			}
-		} else {
-			Log("could not find config file for " + clientOpts.Region + ". using defaults.")
+		}
+		if !configFileFound {
+			fmt.Print("Error: could not find config file for " + clientOpts.Region + "\n")
+			os.Exit(1)
 		}
 	}
 	if clientOpts.Host != "" {
