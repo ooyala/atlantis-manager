@@ -90,7 +90,7 @@ func (c *DeployContainerCommand) Execute(args []string) error {
 type CopyContainerCommand struct {
 	ContainerID string `short:"c" long:"container" description:"the id of the container to copy"`
 	ToHost      string `short:"H" long:"host" description:"the host to copy to"`
-	PostCopy    int    `short:"p" long:"post" description:"what to do after the copy. (0 = nothing, 1 = cleanup datamodel only, 2 = teardown)"`
+	PostCopy    int    `short:"p" long:"post" description:"what to do after the copy. (0 = nothing, 1 = cleanup datamodel only)"`
 	Wait        bool   `long:"wait" description:"wait until the deploy is done before exiting"`
 }
 

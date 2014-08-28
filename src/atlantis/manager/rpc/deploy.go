@@ -217,6 +217,8 @@ func (e *CopyContainerExecutor) Execute(t *Task) error {
 		}
 		cleanupZk(inst, t)
 	case PostCopyTeardown:
+		// TODO(edanaher): Fix this properly and re-enable.
+		break
 		// now time to remove the old instance
 		// get old instance
 		inst, err := datamodel.GetInstance(e.arg.ContainerID)
