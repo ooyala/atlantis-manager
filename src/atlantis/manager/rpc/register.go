@@ -601,9 +601,22 @@ func (e *UnregisterSupervisorExecutor) Execute(t *Task) error {
 	if e.arg.Host == "" {
 		return errors.New("Please specify a host to unregister")
 	}
-	// teardown containers
+	// TODO(edanaher): With appropriate confirmation (--force?), tear down containers on the host and delete
+	// metadata.  Until then, cowardly refuse to tear down supervisors with containers.
+	listResponse, err := supervisor.List(e.arg.Host)
+	if err != nil {
+		return err
+	}
+	containerCount := len(listResponse.Containers)
+	if containerCount > 0 {
+		plural := ""
+		if containerCount > 1 {
+			plural = "s"
+		}
+		return errors.New(fmt.Sprintf("Supervisor still has %d running container%s", +containerCount, plural))
+	}
 	supervisor.Teardown(e.arg.Host, []string{}, true)
-	err := datamodel.Supervisor(e.arg.Host).Delete()
+	err = datamodel.Supervisor(e.arg.Host).Delete()
 	if err != nil {
 		return err
 	}
