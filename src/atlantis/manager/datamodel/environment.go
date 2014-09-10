@@ -12,8 +12,15 @@
 package datamodel
 
 import (
+	"fmt"
 	"atlantis/manager/helper"
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/coopernurse/gorp"
 )
+
+type Enviroment struct {
+	Name string 	`db:"name"`
+}
 
 type ZkEnv struct {
 	Name string
@@ -22,6 +29,17 @@ type ZkEnv struct {
 func GetEnv(name string) (*ZkEnv, error) {
 	e := &ZkEnv{name}
 	err := e.Get()
+
+	/////////////////////// SQL /////////////////
+	obj, err := DbMap.Get(Enviroment{}, name)
+	if err != nil {
+
+	}
+	if obj == nil {
+
+	}
+	env := obj.(*Enviroment)	
+	////////////////////////////////////////////
 	return e, err
 }
 
@@ -30,6 +48,13 @@ func Env(name string) *ZkEnv {
 }
 
 func (e *ZkEnv) Save() error {
+
+	///////////////// SQL /////////////////////////	
+	env := Enviroment{e.Name}
+	DbMap.Insert(env)
+	///////////////////////////////////////////////
+
+	
 	return setJson(e.path(), e)
 }
 
@@ -40,6 +65,14 @@ func (e *ZkEnv) Delete() error {
 	if err := ReclaimRouterPortsForEnv(false, e.Name); err != nil {
 		return err
 	}
+
+	/////////////////// SQL //////////////////////
+	env := Enviroment{e.Name}
+	DbMap.Delete(env)
+	//if not
+	//DbMap.Exec("delete from enviroment where name=?", env.Name)
+	/////////////////////////////////////////////
+	
 	return Zk.RecursiveDelete(e.path())
 }
 
@@ -56,5 +89,14 @@ func ListEnvs() (envs []string, err error) {
 	if envs == nil {
 		return []string{}, err
 	}
+
+	///////////////// SQL /////////////////////
+	var envs []Enviroment
+	_, err := DbMap.Select(&envs, "select * from enviroment")
+	if err != nil {
+		//
+	}
+	//////////////////////////////////////////
+	
 	return
 }

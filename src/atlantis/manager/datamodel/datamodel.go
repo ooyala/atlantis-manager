@@ -16,9 +16,14 @@ import (
 	"atlantis/manager/helper"
 	routerzk "atlantis/router/zk"
 	zookeeper "github.com/jigish/gozk-recipes"
+	"database/sql"
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/coopernurse/gorp"
 )
 
 var Zk *zookeeper.ZkConn
+var DbConn *Db
+var DbMap *gorp.DbMap
 
 func CreateRouterPortsPaths() {
 	Zk.Touch(helper.GetBaseRouterPortsPath(true))
@@ -81,4 +86,14 @@ func CreatePaths() {
 func Init(zkUri string) {
 	Zk = zookeeper.GetPanicingZk(zkUri)
 	CreatePaths()
+
+	DbConn, _ := sql.Open("mysql", "root@/manager")
+	DbMap = &gorp.DbMap{Db: DbConn, Dialect: gorp.MySQLDialect{"InnoDB", "UTF8"}}
+
+	DbMap.AddTableWithName(Instance{}, "instance").SetKeys(false, "name") 
+	DbMap.AddTableWithName(Enviroment{}, "enviroment").SetKeys(false, "name")
+	DbMap.AddTableWithName(App{}, "apps").SetKeys(false, "name")
+
+	//should really never create tables unless fresh install
+	err := DbMap.CreateTablesIfNotExists()
 }

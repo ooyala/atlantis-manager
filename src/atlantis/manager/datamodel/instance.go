@@ -14,29 +14,57 @@ package datamodel
 import (
 	"atlantis/manager/helper"
 	"atlantis/supervisor/rpc/types"
+	"github.com/coopernurse/gorp"
 	"log"
 )
 
+type Instance struct {
+	ID       string		`db:"name"`
+	App      string		`db:"appId"`
+	Sha      string		`db:"sha"`
+	Env      string		`db:"envId"`
+	Host     string		`db:"hostId"`
+	Port     uint16		`db:"port"`
+	Manifest uint16		'db:"manifestId"`	
+}
+
 type ZkInstance struct {
-	ID       string
-	App      string
-	Sha      string
-	Env      string
-	Host     string
-	Port     uint16
-	Manifest *types.Manifest
+	ID       string		`db:"name"`
+	App      string		`db:"appId"`
+	Sha      string		`db:"sha"`
+	Env      string		`db:"envId"`
+	Host     string		`db:"hostId"`
+	Port     uint16		`db:"port"`
+	Manifest *types.Manifest	
 }
 
 func InstanceExists(id string) bool {
 	if stat, err := Zk.Exists(helper.GetBaseInstanceDataPath(id)); err == nil && stat != nil {
 		return true
 	}
+
+	///////////// SQL /////////////////////
+	obj, err := DbMap.Get(Instance{}, id)
+	if err != nil {
+		//fail	
+	}
+	if obj == nil {
+		//not found
+	}
+	//////////////////////////////////////
+
 	return false
 }
 
 func GetInstance(id string) (zi *ZkInstance, err error) {
 	zi = &ZkInstance{}
 	err = getJson(helper.GetBaseInstanceDataPath(id), zi)
+
+	////////////// SQL /////////////
+	obj, err := DbMap.Get(Instance{}, id)
+	inst := obj.(*Instance)	
+	////////////////////////////////
+	
 	return
 }
 
@@ -56,6 +84,16 @@ func CreateInstance(app, sha, env, host string) (*ZkInstance, error) {
 		Zk.RecursiveDelete(zi.dataPath())
 		return zi, err
 	}
+
+	/////////////// SQL //////////////////////////////
+
+	//TODO: manifest Id FK needs to be set
+	//eventually change methods to use Instance instead of ZkInstance also
+	inst := Instance{id, app, sha, env, host, 0, nil}		
+	DbMap.Insert(inst)
+
+
+	//////////////////////////////////////////////////
 	return zi, nil
 }
 
@@ -66,6 +104,17 @@ func (zi *ZkInstance) Delete() (bool, error) { // true if this was the last inst
 		err2 error
 		list []string
 	)
+	
+	/////////// SQL //////////////////////////
+	//TODO check to be sure this works
+	inst := Instance{}
+	inst.ID = zi.ID
+	DbMap.Delete(inst)
+	//if not
+	//_, err := DbMap.Exec("delete from instance where name=?", inst.ID)	
+	/////////////////////////////////////////
+
+
 	// try to get the data (its ok if we can't)
 	dataErr := getJson(zi.dataPath(), zi)
 	err = Zk.RecursiveDelete(zi.dataPath())
@@ -108,10 +157,22 @@ func (zi *ZkInstance) Delete() (bool, error) { // true if this was the last inst
 }
 
 func (zi *ZkInstance) SetPort(port uint16) error {
+
+	//////////////// SQL /////////////////////////
+	obj, err := DbMap.Get(Instace{}, zi.ID)
+	if err != nil {
+		//
+	}
+	inst := obj.(*Instance)
+	inst.Port = port
+	DbMap.Update(inst) 		
+	/////////////////////////////////////////////
+
 	zi.Port = port
 	return setJson(zi.dataPath(), zi)
 }
 
+//TODO: SQL manifest stuff
 func (zi *ZkInstance) SetManifest(m *types.Manifest) error {
 	zi.Manifest = m
 	return setJson(zi.dataPath(), zi)
@@ -146,6 +207,14 @@ func ListShas(app string) (shas []string, err error) {
 		log.Println("No shas found. Returning empty list.")
 		shas = []string{}
 	}
+
+	///////////////////// SQL //////////////////////////////
+        var envList []string
+        _, err := DbMap.Select(&envList, "select envId from instance where appId = :appid",
+                                map[string]interface{}{
+                                        "appid": app,
+                                })
+	//////////////////////////////////////////////////////
 	return
 }
 
@@ -158,6 +227,20 @@ func ListAppEnvs(app, sha string) (envs []string, err error) {
 		log.Println("No shas found. Returning empty list.")
 		envs = []string{}
 	}
+	
+	///////////////////// SQL //////////////////////////////
+	var envList []string
+	_, err := DbMap.Select(&envList, "select envId from instance where appId = :appid and sha = :sha", 
+				map[string]interface{}{
+					"appid": app,
+					"sha": sha,
+				})
+	if err != nil {
+
+	}
+	///////////////////////////////////////////////////////
+
+	
 	return
 }
 
@@ -170,6 +253,20 @@ func ListInstances(app, sha, env string) (instances []string, err error) {
 		log.Println("No instances found. Returning empty list.")
 		instances = []string{}
 	}
+
+	//////////////////// SQL //////////////////////////////
+	var insts []Instance
+	_, err := DbMap.Select(&insts,"select * from instance where appId = :appid and sha = :sha and env = :env",
+				map[string]interface{}{
+					"appid": app,
+					"sha": sha,
+					"env: env,
+				})
+	if err != nil {
+
+	}
+	//////////////////////////////////////////////////////
+
 	return
 }
 
@@ -182,5 +279,16 @@ func ListAllInstances() (instances []string, err error) {
 		log.Println("No instances found. Returning empty list.")
 		instances = []string{}
 	}
+
+
+	///////////////////// SQL ////////////////////////////
+	var insts []Instance
+	_, err := DbMap.Select(&insts, "select * from instance")
+	if err != nil {
+
+	}
+	/////////////////////////////////////////////////////
+
+
 	return
 }

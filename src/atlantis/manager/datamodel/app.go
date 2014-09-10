@@ -19,6 +19,15 @@ import (
 	"log"
 )
 
+type App struct {
+	Name string		`db:"name"`
+	NonAtlantis bool	`db:"nonatlantis"`
+	Internal bool		`db:"internal"`
+	Email string		`db:"email"`
+	Repo string		`db:"repo"`
+	Root string		`db:"root"`
+}
+
 type ZkApp types.App
 
 func GetApp(name string) (za *ZkApp, err error) {
@@ -32,6 +41,15 @@ func GetApp(name string) (za *ZkApp, err error) {
 		za.DependerAppData = map[string]*types.DependerAppData{}
 		za.Save()
 	}
+	
+	////////////////////////// SQL ////////////////////////////////
+	obj, err := DbMap.Get(App{}, name)
+	if err != nil {
+
+	}
+	app := obj.(*App)
+	///////////////////////////////////////////////////////////////
+
 	return
 }
 
@@ -76,6 +94,16 @@ func (za *ZkApp) Delete() error {
 			return err
 		}
 	}
+	
+	////////////////////// SQL /////////////////////////////////
+	app := App{}
+	app.Name = za.Name
+	DbMap.Delete(app)
+	//if not
+	//_, err := DbMap.Exec("delete from apps where name=?", app.Name)
+	//////////////////////////////////////////////////////////
+	
+	
 	return Zk.RecursiveDelete(za.path())
 }
 
@@ -87,6 +115,26 @@ func (za *ZkApp) Save() error {
 	if err := setJson(za.path(), za); err != nil {
 		return err
 	}
+
+
+	///////////////////////// SQL ///////////////////////////////////////
+	app := App{za.Name, za.NonAtlantis, za.Internal, za.Email, za.Repo, za.Root}
+	_, err := GetApp(za.Name)
+	if err != nil {
+		//insert
+		err = DbMap.Insert(app)
+		if err != nil {
+
+		}
+	} else {
+		//update
+		err = DbMap.Update(app)
+		if err != nil {
+
+		}
+	}	
+	/////////////////////////////////////////////////////////////////////
+
 	return nil
 }
 
@@ -218,5 +266,14 @@ func ListRegisteredApps() (apps []string, err error) {
 		log.Println("No registered apps found. Returning empty list.")
 		apps = []string{}
 	}
+	
+	/////////////////////////// SQL ///////////////////////////////////
+	var apps []App
+	_, err := DbMap.Select(&apps, "select * from apps")
+	if err != nil {
+
+	}
+	////////////////////////////////////////////////////////////////////
+	
 	return
 }
