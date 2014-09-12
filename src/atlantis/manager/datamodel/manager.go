@@ -19,6 +19,16 @@ import (
 
 type ZkManager types.Manager
 
+type Manager struct {
+	Host string	`db:"host"`
+	Region string	`db:"region"`
+	CName string	`db:"cname"`
+	RecordID string	`db:"recordID"`
+	RegistryCName string	`db:"registrycname"`
+	RegistryRecordID string	`db:"registryrecID"`
+
+}
+
 func Manager(region, value string) *ZkManager {
 	return &ZkManager{Region: region, Host: value, Roles: map[string]map[string]bool{}}
 }
@@ -27,6 +37,18 @@ func (m *ZkManager) Save() error {
 	if m.Roles == nil {
 		m.Roles = map[string]map[string]bool{}
 	}
+
+	////////////////// SQL //////////////////////////////
+	//TODO: handle roles
+	//TODO: might need to check if insert or update
+	sqlManager := Manager{m.Host, m.Region, m.ManagerCName, m.ManagerRecordID,
+				m.RegistryCName, m.RegistryRecordID, 0}
+	err := DbMap.Insert(&sqlManager)
+	if err != nil {
+	}
+	////////////////////////////////////////////////////
+
+
 	return setJson(m.path(), m)
 }
 
@@ -78,6 +100,16 @@ func (m *ZkManager) Delete() error {
 		log.Printf("Warning: clean up fail during managers delete: %s", err)
 		// this is extra, no need to return the error if we couldn't get them
 	}
+
+
+	///////////////////////////// SQL //////////////////////////////////
+	sqlManager := Manager{}
+	sqlManager.Host = m.Host
+	DbMap.Delete(sqlManager)
+	//if not
+	//_, err := DbMap.Exec("delete from manager where host=?", sqlManager.Host)	
+	///////////////////////////////////////////////////////////////////
+
 	return nil
 }
 

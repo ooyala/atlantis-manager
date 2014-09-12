@@ -15,6 +15,7 @@ import (
 	"atlantis/manager/helper"
 	"atlantis/supervisor/rpc/types"
 	"github.com/coopernurse/gorp"
+	"strings"
 	"log"
 )
 
@@ -28,13 +29,26 @@ type Instance struct {
 	Manifest uint16		'db:"manifestId"`	
 }
 
+type Manifest struct {
+	ID int64		`db:"id"`
+	Name string		`db:"name"`
+	Description string	`db:"description"`
+	Instances int64 	`db:"instances"`
+	CPUShares int64		`db:"cpushares"`
+	MemoryLimit int64	`db:"memorylimit"`
+	AppType	string		`db:"apptype"`
+	JavaType string		`db:"javatype"`
+	RunCommands string	`db:"runcommands"`
+	Dependencies int64	`db:dependencies"`
+}
+
 type ZkInstance struct {
-	ID       string		`db:"name"`
-	App      string		`db:"appId"`
-	Sha      string		`db:"sha"`
-	Env      string		`db:"envId"`
-	Host     string		`db:"hostId"`
-	Port     uint16		`db:"port"`
+	ID       string		
+	App      string		
+	Sha      string		
+	Env      string		
+	Host     string	
+	Port     uint16		
 	Manifest *types.Manifest	
 }
 
@@ -62,7 +76,10 @@ func GetInstance(id string) (zi *ZkInstance, err error) {
 
 	////////////// SQL /////////////
 	obj, err := DbMap.Get(Instance{}, id)
-	inst := obj.(*Instance)	
+	inst := obj.(*Instance)		
+	//TODO: retrive manifest from DB and build instance obj
+	//or require whoever uses instance object to manually retrieve
+	//the manifest
 	////////////////////////////////
 	
 	return
@@ -165,16 +182,50 @@ func (zi *ZkInstance) SetPort(port uint16) error {
 	}
 	inst := obj.(*Instance)
 	inst.Port = port
-	DbMap.Update(inst) 		
+	_, err := DbMap.Update(inst) 		
+	if err != nil {
+	}
 	/////////////////////////////////////////////
 
 	zi.Port = port
 	return setJson(zi.dataPath(), zi)
 }
 
-//TODO: SQL manifest stuff
 func (zi *ZkInstance) SetManifest(m *types.Manifest) error {
 	zi.Manifest = m
+
+	////////////////////////// SQL /////////////////////////////
+	//build sql manifest from ZK manifest
+	sqlManifest := Manifest{
+		Name: m.Name,
+		Description: m.Description,
+		Instances: int64(m.Instances),
+		CPUShares: int64(m.CPUShares),
+		MemoryLimit: int64(m.MemoryLimit),
+		AppType: m.AppType,
+		JavaType: m.JavaType,
+		RunCommands: strings.Join(m.RunCommands, ","),
+		Dependencies: 0	
+	}
+
+	//Insert it to DB
+	//****NOTE**** this should populate the ID field of Manifest with
+	//the PK of the row in the DB	
+	err := DbMap.Insert(&sqlManifest)
+	if err != nil {
+	}	
+	
+	//Retrieve instance from DB
+	obj, err := DbMap.Get(Instance{}, zi.ID)
+	if err != nil {
+	}
+	inst := obj.(*Instace)
+	inst.Manifest = sqlManifest.ID
+	_, err := DbMap.Update(&inst)
+	if err != nil {
+	}
+	///////////////////////////////////////////////////////////	
+
 	return setJson(zi.dataPath(), zi)
 }
 
@@ -186,6 +237,7 @@ func (zi *ZkInstance) dataPath() string {
 	return helper.GetBaseInstanceDataPath(zi.ID)
 }
 
+//TODO: Figure out region issue (one db per region or add region column to tables)
 func ListApps() (apps []string, err error) {
 	apps, _, err = Zk.VisibleChildren(helper.GetBaseInstancePath())
 	if err != nil {
