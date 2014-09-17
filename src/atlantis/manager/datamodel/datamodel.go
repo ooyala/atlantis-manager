@@ -95,6 +95,9 @@ func Init(zkUri string) {
 	DbMap.AddTableWithName(App{}, "apps").SetKeys(false, "name")
 	DbMap.AddTableWithName(Manifest{}, "manifest").SetKeys(true, "id")
 	DbMap.AddTableWithName(Manager{}, "manager").SetKeys(false, "host")
+	DbMap.AddTableWithName(Role{}, "roles").SetKeys(true, "id")
+	DbMap.AddTableWithName(Supervisor{}, "supervisor").SetKeys(false, "name")
+	DbMap.AddTableWithName(PortMap{}, "portmap").SetKeys(true, "id")
 	//should really never create tables unless fresh install
 	err := DbMap.CreateTablesIfNotExists()
 }

@@ -24,6 +24,17 @@ import (
 
 type ZkSupervisor string
 
+type Supervisor struct {
+	Name string 	`db:"name"`
+}
+
+type PortMap struct {
+	Id int64	`db:"id"`
+	Instance string	`db:"instance"`
+	Port int64	`db:"port"`
+	Supervisor string	`db:"supervisorId"`
+}
+
 type SupervisorData struct {
 	PortMap map[string]uint16
 }
@@ -65,11 +76,27 @@ func Supervisor(name string) ZkSupervisor {
 
 func (h ZkSupervisor) Touch() error {
 	_, err := Zk.Touch(h.path())
+	
+	////////////////// SQL /////////////////////
+	sup := Supervisor{string(h)}
+	err := DbMap.Insert(sup)
+	if err != nil {
+
+	}
+	///////////////////////////////////////////
+	
 	return err
 }
 
 // Delete the host node and all child container nodes of that host
 func (h ZkSupervisor) Delete() error {
+	
+	/////////////// SQL /////////////////////////
+	//TODO: Do I need to delete all references in PortMap to this Super?
+	sup := Supervisor{string(h)}
+	DbMap.Delete(sup)
+	///////////////////////////////////////////
+	
 	return Zk.RecursiveDelete(h.path())
 }
 
@@ -85,6 +112,11 @@ func (h ZkSupervisor) SetContainerAndPort(container string, port uint16) (err er
 	if err != nil {
 		log.Printf("Error setting mapping in host node. Error: %s.", err.Error())
 	}
+
+	//////////////////// SQL ///////////////////////////
+	
+	///////////////////////////////////////////////////
+
 	return
 }
 
@@ -147,6 +179,17 @@ func (h ZkSupervisor) createOrUpdateContainer(container string, data *ContainerD
 	if err != nil {
 		return err
 	}
+	///////////////////////// SQL /////////////////////////
+	var pMap PortMap
+	err := DbMap.SelectOne(&pMap, "select * from portmap where instance=? AND supervisorId=?", container, string(h))
+	if err != nil {
+		pMap = PortMap{ Instance: container, Port: data.port, Supervisor: string(h) } 
+	} else {
+		pMap.Port = data.port
+	}
+	err = DbMap.Insert(&pMap)
+	///////////////////////////////////////////////////////
+
 	return setJson(h.containerPath(container), data)
 }
 
@@ -173,6 +216,22 @@ func (h ZkSupervisor) addRelation(container string, port uint16) (err error) {
 	if err != nil {
 		log.Printf("Error setting json to host node. Error: %s.", err.Error())
 	}
+
+
+	/////////////////////// SQL ////////////////////////////
+	var pMap PortMap
+	err := DbMap.SelectOne(&pMap, "select * from portmap where instance=? AND supervisorId=?", container, string(h))
+	if err != nil {
+		pMap = PortMap{ Instance: container, Port: port, Supervisor: string(h) }
+	} else {
+		pMap.Port = port
+	}
+	err = DbMap.Insert(&pMap) 
+ 	if err != nil {
+
+	} 
+	//////////////////////////////////////////////////////
+
 	return
 }
 
@@ -199,6 +258,14 @@ func (h ZkSupervisor) removeRelation(container string) (retErr error) {
 			container))
 		log.Println(retErr.Error())
 	}
+	
+	///////////////////////// SQL ////////////////////
+	_, err := DbMap.Exec("delete from portmap where instance=? AND supervisorId=?", container, string(h))
+	if err != nil {
+
+	}
+	/////////////////////////////////////////////////
+
 	return
 }
 

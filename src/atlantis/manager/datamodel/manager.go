@@ -29,6 +29,14 @@ type Manager struct {
 
 }
 
+type Role struct {
+	Id int64	`db:"id"`
+	Name string	`db:"name"`
+	RoleType string	`db:"roleType"`
+	Value bool	`db:"value"`
+	Manager string	`db:"manager"`
+}
+
 func Manager(region, value string) *ZkManager {
 	return &ZkManager{Region: region, Host: value, Roles: map[string]map[string]bool{}}
 }
@@ -62,6 +70,23 @@ func (m *ZkManager) AddRole(name, roleType string) error {
 	if roleType != "" {
 		m.Roles[name][roleType] = true
 	}
+
+	//////////////// SQL ////////////////////////
+	var role Role
+	err := DbMap.SelectOne(&role, "select * from roles where name=? AND roletype=? AND manager=?", name, roleType, m.Host)
+	//if not found/not exists create and update
+	if err != nil {
+		role = role{Name: name, RoleType: roletype, Value: true, Manager: m.host}
+
+		//update the role
+		err = DbMap.Insert(&role)
+		if err != nil {
+
+		}	
+	} 
+	////////////////////////////////////////////
+
+
 	return m.Save()
 }
 
@@ -69,6 +94,19 @@ func (m *ZkManager) HasRole(name, roleType string) bool {
 	if m.Roles[name] == nil {
 		return false
 	}
+
+	////////////////////////// SQL ////////////////////
+	//TODO: allow for any "RoleType" if not only read/write are supported.
+	var role Role 
+	err := DbMap.SelectOne(&role, "select * from roles where name=? AND roletype=? AND manager=?", name, roleType, m.Host)
+	//no role with that name for this manager
+	if err != nil {
+		//return role.Value
+	} else {
+		//not exists
+		//return false
+	}
+	//////////////////////////////////////////////////
 	return m.Roles[name][roleType]
 }
 
@@ -85,6 +123,14 @@ func (m *ZkManager) RemoveRole(name, roleType string) error {
 	} else {
 		delete(m.Roles, name)
 	}
+
+	//////////////// SQL /////////////////////////
+	_, err := DbMap.Exec("delete from roles where name=? AND roletype=? AND manager=?", name, roleType, m.Host)
+	if err != nil {
+		//do something
+	}
+	/////////////////////////////////////////////
+	
 	return m.Save()
 }
 
@@ -119,6 +165,18 @@ func GetManager(region, value string) (zm *ZkManager, err error) {
 	if err == nil && zm.Roles == nil {
 		err = zm.Save()
 	}
+
+	//////////////////////// SQL /////////////////////////////
+	//TODO: verify the value string is the host name
+	obj, err := DbMap.Get(Manager{}, value)
+	if err != nil {
+
+	}
+	if obj == nil {
+		//manager does not exists
+	}
+	man := obj.(*Manager)
+	/////////////////////////////////////////////////////////
 	return
 }
 
