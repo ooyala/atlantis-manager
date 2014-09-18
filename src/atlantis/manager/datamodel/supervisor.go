@@ -49,6 +49,11 @@ func (h *SupervisorData) HasAppShaEnv(app, sha, env string) bool {
 			return true
 		}
 	}
+	
+	/////////////////////// SQL ///////////////////////////
+	//Also join with instance table on instance?
+	//////////////////////////////////////////////////////
+
 	return false
 }
 
@@ -63,6 +68,12 @@ func (h *SupervisorData) CountAppShaEnv(app, sha, env string) int {
 			count++
 		}
 	}
+
+	//////////////////////////// SQL ///////////////////////////
+	//count, err := DbMap.SelectInt("select count(*) from portmap where instance
+	//TODO: perhaps join on instance with the instance table?
+	///////////////////////////////////////////////////////////
+
 	return count
 }
 
@@ -112,10 +123,6 @@ func (h ZkSupervisor) SetContainerAndPort(container string, port uint16) (err er
 	if err != nil {
 		log.Printf("Error setting mapping in host node. Error: %s.", err.Error())
 	}
-
-	//////////////////// SQL ///////////////////////////
-	
-	///////////////////////////////////////////////////
 
 	return
 }

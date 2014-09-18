@@ -19,13 +19,45 @@ import (
 
 type ZkIPGroup types.IPGroup
 
+type IpGroup struct {
+	Name string 	`db:"name"`
+}
+
+type IpGroupMember struct {
+	Id int64	`db"id"`
+	IpGroup string	`db:"ipgroup"`
+	IP string	`db:"ip"`
+}
+
+
 func GetIPGroup(name string) (zig *ZkIPGroup, err error) {
 	zig = &ZkIPGroup{}
 	err = getJson(helper.GetBaseIPGroupPath(name), zig)
+
+	//////////////////// SQL ///////////////////////////	
+	var ips []string
+	_, err := DbMap.Select(&ips, "select ip from ipgroupmember where ipgroup=?", name)
+	if err != nil {
+
+	}
+	//////////////////////////////////////////////////
+	
 	return
 }
 
 func (zig *ZkIPGroup) Delete() error {
+
+	/////////////////// SQL ////////////////////////
+	_, err := DbMap.Exec("delete from ipgroupmember where ipgroup=?", zig.Name)
+	if err != nil {
+
+	}
+	_, err = DbMap.Delete(&IpGroup{zig.Name})
+	if err != nil {
+
+	}
+	//////////////////////////////////////////////
+
 	return Zk.RecursiveDelete(zig.path())
 }
 
@@ -37,6 +69,30 @@ func (zig *ZkIPGroup) Save() error {
 	if err := setJson(zig.path(), zig); err != nil {
 		return err
 	}
+
+	//////////////////// SQL ///////////////////////////
+	obj, err := DbMap.Get(IpGroup{}, zig.Name)
+	if err != nil {
+
+	}	
+	if obj == nil {
+		ipg := IpGroup{zig.Name}
+		DbMap.Insert(&ipg)
+	} else {
+		ipg := obj.(*IpGroup)
+		_, err := DbMap.Exec("delete from ipgroupmember where ipgroup=?", zig.Name)
+		if err != nil {
+
+		}
+	}
+	//populate ipgroupmem table 
+	for _, ip := range zig.IPs {
+		ipMem := IpGroupMember{IpGroup: zig.Name, IP: ip}
+		DbMap.Insert(&ipMem)	
+	}
+
+	///////////////////////////////////////////////////
+
 	return nil
 }
 
@@ -49,5 +105,13 @@ func ListIPGroups() (groups []string, err error) {
 		log.Println("No ip groups found. Returning empty list.")
 		groups = []string{}
 	}
+	/////////////////////// SQL //////////////////////////
+	var igroups []string
+	_, err := DbMap.Select(&igroups, "select name from ipgroup")
+	if err != nil {
+
+	}	
+	/////////////////////////////////////////////////////
+
 	return
 }
