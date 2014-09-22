@@ -24,7 +24,7 @@ import (
 
 type ZkSupervisor string
 
-type Supervisor struct {
+type SupervisorSql struct {
 	Name string 	`db:"name"`
 }
 
@@ -51,13 +51,13 @@ func (h *SupervisorData) HasAppShaEnv(app, sha, env string) bool {
 	}
 	
 	/////////////////////// SQL ///////////////////////////
-	count, err := DbMap.SelectInt("select count(*) from portmap "
-					+ "inner join instance " 
-					+ "on instance.`name`=portmap.`instance` " 
-					+ "where instance.`envId`=? "
-					+ "and instance.`sha`=? "
-					+ "and instance.`appId`=? "
-					+ "and portmap.`supervisorId`=?", env, sha, app, string(h))
+	//TODO: this is now for all supervisors
+	count, err := DbMap.SelectInt("select count(*) from portmap " + 
+					"inner join instance " +  
+					"on instance.`name`=portmap.`instance` " +
+					"where instance.`envId`=? " +
+					"and instance.`sha`=? " +
+					"and instance.`appId`=?", env, sha, app)
 	if err != nil {
 		//fail
 	} 
@@ -82,16 +82,19 @@ func (h *SupervisorData) CountAppShaEnv(app, sha, env string) int {
 	}
 
 	//////////////////////////// SQL ///////////////////////////
-	count, err := DbMap.SelectInt("select count(*) from portmap "
-					+ "inner join instance " 
-					+ "on instance.`name`=portmap.`instance` " 
-					+ "where instance.`envId`=? "
-					+ "and instance.`sha`=? "
-					+ "and instance.`appId`=? "
-					+ "and portmap.`supervisoId`=?", env, sha, app, string(h))
+	//TODO: this looks at all supervisors
+	countSql, err := DbMap.SelectInt("select count(*) from portmap " + 
+					"inner join instance " +
+					"on instance.`name`=portmap.`instance` "  +
+					"where instance.`envId`=? " +
+					"and instance.`sha`=? " +
+					"and instance.`appId`=?", env, sha, app)
 	if err != nil {
 		//fail
-	} 
+	}
+     	//just to stop compile error
+	if countSql > 0 {
+	}  
 	///////////////////////////////////////////////////////////
 
 	return count
@@ -109,8 +112,8 @@ func (h ZkSupervisor) Touch() error {
 	_, err := Zk.Touch(h.path())
 	
 	////////////////// SQL /////////////////////
-	sup := Supervisor{string(h)}
-	err := DbMap.Insert(sup)
+	sup := SupervisorSql{string(h)}
+	err = DbMap.Insert(sup)
 	if err != nil {
 
 	}
@@ -124,7 +127,7 @@ func (h ZkSupervisor) Delete() error {
 	
 	/////////////// SQL /////////////////////////
 	//TODO: Do I need to delete all references in PortMap to this Super?
-	sup := Supervisor{string(h)}
+	sup := SupervisorSql{string(h)}
 	DbMap.Delete(sup)
 	///////////////////////////////////////////
 	
@@ -208,11 +211,11 @@ func (h ZkSupervisor) createOrUpdateContainer(container string, data *ContainerD
 	}
 	///////////////////////// SQL /////////////////////////
 	var pMap PortMap
-	err := DbMap.SelectOne(&pMap, "select * from portmap where instance=? AND supervisorId=?", container, string(h))
+	err = DbMap.SelectOne(&pMap, "select * from portmap where instance=? AND supervisorId=?", container, string(h))
 	if err != nil {
-		pMap = PortMap{ Instance: container, Port: data.port, Supervisor: string(h) } 
+		pMap = PortMap{ Instance: container, Port: int64(data.port), Supervisor: string(h) } 
 	} else {
-		pMap.Port = data.port
+		pMap.Port = int64(data.port)
 	}
 	err = DbMap.Insert(&pMap)
 	///////////////////////////////////////////////////////
@@ -247,11 +250,11 @@ func (h ZkSupervisor) addRelation(container string, port uint16) (err error) {
 
 	/////////////////////// SQL ////////////////////////////
 	var pMap PortMap
-	err := DbMap.SelectOne(&pMap, "select * from portmap where instance=? AND supervisorId=?", container, string(h))
+	err = DbMap.SelectOne(&pMap, "select * from portmap where instance=? AND supervisorId=?", container, string(h))
 	if err != nil {
-		pMap = PortMap{ Instance: container, Port: port, Supervisor: string(h) }
+		pMap = PortMap{ Instance: container, Port: int64(port), Supervisor: string(h) }
 	} else {
-		pMap.Port = port
+		pMap.Port = int64(port)
 	}
 	err = DbMap.Insert(&pMap) 
  	if err != nil {
@@ -287,7 +290,7 @@ func (h ZkSupervisor) removeRelation(container string) (retErr error) {
 	}
 	
 	///////////////////////// SQL ////////////////////
-	_, err := DbMap.Exec("delete from portmap where instance=? AND supervisorId=?", container, string(h))
+	_, err = DbMap.Exec("delete from portmap where instance=? AND supervisorId=?", container, string(h))
 	if err != nil {
 
 	}

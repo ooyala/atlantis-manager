@@ -14,7 +14,6 @@ package datamodel
 import (
 	"atlantis/manager/helper"
 	"atlantis/supervisor/rpc/types"
-	"github.com/coopernurse/gorp"
 	"strings"
 	"log"
 )
@@ -26,7 +25,7 @@ type Instance struct {
 	Env      string		`db:"envId"`
 	Host     string		`db:"hostId"`
 	Port     uint16		`db:"port"`
-	Manifest uint16		'db:"manifestId"`	
+	Manifest int64		`db:"manifestId"`	
 }
 
 type Manifest struct {
@@ -77,6 +76,8 @@ func GetInstance(id string) (zi *ZkInstance, err error) {
 	////////////// SQL /////////////
 	obj, err := DbMap.Get(Instance{}, id)
 	inst := obj.(*Instance)		
+	if inst != nil {
+	}
 	//TODO: retrive manifest from DB and build instance obj
 	//or require whoever uses instance object to manually retrieve
 	//the manifest
@@ -106,7 +107,7 @@ func CreateInstance(app, sha, env, host string) (*ZkInstance, error) {
 
 	//TODO: manifest Id FK needs to be set
 	//eventually change methods to use Instance instead of ZkInstance also
-	inst := Instance{id, app, sha, env, host, 0, nil}		
+	inst := Instance{id, app, sha, env, host, 0, 0}		
 	DbMap.Insert(inst)
 
 
@@ -176,13 +177,13 @@ func (zi *ZkInstance) Delete() (bool, error) { // true if this was the last inst
 func (zi *ZkInstance) SetPort(port uint16) error {
 
 	//////////////// SQL /////////////////////////
-	obj, err := DbMap.Get(Instace{}, zi.ID)
+	obj, err := DbMap.Get(Instance{}, zi.ID)
 	if err != nil {
 		//
 	}
 	inst := obj.(*Instance)
 	inst.Port = port
-	_, err := DbMap.Update(inst) 		
+	_, err = DbMap.Update(inst) 		
 	if err != nil {
 	}
 	/////////////////////////////////////////////
@@ -205,7 +206,7 @@ func (zi *ZkInstance) SetManifest(m *types.Manifest) error {
 		AppType: m.AppType,
 		JavaType: m.JavaType,
 		RunCommands: strings.Join(m.RunCommands, ","),
-		Dependencies: 0	
+		Dependencies: 0,
 	}
 
 	//Insert it to DB
@@ -219,9 +220,9 @@ func (zi *ZkInstance) SetManifest(m *types.Manifest) error {
 	obj, err := DbMap.Get(Instance{}, zi.ID)
 	if err != nil {
 	}
-	inst := obj.(*Instace)
+	inst := obj.(*Instance)
 	inst.Manifest = sqlManifest.ID
-	_, err := DbMap.Update(&inst)
+	_, err = DbMap.Update(&inst)
 	if err != nil {
 	}
 	///////////////////////////////////////////////////////////	
@@ -262,7 +263,7 @@ func ListShas(app string) (shas []string, err error) {
 
 	///////////////////// SQL //////////////////////////////
         var envList []string
-        _, err := DbMap.Select(&envList, "select envId from instance where appId = :appid",
+        _, err = DbMap.Select(&envList, "select envId from instance where appId = :appid",
                                 map[string]interface{}{
                                         "appid": app,
                                 })
@@ -282,7 +283,7 @@ func ListAppEnvs(app, sha string) (envs []string, err error) {
 	
 	///////////////////// SQL //////////////////////////////
 	var envList []string
-	_, err := DbMap.Select(&envList, "select envId from instance where appId = :appid and sha = :sha", 
+	_, err = DbMap.Select(&envList, "select envId from instance where appId = :appid and sha = :sha", 
 				map[string]interface{}{
 					"appid": app,
 					"sha": sha,
@@ -308,11 +309,11 @@ func ListInstances(app, sha, env string) (instances []string, err error) {
 
 	//////////////////// SQL //////////////////////////////
 	var insts []Instance
-	_, err := DbMap.Select(&insts,"select * from instance where appId = :appid and sha = :sha and env = :env",
+	_, err = DbMap.Select(&insts,"select * from instance where appId = :appid and sha = :sha and env = :env",
 				map[string]interface{}{
 					"appid": app,
 					"sha": sha,
-					"env: env,
+					"env": env,
 				})
 	if err != nil {
 
@@ -335,7 +336,7 @@ func ListAllInstances() (instances []string, err error) {
 
 	///////////////////// SQL ////////////////////////////
 	var insts []Instance
-	_, err := DbMap.Select(&insts, "select * from instance")
+	_, err = DbMap.Select(&insts, "select * from instance")
 	if err != nil {
 
 	}

@@ -13,6 +13,7 @@ package datamodel
 
 import (
 	"atlantis/manager/crypto"
+	crypt "atlantis/crypto"
 	"atlantis/manager/helper"
 	"atlantis/manager/rpc/types"
 	"encoding/json"
@@ -44,7 +45,7 @@ type AppDepData struct {
 	ID int64 `db:"id"`
 	DepApp string	`db:"depApp"`
 	EnvDepDataId int64 `db:"envdepdataId"`
-	App string string `db:"app"`    
+	App string `db:"app"`    
 }
 
 type ZkApp types.App
@@ -67,6 +68,9 @@ func GetApp(name string) (za *ZkApp, err error) {
 
 	}
 	app := obj.(*App)
+	if app != nil {
+
+	}
 	///////////////////////////////////////////////////////////////
 
 	return
@@ -147,7 +151,7 @@ func (za *ZkApp) Save() error {
 		}
 	} else {
 		//update
-		err = DbMap.Update(app)
+		_, err = DbMap.Update(app)
 		if err != nil {
 
 		}
@@ -175,10 +179,10 @@ func (za *ZkApp) AddDependerEnvData(data *types.DependerEnvData) error {
 	mapData, err := json.Marshal(data.DataMap)
 	if err != nil {
 	}	
-	encDataStr := string(crypto.Encrypt(encData)) 			
+	encDataStr := string(crypt.Encrypt(mapData)) 			
 	dep := EnvDepData{Enviroment: data.Name, SecGroup: string(secGroupStr), DataMap: string(mapData), 
 				EncryptedData: encDataStr, App: za.Name }	
-	err = DataMap.Insert(&dep)
+	err = DbMap.Insert(&dep)
 	if err != nil {
 	
 	}	
@@ -221,11 +225,11 @@ func (za *ZkApp) GetDependerEnvData(env string, decrypt bool) *types.DependerEnv
 	if err != nil {
 	}
 	var secG map[string][]uint16
-	var dMap mpa[string]interface{}
-	err = json.Unmarshal(dep.SecGroup, secG)
+	var dMap map[string]interface{}
+	err = json.Unmarshal([]byte(dep.SecGroup), secG)
 	if err != nil {
 	}
-	err = json.Unmarshal(dep.DataMap, dMap)
+	err = json.Unmarshal([]byte(dep.DataMap), dMap)
 	if err != nil{
 	}
 	//ded := DependerEnvData{dep.Enviroment, secG, dep.EncryptedData, dep.DataMap}
@@ -251,20 +255,20 @@ func (za *ZkApp) AddDependerAppData(data *types.DependerAppData) error {
 	za.DependerAppData[data.Name] = data
 	
 	////////////////////////////// SQL //////////////////////////////////////////
-	secGroupStr, err := json.Marshal(data.DependerEnvData.SecurityGroup)
+	secGroupStr, err := json.Marshal(data.DependerEnvData[data.Name].SecurityGroup)
 	if err != nil {
 
 	}
-	mapData, err := json.Marshal(data.DependerEnvData.DataMap)
+	mapData, err := json.Marshal(data.DependerEnvData[data.Name].DataMap)
 	if err != nil {
 	}	
-	encDataStr := string(crypto.Encrypt(encData)) 			
-	dep := EnvDepData{Enviroment: data.DependerEnvData.Name, SecGroup: string(secGroupStr), DataMap: string(mapData), 
+	encDataStr := string(crypt.Encrypt(mapData)) 			
+	dep := EnvDepData{Enviroment: data.DependerEnvData[data.Name].Name, SecGroup: string(secGroupStr), DataMap: string(mapData), 
 				EncryptedData: encDataStr}
 	//should populate dep with ID
 	err = DbMap.Insert(&dep)
 	appDep := AppDepData{ DepApp: data.Name, EnvDepDataId: dep.ID, App: za.Name}  	
-	err = DataMap.Insert(&appDep)
+	err = DbMap.Insert(&appDep)
 	if err != nil {
 	
 	}	
@@ -314,7 +318,7 @@ func (za *ZkApp) GetDependerAppData(app string, decrypt bool) *types.DependerApp
 		}
 	}
 	//////////////////////////// SQL ///////////////////////////////////////
-	var 
+	//TODO: more dependecy shit 
 	///////////////////////////////////////////////////////////////////////
 
 	return dad
@@ -373,8 +377,8 @@ func ListRegisteredApps() (apps []string, err error) {
 	}
 	
 	/////////////////////////// SQL ///////////////////////////////////
-	var apps []App
-	_, err := DbMap.Select(&apps, "select * from apps")
+	var appSql []App
+	_, err = DbMap.Select(&appSql, "select * from apps")
 	if err != nil {
 
 	}

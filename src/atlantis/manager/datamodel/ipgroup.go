@@ -36,7 +36,7 @@ func GetIPGroup(name string) (zig *ZkIPGroup, err error) {
 
 	//////////////////// SQL ///////////////////////////	
 	var ips []string
-	_, err := DbMap.Select(&ips, "select ip from ipgroupmember where ipgroup=?", name)
+	_, err = DbMap.Select(&ips, "select ip from ipgroupmember where ipgroup=?", name)
 	if err != nil {
 
 	}
@@ -80,6 +80,8 @@ func (zig *ZkIPGroup) Save() error {
 		DbMap.Insert(&ipg)
 	} else {
 		ipg := obj.(*IpGroup)
+		if ipg != nil {
+		}
 		_, err := DbMap.Exec("delete from ipgroupmember where ipgroup=?", zig.Name)
 		if err != nil {
 
@@ -107,7 +109,7 @@ func ListIPGroups() (groups []string, err error) {
 	}
 	/////////////////////// SQL //////////////////////////
 	var igroups []string
-	_, err := DbMap.Select(&igroups, "select name from ipgroup")
+	_, err = DbMap.Select(&igroups, "select name from ipgroup")
 	if err != nil {
 
 	}	

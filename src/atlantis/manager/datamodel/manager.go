@@ -19,7 +19,7 @@ import (
 
 type ZkManager types.Manager
 
-type Manager struct {
+type SqlManager struct {
 	Host string	`db:"host"`
 	Region string	`db:"region"`
 	CName string	`db:"cname"`
@@ -49,8 +49,8 @@ func (m *ZkManager) Save() error {
 	////////////////// SQL //////////////////////////////
 	//TODO: handle roles
 	//TODO: might need to check if insert or update
-	sqlManager := Manager{m.Host, m.Region, m.ManagerCName, m.ManagerRecordID,
-				m.RegistryCName, m.RegistryRecordID, 0}
+	sqlManager := SqlManager{m.Host, m.Region, m.ManagerCName, m.ManagerRecordID,
+				m.RegistryCName, m.RegistryRecordID}
 	err := DbMap.Insert(&sqlManager)
 	if err != nil {
 	}
@@ -76,7 +76,7 @@ func (m *ZkManager) AddRole(name, roleType string) error {
 	err := DbMap.SelectOne(&role, "select * from roles where name=? AND roletype=? AND manager=?", name, roleType, m.Host)
 	//if not found/not exists create and update
 	if err != nil {
-		role = role{Name: name, RoleType: roletype, Value: true, Manager: m.host}
+		role = Role{Name: name, RoleType: roleType, Value: true, Manager: m.Host}
 
 		//update the role
 		err = DbMap.Insert(&role)
@@ -149,7 +149,7 @@ func (m *ZkManager) Delete() error {
 
 
 	///////////////////////////// SQL //////////////////////////////////
-	sqlManager := Manager{}
+	sqlManager := SqlManager{}
 	sqlManager.Host = m.Host
 	DbMap.Delete(sqlManager)
 	//if not
@@ -168,14 +168,16 @@ func GetManager(region, value string) (zm *ZkManager, err error) {
 
 	//////////////////////// SQL /////////////////////////////
 	//TODO: verify the value string is the host name
-	obj, err := DbMap.Get(Manager{}, value)
+	obj, err := DbMap.Get(SqlManager{}, value)
 	if err != nil {
 
 	}
 	if obj == nil {
 		//manager does not exists
 	}
-	man := obj.(*Manager)
+	man := obj.(*SqlManager)
+	if man != nil {
+	}
 	/////////////////////////////////////////////////////////
 	return
 }

@@ -12,10 +12,8 @@
 package datamodel
 
 import (
-	"fmt"
 	"atlantis/manager/helper"
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/coopernurse/gorp"
 )
 
 type Enviroment struct {
@@ -39,6 +37,8 @@ func GetEnv(name string) (*ZkEnv, error) {
 
 	}
 	env := obj.(*Enviroment)	
+	if env != nil {
+	}
 	////////////////////////////////////////////
 	return e, err
 }
@@ -91,8 +91,8 @@ func ListEnvs() (envs []string, err error) {
 	}
 
 	///////////////// SQL /////////////////////
-	var envs []Enviroment
-	_, err := DbMap.Select(&envs, "select * from enviroment")
+	var envSql []Enviroment
+	_, err = DbMap.Select(&envSql, "select * from enviroment")
 	if err != nil {
 		//
 	}

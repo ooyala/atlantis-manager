@@ -22,7 +22,7 @@ import (
 )
 
 var Zk *zookeeper.ZkConn
-var DbConn *Db
+var DbConn *sql.DB
 var DbMap *gorp.DbMap
 
 func CreateRouterPortsPaths() {
@@ -94,11 +94,14 @@ func Init(zkUri string) {
 	DbMap.AddTableWithName(Enviroment{}, "enviroment").SetKeys(false, "name")
 	DbMap.AddTableWithName(App{}, "apps").SetKeys(false, "name")
 	DbMap.AddTableWithName(Manifest{}, "manifest").SetKeys(true, "id")
-	DbMap.AddTableWithName(Manager{}, "manager").SetKeys(false, "host")
+	DbMap.AddTableWithName(SqlManager{}, "manager").SetKeys(false, "host")
 	DbMap.AddTableWithName(Role{}, "roles").SetKeys(true, "id")
-	DbMap.AddTableWithName(Supervisor{}, "supervisor").SetKeys(false, "name")
+	DbMap.AddTableWithName(SupervisorSql{}, "supervisor").SetKeys(false, "name")
 	DbMap.AddTableWithName(PortMap{}, "portmap").SetKeys(true, "id")
-	DbMap.AddTableWithName(Dependency{}, "deps").SetKeys(true, "id")
+	DbMap.AddTableWithName(EnvDepData{}, "envdepdata").SetKeys(true, "id")
+	DbMap.AddTableWithName(AppDepData{}, "appdepdata").SetKeys(true, "id")
 	//should really never create tables unless fresh install
 	err := DbMap.CreateTablesIfNotExists()
+	if err != nil {
+	}	
 }
