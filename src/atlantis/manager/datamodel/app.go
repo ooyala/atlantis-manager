@@ -15,6 +15,7 @@ import (
 	"atlantis/manager/crypto"
 	"atlantis/manager/helper"
 	"atlantis/manager/rpc/types"
+	"encoding/json"
 	"errors"
 	"log"
 )
@@ -26,6 +27,24 @@ type App struct {
 	Email string		`db:"email"`
 	Repo string		`db:"repo"`
 	Root string		`db:"root"`
+}
+
+type EnvDepData struct {
+	
+	ID int64	`db:"id"`
+	Enviroment string `db:"env"`
+	SecGroup string	`db:"secgroup"`
+	DataMap	string	`db:"datamap"`
+	EncryptedData string	`db:"encryptedData"`
+	App string `db:"app"`
+	Instance string `db:"instance"`
+}
+
+type AppDepData struct {
+	ID int64 `db:"id"`
+	DepApp string	`db:"depApp"`
+	EnvDepDataId int64 `db:"envdepdataId"`
+	App string string `db:"app"`    
 }
 
 type ZkApp types.App
@@ -147,6 +166,24 @@ func (za *ZkApp) AddDependerEnvData(data *types.DependerEnvData) error {
 	}
 	crypto.EncryptDependerEnvData(data)
 	za.DependerEnvData[data.Name] = data
+
+	//////////////////////////// SQL ///////////////////////////////////
+	secGroupStr, err := json.Marshal(data.SecurityGroup)
+	if err != nil {
+
+	}
+	mapData, err := json.Marshal(data.DataMap)
+	if err != nil {
+	}	
+	encDataStr := string(crypto.Encrypt(encData)) 			
+	dep := EnvDepData{Enviroment: data.Name, SecGroup: string(secGroupStr), DataMap: string(mapData), 
+				EncryptedData: encDataStr, App: za.Name }	
+	err = DataMap.Insert(&dep)
+	if err != nil {
+	
+	}	
+	///////////////////////////////////////////////////////////////////
+
 	return za.Save()
 }
 
@@ -155,6 +192,13 @@ func (za *ZkApp) RemoveDependerEnvData(env string) error {
 		za.DependerEnvData = map[string]*types.DependerEnvData{}
 	}
 	delete(za.DependerEnvData, env)
+
+	///////////////////////////// SQL ///////////////////////////////
+	_, err := DbMap.Exec("delete from deps where env=? and app=?", env, za.Name)
+	if err != nil {
+	}
+	////////////////////////////////////////////////////////////////
+
 	return za.Save()
 }
 
@@ -170,6 +214,24 @@ func (za *ZkApp) GetDependerEnvData(env string, decrypt bool) *types.DependerEnv
 	if decrypt {
 		crypto.DecryptDependerEnvData(ded)
 	}
+
+	/////////////////////// SQL /////////////////////////////////
+	var dep EnvDepData 
+	err := DbMap.SelectOne(&dep, "select * from deps where env=? and app=?", env, za.Name)
+	if err != nil {
+	}
+	var secG map[string][]uint16
+	var dMap mpa[string]interface{}
+	err = json.Unmarshal(dep.SecGroup, secG)
+	if err != nil {
+	}
+	err = json.Unmarshal(dep.DataMap, dMap)
+	if err != nil{
+	}
+	//ded := DependerEnvData{dep.Enviroment, secG, dep.EncryptedData, dep.DataMap}
+	////////////////////////////////////////////////////////////
+
+
 	return ded
 }
 
@@ -187,6 +249,29 @@ func (za *ZkApp) AddDependerAppData(data *types.DependerAppData) error {
 		crypto.EncryptDependerEnvData(ded)
 	}
 	za.DependerAppData[data.Name] = data
+	
+	////////////////////////////// SQL //////////////////////////////////////////
+	secGroupStr, err := json.Marshal(data.DependerEnvData.SecurityGroup)
+	if err != nil {
+
+	}
+	mapData, err := json.Marshal(data.DependerEnvData.DataMap)
+	if err != nil {
+	}	
+	encDataStr := string(crypto.Encrypt(encData)) 			
+	dep := EnvDepData{Enviroment: data.DependerEnvData.Name, SecGroup: string(secGroupStr), DataMap: string(mapData), 
+				EncryptedData: encDataStr}
+	//should populate dep with ID
+	err = DbMap.Insert(&dep)
+	appDep := AppDepData{ DepApp: data.Name, EnvDepDataId: dep.ID, App: za.Name}  	
+	err = DataMap.Insert(&appDep)
+	if err != nil {
+	
+	}	
+	////////////////////////////////////////////////////////////////////////////
+
+
+
 	return za.Save()
 }
 
@@ -195,6 +280,22 @@ func (za *ZkApp) RemoveDependerAppData(app string) error {
 		za.DependerAppData = map[string]*types.DependerAppData{}
 	}
 	delete(za.DependerAppData, app)
+
+
+	///////////////////////////// SQL ///////////////////////////////////////
+	//get envdepdata id to delete that after deleting appdepdata
+	var envDepDataId int64
+	_, err := DbMap.Select(&envDepDataId, "select envdepdataId from appdepdata where depApp=? and app=?", app, za.Name)
+	if err != nil {
+	}
+	_, err = DbMap.Exec("delete from appdepdata where depApp=? and app=?", app, za.Name)
+	if err != nil {
+	}
+	_, err = DbMap.Exec("delete from envdepdata where id=?", envDepDataId)
+	if err != nil{
+	}
+	////////////////////////////////////////////////////////////////////////	
+
 	return za.Save()
 }
 
@@ -212,6 +313,10 @@ func (za *ZkApp) GetDependerAppData(app string, decrypt bool) *types.DependerApp
 			crypto.DecryptDependerEnvData(ded)
 		}
 	}
+	//////////////////////////// SQL ///////////////////////////////////////
+	var 
+	///////////////////////////////////////////////////////////////////////
+
 	return dad
 }
 

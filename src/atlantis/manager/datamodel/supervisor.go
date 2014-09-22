@@ -51,7 +51,19 @@ func (h *SupervisorData) HasAppShaEnv(app, sha, env string) bool {
 	}
 	
 	/////////////////////// SQL ///////////////////////////
-	//Also join with instance table on instance?
+	count, err := DbMap.SelectInt("select count(*) from portmap "
+					+ "inner join instance " 
+					+ "on instance.`name`=portmap.`instance` " 
+					+ "where instance.`envId`=? "
+					+ "and instance.`sha`=? "
+					+ "and instance.`appId`=? "
+					+ "and portmap.`supervisorId`=?", env, sha, app, string(h))
+	if err != nil {
+		//fail
+	} 
+	if count > 0 {
+		//return true
+	}		
 	//////////////////////////////////////////////////////
 
 	return false
@@ -70,8 +82,16 @@ func (h *SupervisorData) CountAppShaEnv(app, sha, env string) int {
 	}
 
 	//////////////////////////// SQL ///////////////////////////
-	//count, err := DbMap.SelectInt("select count(*) from portmap where instance
-	//TODO: perhaps join on instance with the instance table?
+	count, err := DbMap.SelectInt("select count(*) from portmap "
+					+ "inner join instance " 
+					+ "on instance.`name`=portmap.`instance` " 
+					+ "where instance.`envId`=? "
+					+ "and instance.`sha`=? "
+					+ "and instance.`appId`=? "
+					+ "and portmap.`supervisoId`=?", env, sha, app, string(h))
+	if err != nil {
+		//fail
+	} 
 	///////////////////////////////////////////////////////////
 
 	return count
