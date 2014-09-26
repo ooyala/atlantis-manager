@@ -31,22 +31,20 @@ type App struct {
 	Root string		`db:"root"`
 }
 
-type EnvDepData struct {
+type DepsData struct {
 	
 	ID int64	`db:"id"`
+	AppDepId int64	`db:"appdepid"`
 	Enviroment string `db:"env"`
 	SecGroup string	`db:"secgroup"`
 	DataMap	string	`db:"datamap"`
-	EncryptedData string	`db:"encryptedData"`
-	App string `db:"app"`
-	Instance string `db:"instance"`
+	EncryptedData string	`db:"encdata"`
 }
 
-type AppDepData struct {
+type AppDeps struct {
 	ID int64 `db:"id"`
-	DepApp string	`db:"depApp"`
-	EnvDepDataId int64 `db:"envdepdataId"`
 	App string `db:"app"`    
+	Depender string `db:"depender"`
 }
 
 type ZkApp types.App
@@ -198,11 +196,23 @@ func (za *ZkApp) AddDependerEnvData(data *types.DependerEnvData) error {
 	if err != nil {
 	}	
 	encDataStr := string(crypt.Encrypt(mapData)) 			
-	dep := EnvDepData{Enviroment: data.Name, SecGroup: string(secGroupStr), DataMap: string(mapData), 
-				EncryptedData: encDataStr, App: za.Name }	
+		
+	var appDep AppDeps
+	err = DbMap.SelectOne(&appDep, "select * from appdeps where app=? AND depender=?", za.Name, nil)
+	if err != nil {
+		fmt.Printf("\n No record for App : %s, creating \n", za.Name)
+		appDep = AppDeps{App: za.Name}		
+		err = DbMap.Insert(&appDep)
+		if err != nil {
+			fmt.Printf("\n Could not insert new plain app in dep : %v \n", err)
+		}
+	}
+ 
+	dep := DepsData{AppDepId: appDep.ID, Enviroment: data.Name, SecGroup: string(secGroupStr), DataMap: string(mapData), 
+				EncryptedData: encDataStr}	
 	err = DbMap.Insert(&dep)
 	if err != nil {
-	
+		fmt.Printf("\n Could not insert new env data for %s : %v \n", za.Name, err)	
 	}	
 	///////////////////////////////////////////////////////////////////
 
@@ -216,9 +226,16 @@ func (za *ZkApp) RemoveDependerEnvData(env string) error {
 	delete(za.DependerEnvData, env)
 
 	///////////////////////////// SQL ///////////////////////////////
-	_, err := DbMap.Exec("delete from deps where env=? and app=?", env, za.Name)
+	var appDepId int
+	err := DbMap.SelectOne(&appDepId, "select id from appdeps where app=? and depender=?", za.Name, nil)
 	if err != nil {
-	}
+		fmt.Printf("\n Cannot find dep ID to remove data for env: %s : %v\n", env, err)
+	} else {
+		_, err := DbMap.Exec("delete from depsdata where appdepid=?", appDepId)
+		if err != nil {
+			fmt.Printf("\n Error deleting dep data for env %s : %v \n", env, err)
+		}
+ 	}
 	////////////////////////////////////////////////////////////////
 
 	return za.Save()
@@ -238,17 +255,24 @@ func (za *ZkApp) GetDependerEnvData(env string, decrypt bool) *types.DependerEnv
 	}
 
 	/////////////////////// SQL /////////////////////////////////
-	var dep EnvDepData 
-	err := DbMap.SelectOne(&dep, "select * from deps where env=? and app=?", env, za.Name)
+	var appDepId int
+	err := DbMap.SelectOne(&appDepId, "select id from appdeps where app=? and depender=?", za.Name, nil)
 	if err != nil {
-	}
-	var secG map[string][]uint16
-	var dMap map[string]interface{}
-	err = json.Unmarshal([]byte(dep.SecGroup), secG)
-	if err != nil {
-	}
-	err = json.Unmarshal([]byte(dep.DataMap), dMap)
-	if err != nil{
+		fmt.Printf("\n Cannot find dep ID to get  data for env: %s : %v\n", env, err)
+	} else { 
+		var dep DepsData 
+		err := DbMap.SelectOne(&dep, "select * from deps where appdepid=?", appDepId)
+		if err != nil {
+		}
+		var secG map[string][]uint16
+		var dMap map[string]interface{}
+		err = json.Unmarshal([]byte(dep.SecGroup), secG)
+		if err != nil {
+
+		}
+		err = json.Unmarshal([]byte(dep.DataMap), dMap)
+		if err != nil{
+		}
 	}
 	//ded := DependerEnvData{dep.Enviroment, secG, dep.EncryptedData, dep.DataMap}
 	////////////////////////////////////////////////////////////
@@ -273,26 +297,35 @@ func (za *ZkApp) AddDependerAppData(data *types.DependerAppData) error {
 	za.DependerAppData[data.Name] = data
 	
 	////////////////////////////// SQL //////////////////////////////////////////
-	secGroupStr, err := json.Marshal(data.DependerEnvData[data.Name].SecurityGroup)
-	if err != nil {
-
-	}
-	mapData, err := json.Marshal(data.DependerEnvData[data.Name].DataMap)
-	if err != nil {
-	}	
-	encDataStr := string(crypt.Encrypt(mapData)) 			
-	dep := EnvDepData{Enviroment: data.DependerEnvData[data.Name].Name, SecGroup: string(secGroupStr), DataMap: string(mapData), 
-				EncryptedData: encDataStr}
-	//should populate dep with ID
-	err = DbMap.Insert(&dep)
-	appDep := AppDepData{ DepApp: data.Name, EnvDepDataId: dep.ID, App: za.Name}  	
-	err = DbMap.Insert(&appDep)
-	if err != nil {
 	
-	}	
+	var appDep AppDeps
+	err := DbMap.SelectOne(&appDep, "select * from appdeps where app=? AND depender=?", za.Name, data.Name)
+	if err != nil {
+		fmt.Printf("\n No record for App : %s, creating \n", za.Name)
+		appDep = AppDeps{App: za.Name, Depender: data.Name}		
+		err = DbMap.Insert(&appDep)
+		if err != nil {
+			fmt.Printf("\n Could not new app dep relation : %v \n", err)
+		}
+	}
+	for _, ded := range data.DependerEnvData {
+		secGroupStr, err := json.Marshal(ded.SecurityGroup)
+		if err != nil {
+
+		}
+		mapData, err := json.Marshal(ded.DataMap)
+		if err != nil {
+		}	
+		encDataStr := string(crypt.Encrypt(mapData)) 			
+
+		dep := DepsData{AppDepId: appDep.ID, Enviroment: ded.Name, 
+				 SecGroup: string(secGroupStr), DataMap: string(mapData), EncryptedData: encDataStr}
+		err = DbMap.Insert(&dep)
+		if err != nil {
+			fmt.Printf("\n Error inserting env data for app,depender,env %s,%s,%s : %v \n", za.Name, data.Name, ded.Name, err)
+		}
+	}
 	////////////////////////////////////////////////////////////////////////////
-
-
 
 	return za.Save()
 }
@@ -305,16 +338,19 @@ func (za *ZkApp) RemoveDependerAppData(app string) error {
 
 
 	///////////////////////////// SQL ///////////////////////////////////////
-	//get envdepdata id to delete that after deleting appdepdata
-	var envDepDataId int64
-	_, err := DbMap.Select(&envDepDataId, "select envdepdataId from appdepdata where depApp=? and app=?", app, za.Name)
+	var appDepId int
+	err := DbMap.SelectOne(&appDepId, "select id from appdeps where app=? and depender=?", za.Name, nil)
 	if err != nil {
-	}
-	_, err = DbMap.Exec("delete from appdepdata where depApp=? and app=?", app, za.Name)
-	if err != nil {
-	}
-	_, err = DbMap.Exec("delete from envdepdata where id=?", envDepDataId)
-	if err != nil{
+		fmt.Printf("\n Cannot find dep ID to delete data for app,depender: %s : %v\n", za.Name, app, err)
+	} else { 
+		_, err = DbMap.Exec("delete from depsdata where appdepid=?", appDepId)
+		if err != nil {
+			fmt.Printf("\n Trouble deleting depdata for app,dep %s,%s : %v\n", za.Name, app, err)	
+		}		
+		_, err = DbMap.Exec("delete from appdeps where id=?", appDepId)
+		if err != nil{
+			fmt.Printf("\n Error deleting relation in appdep table for app,dep %s,%s : %v \n", za.Name, app, err)
+		}
 	}
 	////////////////////////////////////////////////////////////////////////	
 
@@ -336,7 +372,39 @@ func (za *ZkApp) GetDependerAppData(app string, decrypt bool) *types.DependerApp
 		}
 	}
 	//////////////////////////// SQL ///////////////////////////////////////
-	//TODO: more dependecy shit 
+	var appDepId int
+	err := DbMap.SelectOne(&appDepId, "select id from appdeps where app=? and depender=?", za.Name, app)
+	if err != nil {
+		fmt.Printf("\n Cannot find dep ID to delete data for app,depender: %s : %v\n", za.Name, app, err)
+	} else {
+		sqlDad := &types.DependerAppData{}
+		sqlDad.Name = app 
+		sqlDad.DependerEnvData = make(map[string]*types.DependerEnvData)
+		var depDataList []DepsData
+		_, err := DbMap.Select(&depDataList, "select * from depsdata where appdepid=?", appDepId)
+		if err != nil {
+			fmt.Printf("Could not find any dep data for app,dep %s,%s : %v \n", za.Name, app, err)
+		}
+
+		for _, dData := range depDataList {
+
+			sqlDad.DependerEnvData[dData.Enviroment] = &types.DependerEnvData{Name: dData.Enviroment} 
+			var secg map[string][]uint16
+			err = json.Unmarshal([]byte(dData.SecGroup), &secg)
+			if err != nil {
+			}
+			sqlDad.DependerEnvData[dData.Enviroment].SecurityGroup = secg
+			if decrypt {
+				dMapStr := crypt.Decrypt([]byte(dData.EncryptedData))
+				var dMap map[string]interface{}
+				err = json.Unmarshal([]byte(dMapStr), &dMap)	
+				if err != nil {
+				}
+				sqlDad.DependerEnvData[dData.Enviroment].DataMap = dMap
+			}
+			sqlDad.DependerEnvData[dData.Enviroment].EncryptedData = dData.EncryptedData
+		}
+	} 
 	///////////////////////////////////////////////////////////////////////
 
 	return dad
@@ -356,6 +424,35 @@ func (za *ZkApp) AddDependerEnvDataForDependerApp(app string, data *types.Depend
 	crypto.EncryptDependerEnvData(data)
 	dad.DependerEnvData[data.Name] = data
 	za.DependerAppData[app] = dad
+
+	///////////////////////////////////////////////// SQL //////////////////////////////////////////////
+	var appDep AppDeps
+	err := DbMap.SelectOne(&appDep, "select * from appdeps where app=? AND depender=?", za.Name, app)
+	if err != nil {
+		fmt.Printf("\n No record for App : %s, creating \n", za.Name)
+		appDep = AppDeps{App: za.Name, Depender: app}		
+		err = DbMap.Insert(&appDep)
+		if err != nil {
+			fmt.Printf("\n Could not new app dep relation : %v \n", err)
+		}
+	}
+	secGroupStr, err := json.Marshal(data.SecurityGroup)
+	if err != nil {
+
+	}
+	mapData, err := json.Marshal(data.DataMap)
+	if err != nil {
+	}	
+	encDataStr := string(crypt.Encrypt(mapData)) 			
+
+	dep := DepsData{AppDepId: appDep.ID, Enviroment: data.Name, 
+			 SecGroup: string(secGroupStr), DataMap: string(mapData), EncryptedData: encDataStr}
+	err = DbMap.Insert(&dep)
+	if err != nil {
+		fmt.Printf("\n Error inserting env data for app,depender,env %s,%s,%s : %v \n", za.Name, app, data.Name, err)
+	}
+	/////////////////////////////////////////////////////////////////////////////////////////////////////
+
 	return za.Save()
 }
 
@@ -366,6 +463,22 @@ func (za *ZkApp) RemoveDependerEnvDataForDependerApp(app, env string) error {
 	}
 	delete(dad.DependerEnvData, env)
 	za.DependerAppData[app] = dad
+
+	//////////////////////////////////////////////// SQL //////////////////////////////////////////
+	var appDepId int
+	err := DbMap.SelectOne(&appDepId, "select id from appdeps where app=? and depender=?", za.Name, app) 
+	if err != nil {
+		fmt.Printf("\n Cannot find dep ID to delete data for app,depender: %s : %v\n", za.Name, app, err)
+	} else {
+		_, err = DbMap.Exec("delete from depsdata where appdepid=? and env=?", appDepId, env)
+		if err != nil {
+			fmt.Printf("\n Could not delete envdata for app,dep,env %s,%s,%s : %v \n", za.Name, app, env)
+		}
+	}
+
+	///////////////////////////////////////////////////////////////////////////////////////////// 
+
+
 	return za.Save()
 }
 
@@ -381,6 +494,37 @@ func (za *ZkApp) GetDependerEnvDataForDependerApp(app, env string, decrypt bool)
 	if decrypt {
 		crypto.DecryptDependerEnvData(ded)
 	}
+
+	///////////////////////////////////////////////// SQL ///////////////////////////////////////////////
+	var appDepId int
+	err := DbMap.SelectOne(&appDepId, "select id from appdeps where app=? and depender=?", za.Name, app) 
+	if err != nil {
+		fmt.Printf("\n Cannot find dep ID to delete data for app,depender: %s : %v\n", za.Name, app, err)
+	}
+	var depEnvData DepsData
+	err = DbMap.SelectOne(&depEnvData, "select * from depsdata where appdepid=? and env=?", appDepId, env)
+	if err != nil {
+		return nil
+	}
+
+	sqlDed := &types.DependerEnvData{Name: depEnvData.Enviroment}
+	var secg map[string][]uint16
+	err = json.Unmarshal([]byte(depEnvData.SecGroup), &secg)
+	if err != nil {
+	}
+	sqlDed.SecurityGroup = secg
+	if decrypt {
+		var dMap map[string]interface{}
+		dMapStr := crypt.Decrypt([]byte(depEnvData.EncryptedData))
+		err = json.Unmarshal(dMapStr, &dMap)	
+		if err != nil {
+		}
+		sqlDed.DataMap = dMap
+	}
+	sqlDed.EncryptedData = depEnvData.EncryptedData
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////// 
+
 	return ded
 }
 

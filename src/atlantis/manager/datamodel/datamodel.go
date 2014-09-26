@@ -101,8 +101,8 @@ func Init(zkUri string) {
 	DbMap.AddTableWithName(Role{}, "roles").SetKeys(true, "id")
 	DbMap.AddTableWithName(SupervisorSql{}, "supervisor").SetKeys(false, "name")
 	DbMap.AddTableWithName(PortMap{}, "portmap").SetKeys(true, "Id")
-	DbMap.AddTableWithName(EnvDepData{}, "envdepdata").SetKeys(true, "id")
-	DbMap.AddTableWithName(AppDepData{}, "appdepdata").SetKeys(true, "id")	
+	DbMap.AddTableWithName(DepsData{}, "depsdata").SetKeys(true, "id")
+	DbMap.AddTableWithName(AppDeps{}, "appdeps").SetKeys(true, "id")	
 	DbMap.AddTableWithName(IpGroup{}, "ipgroup").SetKeys(false, "name")
 	DbMap.AddTableWithName(IpGroupMember{}, "ipgroupmember").SetKeys(true, "Id")
 	//should really never create tables unless fresh install
