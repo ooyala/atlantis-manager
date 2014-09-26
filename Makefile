@@ -50,8 +50,8 @@ install-deps:
 	@GOPATH=$(VENDOR_PATH) go get github.com/mavricknz/ldap
 	@GOPATH=$(VENDOR_PATH) go get github.com/mewpkg/gopass
 	@GOPATH=$(VENDOR_PATH) go get github.com/ooyala/go-jenkins-cli
-	#@GOPATH=$(VENDOR_PATH) go get github.com/jigish/route53
-	#@GOPATH=$(VENDOR_PATH) go get github.com/crowdmob/goamz
+	@git clone https://github.com/jigish/route53.git $(VENDOR_PATH)/src/github.com/jigish
+	@mkdir -p $(VENDOR_PATH)/src/github.com/crowdmob && git clone https://github.com/crowdmob/goamz.git $(VENDOR_PATH)/src/github.com/crowdmob
 	@GOPATH=$(VENDOR_PATH) go get code.google.com/p/gographviz
 	@GOPATH=$(VENDOR_PATH) go get launchpad.net/gocheck
 	@git clone ssh://git@github.com/ooyala/atlantis-builder $(BUILDER_PATH)
