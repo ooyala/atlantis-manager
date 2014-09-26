@@ -18,6 +18,7 @@ import (
 	"atlantis/manager/rpc/types"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 )
 
@@ -65,11 +66,18 @@ func GetApp(name string) (za *ZkApp, err error) {
 	////////////////////////// SQL ////////////////////////////////
 	obj, err := DbMap.Get(App{}, name)
 	if err != nil {
-
-	}
-	app := obj.(*App)
-	if app != nil {
-
+		fmt.Printf("\n%v\n", err)	
+	} else {
+		if obj == nil {
+			fmt.Println("App doesn't exists \n")
+			err = errors.New("No app with name: " + name)
+			za = nil	
+		} else { 
+			app := obj.(*App)
+			err = nil
+			za = &ZkApp{ app.NonAtlantis, app.Internal, app.Name, app.Email, app.Repo, app.Root, 
+				map[string]*types.DependerEnvData{}, map[string]*types.DependerAppData{}}
+		}
 	}
 	///////////////////////////////////////////////////////////////
 
@@ -141,19 +149,29 @@ func (za *ZkApp) Save() error {
 
 
 	///////////////////////// SQL ///////////////////////////////////////
+	fmt.Println("YAY SQL SAVE APP STUFF")
 	app := App{za.Name, za.NonAtlantis, za.Internal, za.Email, za.Repo, za.Root}
-	_, err := GetApp(za.Name)
+	obj, err := DbMap.Get(App{}, za.Name)	
 	if err != nil {
-		//insert
-		err = DbMap.Insert(app)
-		if err != nil {
+		fmt.Printf("\n Failed trying to check if app exists \n")
+	}
+	if za.Name == "" {
+		return errors.New("Trying to save app with no name")
+	}
+	//app doesnt exist, insert
+	if obj == nil {
 
+		fmt.Printf("\n App %s does not exists, insert \n", za.Name)
+		err = DbMap.Insert(&app)
+		if err != nil {
+			fmt.Printf("\n %v \n", err)
 		}
 	} else {
+		fmt.Printf("\n App %s DOES exist, update \n ", za.Name)
 		//update
-		_, err = DbMap.Update(app)
+		_, err = DbMap.Update(&app)
 		if err != nil {
-
+			fmt.Printf("\n %v \n", err)
 		}
 	}	
 	/////////////////////////////////////////////////////////////////////

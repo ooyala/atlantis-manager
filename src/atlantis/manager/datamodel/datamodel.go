@@ -19,6 +19,9 @@ import (
 	"database/sql"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/coopernurse/gorp"
+	"log"
+	"os"
+	"fmt"
 )
 
 var Zk *zookeeper.ZkConn
@@ -86,8 +89,8 @@ func CreatePaths() {
 func Init(zkUri string) {
 	Zk = zookeeper.GetPanicingZk(zkUri)
 	CreatePaths()
-
-	DbConn, _ := sql.Open("mysql", "root@/manager")
+	fmt.Println("\n\n\n I AM ABOUT TO INITIALIZE THE SQL SHIT \n\n")
+	DbConn, _ := sql.Open("mysql", "root:@tcp(10.11.67.155:3306)/manager")
 	DbMap = &gorp.DbMap{Db: DbConn, Dialect: gorp.MySQLDialect{"InnoDB", "UTF8"}}
 
 	DbMap.AddTableWithName(Instance{}, "instance").SetKeys(false, "name") 
@@ -97,11 +100,17 @@ func Init(zkUri string) {
 	DbMap.AddTableWithName(SqlManager{}, "manager").SetKeys(false, "host")
 	DbMap.AddTableWithName(Role{}, "roles").SetKeys(true, "id")
 	DbMap.AddTableWithName(SupervisorSql{}, "supervisor").SetKeys(false, "name")
-	DbMap.AddTableWithName(PortMap{}, "portmap").SetKeys(true, "id")
+	DbMap.AddTableWithName(PortMap{}, "portmap").SetKeys(true, "Id")
 	DbMap.AddTableWithName(EnvDepData{}, "envdepdata").SetKeys(true, "id")
-	DbMap.AddTableWithName(AppDepData{}, "appdepdata").SetKeys(true, "id")
+	DbMap.AddTableWithName(AppDepData{}, "appdepdata").SetKeys(true, "id")	
+	DbMap.AddTableWithName(IpGroup{}, "ipgroup").SetKeys(false, "name")
+	DbMap.AddTableWithName(IpGroupMember{}, "ipgroupmember").SetKeys(true, "Id")
 	//should really never create tables unless fresh install
 	err := DbMap.CreateTablesIfNotExists()
 	if err != nil {
-	}	
+	}
+	err = DbMap.TruncateTables()
+	if err != nil {
+	}
+	DbMap.TraceOn("[gorp]", log.New(os.Stdout, "managerSQL:", log.Lmicroseconds))	
 }

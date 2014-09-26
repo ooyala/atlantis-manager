@@ -14,8 +14,10 @@ package datamodel
 import (
 	"atlantis/manager/helper"
 	"atlantis/supervisor/rpc/types"
+	"database/sql"
 	"strings"
 	"log"
+	"fmt"
 )
 
 type Instance struct {
@@ -25,7 +27,7 @@ type Instance struct {
 	Env      string		`db:"envId"`
 	Host     string		`db:"hostId"`
 	Port     uint16		`db:"port"`
-	Manifest int64		`db:"manifestId"`	
+	Manifest int64	`db:"manifestId"`	
 }
 
 type Manifest struct {
@@ -52,20 +54,25 @@ type ZkInstance struct {
 }
 
 func InstanceExists(id string) bool {
-	if stat, err := Zk.Exists(helper.GetBaseInstanceDataPath(id)); err == nil && stat != nil {
-		return true
-	}
+
 
 	///////////// SQL /////////////////////
 	obj, err := DbMap.Get(Instance{}, id)
 	if err != nil {
-		//fail	
+		fmt.Printf("\n Error checking for exists: %v \n", err)
 	}
 	if obj == nil {
-		//not found
+		return false
+	} else {
+		return true
 	}
 	//////////////////////////////////////
 
+	if stat, err := Zk.Exists(helper.GetBaseInstanceDataPath(id)); err == nil && stat != nil {
+		return true
+	}
+
+	
 	return false
 }
 
@@ -87,10 +94,23 @@ func GetInstance(id string) (zi *ZkInstance, err error) {
 }
 
 func CreateInstance(app, sha, env, host string) (*ZkInstance, error) {
+
+
 	id := helper.CreateContainerID(app, sha, env)
 	for InstanceExists(id) {
 		id = helper.CreateContainerID(app, sha, env)
 	}
+
+	/////////////// SQL //////////////////////////////
+	//TODO: manifest Id FK needs to be set
+	//eventually change methods to use Instance instead of ZkInstance also
+	inst := Instance{id, app, sha, env, host, 0, sql.NullInt64{}}		
+	err := DbMap.Insert(&inst)
+	if err != nil {
+		fmt.Printf("\n Error inserting instance to DB: %v \n", err)
+	}
+	//////////////////////////////////////////////////
+
 	zi := &ZkInstance{ID: id, App: app, Sha: sha, Env: env, Host: host, Port: 0}
 	if _, err := Zk.Touch(zi.path()); err != nil {
 		Zk.RecursiveDelete(zi.path())
@@ -103,16 +123,7 @@ func CreateInstance(app, sha, env, host string) (*ZkInstance, error) {
 		return zi, err
 	}
 
-	/////////////// SQL //////////////////////////////
-
-	//TODO: manifest Id FK needs to be set
-	//eventually change methods to use Instance instead of ZkInstance also
-	inst := Instance{id, app, sha, env, host, 0, 0}		
-	DbMap.Insert(inst)
-
-
-	//////////////////////////////////////////////////
-	return zi, nil
+		return zi, nil
 }
 
 func (zi *ZkInstance) Delete() (bool, error) { // true if this was the last instance of app+sha+env
@@ -127,7 +138,10 @@ func (zi *ZkInstance) Delete() (bool, error) { // true if this was the last inst
 	//TODO check to be sure this works
 	inst := Instance{}
 	inst.ID = zi.ID
-	DbMap.Delete(inst)
+	_, err = DbMap.Delete(&inst)
+	if err != nil {
+		fmt.Printf("\n %v \n", err)
+	}
 	//if not
 	//_, err := DbMap.Exec("delete from instance where name=?", inst.ID)	
 	/////////////////////////////////////////
@@ -179,14 +193,20 @@ func (zi *ZkInstance) SetPort(port uint16) error {
 	//////////////// SQL /////////////////////////
 	obj, err := DbMap.Get(Instance{}, zi.ID)
 	if err != nil {
-		//
+		fmt.Printf("Error getting instance : %v \n", err)	
 	}
-	inst := obj.(*Instance)
-	inst.Port = port
-	_, err = DbMap.Update(inst) 		
-	if err != nil {
+	if obj == nil {
+		fmt.Printf("\n instance does not exist: %s \n", zi.ID)
+	} else {
+		inst := obj.(*Instance)
+		inst.Port = port
+		_, err = DbMap.Update(inst) 		
+		if err != nil {
+			fmt.Printf("\n Error updating instance: %v \n", err)
+		}
+
 	}
-	/////////////////////////////////////////////
+		/////////////////////////////////////////////
 
 	zi.Port = port
 	return setJson(zi.dataPath(), zi)
@@ -214,16 +234,23 @@ func (zi *ZkInstance) SetManifest(m *types.Manifest) error {
 	//the PK of the row in the DB	
 	err := DbMap.Insert(&sqlManifest)
 	if err != nil {
+		fmt.Printf("\n error inserting manifest %v \n")
 	}	
 	
 	//Retrieve instance from DB
 	obj, err := DbMap.Get(Instance{}, zi.ID)
 	if err != nil {
+		fmt.Printf("Error getting instance: %v \n", err)
 	}
-	inst := obj.(*Instance)
-	inst.Manifest = sqlManifest.ID
-	_, err = DbMap.Update(&inst)
-	if err != nil {
+	if obj == nil {
+		fmt.Println("Instance does not exist!")
+	} else {
+		inst := obj.(*Instance)
+		inst.Manifest = sql.NullInt64{sqlManifest.ID, true}
+		_, err = DbMap.Update(&inst)
+		if err != nil {
+			fmt.Printf("\n Error updating manifest id: %v \n", err)
+		}
 	}
 	///////////////////////////////////////////////////////////	
 

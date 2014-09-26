@@ -14,6 +14,8 @@ package datamodel
 import (
 	"atlantis/manager/helper"
 	"atlantis/manager/rpc/types"
+	"errors"
+	"fmt"
 	"log"
 )
 
@@ -38,8 +40,11 @@ func GetIPGroup(name string) (zig *ZkIPGroup, err error) {
 	var ips []string
 	_, err = DbMap.Select(&ips, "select ip from ipgroupmember where ipgroup=?", name)
 	if err != nil {
-
+		fmt.Printf("\n Error selecting IPs, %v \n", err)
+		zig = nil
+		err := errors.New("No ipgroup found")
 	}
+	fmt.Printf("\n Found %d for ipgroup %s \n", len(ips), name)
 	//////////////////////////////////////////////////
 	
 	return
@@ -66,35 +71,46 @@ func (zig *ZkIPGroup) path() string {
 }
 
 func (zig *ZkIPGroup) Save() error {
+
+
+	//////////////////// SQL ///////////////////////////
+	if zig.Name != "" { 
+		fmt.Printf("trying to save ipgroup: %v \n\n", zig)
+		obj, err := DbMap.Get(IpGroup{}, zig.Name)
+		if err != nil {
+			fmt.Printf("Err: %v \n", err)
+		}	
+		if obj == nil {
+			fmt.Printf("Ipgroup not exist yet, insert it")
+			ipg := IpGroup{zig.Name}
+			DbMap.Insert(&ipg)
+		} else {
+			fmt.Printf("IpGroup does exist, delete its ipgroupmembers so we can reload")
+			ipg := obj.(*IpGroup)
+			if ipg != nil {
+				fmt.Printf("couldn't cast ipgroup")
+			}
+			_, err := DbMap.Exec("delete from ipgroupmember where ipgroup=?", zig.Name)
+			if err != nil {
+				fmt.Printf("error deleting its ipgroupmems")
+			}
+		}
+		//populate ipgroupmem table 
+		for _, ip := range zig.IPs {
+			ipMem := IpGroupMember{IpGroup: zig.Name, IP: ip}
+			DbMap.Insert(&ipMem)	
+		}
+	} else {
+		fmt.Println("\n TRYING TO SAVE IPGROUP WITH EMPTY NAME \n")
+	}
+	///////////////////////////////////////////////////
+
 	if err := setJson(zig.path(), zig); err != nil {
 		return err
 	}
+	
 
-	//////////////////// SQL ///////////////////////////
-	obj, err := DbMap.Get(IpGroup{}, zig.Name)
-	if err != nil {
-
-	}	
-	if obj == nil {
-		ipg := IpGroup{zig.Name}
-		DbMap.Insert(&ipg)
-	} else {
-		ipg := obj.(*IpGroup)
-		if ipg != nil {
-		}
-		_, err := DbMap.Exec("delete from ipgroupmember where ipgroup=?", zig.Name)
-		if err != nil {
-
-		}
-	}
-	//populate ipgroupmem table 
-	for _, ip := range zig.IPs {
-		ipMem := IpGroupMember{IpGroup: zig.Name, IP: ip}
-		DbMap.Insert(&ipMem)	
-	}
-
-	///////////////////////////////////////////////////
-
+	
 	return nil
 }
 

@@ -12,6 +12,8 @@
 package datamodel
 
 import (
+	"errors"
+	"fmt"
 	"atlantis/manager/helper"
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -25,21 +27,24 @@ type ZkEnv struct {
 }
 
 func GetEnv(name string) (*ZkEnv, error) {
-	e := &ZkEnv{name}
-	err := e.Get()
-
 	/////////////////////// SQL /////////////////
 	obj, err := DbMap.Get(Enviroment{}, name)
 	if err != nil {
-
+		fmt.Printf("\n Error trying to get env %s : %v \n", name, err)
 	}
 	if obj == nil {
-
-	}
-	env := obj.(*Enviroment)	
-	if env != nil {
+		fmt.Println("Env does not exist: " + name)
+		return nil, errors.New("Env does not exist")
+	} else {
+		env := obj.(*Enviroment)	
+		return &ZkEnv{env.Name}, nil
 	}
 	////////////////////////////////////////////
+
+	e := &ZkEnv{name}
+	err = e.Get()
+
+
 	return e, err
 }
 
@@ -50,8 +55,12 @@ func Env(name string) *ZkEnv {
 func (e *ZkEnv) Save() error {
 
 	///////////////// SQL /////////////////////////	
+ 	fmt.Println("YAY SQL SAVE ENVIROMENT")
 	env := Enviroment{e.Name}
-	DbMap.Insert(env)
+	err := DbMap.Insert(&env)
+	if err != nil {
+		fmt.Printf("\n%v\n", err)
+	}
 	///////////////////////////////////////////////
 
 	
@@ -68,7 +77,7 @@ func (e *ZkEnv) Delete() error {
 
 	/////////////////// SQL //////////////////////
 	env := Enviroment{e.Name}
-	DbMap.Delete(env)
+	DbMap.Delete(&env)
 	//if not
 	//DbMap.Exec("delete from enviroment where name=?", env.Name)
 	/////////////////////////////////////////////

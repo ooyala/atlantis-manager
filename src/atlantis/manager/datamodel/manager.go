@@ -14,6 +14,8 @@ package datamodel
 import (
 	"atlantis/manager/helper"
 	"atlantis/manager/rpc/types"
+	"errors"
+	"fmt"
 	"log"
 )
 
@@ -49,10 +51,30 @@ func (m *ZkManager) Save() error {
 	////////////////// SQL //////////////////////////////
 	//TODO: handle roles
 	//TODO: might need to check if insert or update
-	sqlManager := SqlManager{m.Host, m.Region, m.ManagerCName, m.ManagerRecordID,
-				m.RegistryCName, m.RegistryRecordID}
-	err := DbMap.Insert(&sqlManager)
+	fmt.Printf("\n Save manager called with: %v \n", m)
+	obj, err := DbMap.Get(SqlManager{}, m.Host)
 	if err != nil {
+		fmt.Printf("\n Error getting manager: %v \n", err)
+	}
+	//If not exists in DB
+	if obj == nil {
+		if m.Host != "" && m.Region != "" {
+			sqlManager := SqlManager{m.Host, m.Region, m.ManagerCName, m.ManagerRecordID,
+				m.RegistryCName, m.RegistryRecordID}
+			err = DbMap.Insert(&sqlManager)
+			if err != nil {
+				fmt.Printf("\n Error inserting manager, %v \n", err)
+			}
+		}
+	} else {
+		if m.Host != "" && m.Region != "" {
+			sqlManager := SqlManager{m.Host, m.Region, m.ManagerCName, m.ManagerRecordID,
+				m.RegistryCName, m.RegistryRecordID}
+			_, err = DbMap.Update(&sqlManager)
+			if err != nil {
+				fmt.Printf("\n Error inserting manager, %v \n", err)
+			}
+		}
 	}
 	////////////////////////////////////////////////////
 
@@ -76,12 +98,13 @@ func (m *ZkManager) AddRole(name, roleType string) error {
 	err := DbMap.SelectOne(&role, "select * from roles where name=? AND roletype=? AND manager=?", name, roleType, m.Host)
 	//if not found/not exists create and update
 	if err != nil {
-		role = Role{Name: name, RoleType: roleType, Value: true, Manager: m.Host}
-
+		myTestRole := Role{Id: 1, Name: name, RoleType: roleType, Value: true, Manager: m.Host}
+		fmt.Printf("\n going to add a role UPDATED \n")
 		//update the role
-		err = DbMap.Insert(&role)
+		err = DbMap.Insert(&myTestRole)
 		if err != nil {
-
+			fmt.Printf("\n %v : in AddRole\n", err)
+			fmt.Printf("%v \n\n", myTestRole)
 		}	
 	} 
 	////////////////////////////////////////////
@@ -91,22 +114,24 @@ func (m *ZkManager) AddRole(name, roleType string) error {
 }
 
 func (m *ZkManager) HasRole(name, roleType string) bool {
-	if m.Roles[name] == nil {
-		return false
-	}
-
+	
 	////////////////////////// SQL ////////////////////
 	//TODO: allow for any "RoleType" if not only read/write are supported.
 	var role Role 
 	err := DbMap.SelectOne(&role, "select * from roles where name=? AND roletype=? AND manager=?", name, roleType, m.Host)
 	//no role with that name for this manager
 	if err != nil {
-		//return role.Value
+		fmt.Printf("Role does not exists: %v \n", err)
+		return false
 	} else {
-		//not exists
-		//return false
+		return true
 	}
 	//////////////////////////////////////////////////
+
+	if m.Roles[name] == nil {
+		return false
+	}
+
 	return m.Roles[name][roleType]
 }
 
@@ -170,13 +195,20 @@ func GetManager(region, value string) (zm *ZkManager, err error) {
 	//TODO: verify the value string is the host name
 	obj, err := DbMap.Get(SqlManager{}, value)
 	if err != nil {
-
+		fmt.Printf("\n Error checking for mananger, %v \n", err)
 	}
 	if obj == nil {
-		//manager does not exists
-	}
-	man := obj.(*SqlManager)
-	if man != nil {
+		fmt.Println("\n Manager is nill no manager with val: " + value)
+		err = errors.New("No manager with name " + value + " " + region)
+		zm = nil
+	} else {
+		man := obj.(*SqlManager)
+		if man != nil {
+			fmt.Printf("\n Manager not nill: %v \n", man)
+		zm = &ZkManager{man.Region, man.Host, man.CName, man.RecordID, man.RegistryCName,
+					man.RegistryRecordID, map[string]map[string]bool{} }
+		err = nil 
+		} 
 	}
 	/////////////////////////////////////////////////////////
 	return
