@@ -33,7 +33,7 @@ type IpGroupMember struct {
 
 
 func GetIPGroup(name string) (zig *ZkIPGroup, err error) {
-	zig = &ZkIPGroup{}
+	zig = &ZkIPGroup{name, []string{}}
 	err = getJson(helper.GetBaseIPGroupPath(name), zig)
 
 	//////////////////// SQL ///////////////////////////	
@@ -42,7 +42,7 @@ func GetIPGroup(name string) (zig *ZkIPGroup, err error) {
 	if err != nil {
 		fmt.Printf("\n Error selecting IPs, %v \n", err)
 		zig = nil
-		err := errors.New("No ipgroup found")
+		err = errors.New("No ipgroup found")
 	}
 	fmt.Printf("\n Found %d for ipgroup %s \n", len(ips), name)
 	//////////////////////////////////////////////////
@@ -81,9 +81,12 @@ func (zig *ZkIPGroup) Save() error {
 			fmt.Printf("Err: %v \n", err)
 		}	
 		if obj == nil {
-			fmt.Printf("Ipgroup not exist yet, insert it")
+			fmt.Printf("\n Ipgroup not exist yet, insert it \n")
 			ipg := IpGroup{zig.Name}
-			DbMap.Insert(&ipg)
+			err = DbMap.Insert(&ipg)
+			if err != nil {
+				fmt.Printf("\n Error inserting new Ipgroup : %v \n", err)
+			}
 		} else {
 			fmt.Printf("IpGroup does exist, delete its ipgroupmembers so we can reload")
 			ipg := obj.(*IpGroup)
@@ -98,10 +101,13 @@ func (zig *ZkIPGroup) Save() error {
 		//populate ipgroupmem table 
 		for _, ip := range zig.IPs {
 			ipMem := IpGroupMember{IpGroup: zig.Name, IP: ip}
-			DbMap.Insert(&ipMem)	
+			err = DbMap.Insert(&ipMem)	
+			if err != nil {
+				fmt.Printf("\n Failed to add ipgroup member \n")
+			}
 		}
 	} else {
-		fmt.Println("\n TRYING TO SAVE IPGROUP WITH EMPTY NAME \n")
+		fmt.Println("\n TRYING TO SAVE IPGROUP WITH EMPTY NAME : %v \n", zig)
 	}
 	///////////////////////////////////////////////////
 

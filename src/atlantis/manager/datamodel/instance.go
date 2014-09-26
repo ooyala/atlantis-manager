@@ -14,8 +14,8 @@ package datamodel
 import (
 	"atlantis/manager/helper"
 	"atlantis/supervisor/rpc/types"
-	"database/sql"
 	"strings"
+	"errors"
 	"log"
 	"fmt"
 )
@@ -27,7 +27,6 @@ type Instance struct {
 	Env      string		`db:"envId"`
 	Host     string		`db:"hostId"`
 	Port     uint16		`db:"port"`
-	Manifest int64	`db:"manifestId"`	
 }
 
 type Manifest struct {
@@ -40,7 +39,8 @@ type Manifest struct {
 	AppType	string		`db:"apptype"`
 	JavaType string		`db:"javatype"`
 	RunCommands string	`db:"runcommands"`
-	Dependencies int64	`db:dependencies"`
+	Dependencies int64	`db:"dependencies"`
+	InstanceId string	`db:"instanceid"`
 }
 
 type ZkInstance struct {
@@ -82,12 +82,23 @@ func GetInstance(id string) (zi *ZkInstance, err error) {
 
 	////////////// SQL /////////////
 	obj, err := DbMap.Get(Instance{}, id)
-	inst := obj.(*Instance)		
-	if inst != nil {
+	if obj == nil {
+		zi = nil
+		err = errors.New("Instance not exist")
+		
+	} else {
+		inst := obj.(*Instance)
+		zi = &ZkInstance{inst.ID, inst.App, inst.Sha, inst.Env, inst.Host, inst.Port, &types.Manifest{}}
+		var mani Manifest	
+		err := DbMap.SelectOne(&mani, "select * from manifest where instanceid=?", id)
+		if err != nil {
+			fmt.Printf("\n Could not get manifest for %v : %v \n", inst, err)
+		} else {
+		zi.Manifest = &types.Manifest{mani.Name, mani.Description, uint(mani.Instances),
+							uint(mani.CPUShares), uint(mani.MemoryLimit), mani.AppType,
+							mani.JavaType, []string{mani.RunCommands}, nil}
+		}
 	}
-	//TODO: retrive manifest from DB and build instance obj
-	//or require whoever uses instance object to manually retrieve
-	//the manifest
 	////////////////////////////////
 	
 	return
@@ -102,9 +113,7 @@ func CreateInstance(app, sha, env, host string) (*ZkInstance, error) {
 	}
 
 	/////////////// SQL //////////////////////////////
-	//TODO: manifest Id FK needs to be set
-	//eventually change methods to use Instance instead of ZkInstance also
-	inst := Instance{id, app, sha, env, host, 0, sql.NullInt64{}}		
+	inst := Instance{ID: id, App: app, Sha: sha, Env: env, Host: host, Port: 0}		
 	err := DbMap.Insert(&inst)
 	if err != nil {
 		fmt.Printf("\n Error inserting instance to DB: %v \n", err)
@@ -227,6 +236,7 @@ func (zi *ZkInstance) SetManifest(m *types.Manifest) error {
 		JavaType: m.JavaType,
 		RunCommands: strings.Join(m.RunCommands, ","),
 		Dependencies: 0,
+		InstanceId: zi.ID,
 	}
 
 	//Insert it to DB
@@ -236,22 +246,6 @@ func (zi *ZkInstance) SetManifest(m *types.Manifest) error {
 	if err != nil {
 		fmt.Printf("\n error inserting manifest %v \n")
 	}	
-	
-	//Retrieve instance from DB
-	obj, err := DbMap.Get(Instance{}, zi.ID)
-	if err != nil {
-		fmt.Printf("Error getting instance: %v \n", err)
-	}
-	if obj == nil {
-		fmt.Println("Instance does not exist!")
-	} else {
-		inst := obj.(*Instance)
-		inst.Manifest = sql.NullInt64{sqlManifest.ID, true}
-		_, err = DbMap.Update(&inst)
-		if err != nil {
-			fmt.Printf("\n Error updating manifest id: %v \n", err)
-		}
-	}
 	///////////////////////////////////////////////////////////	
 
 	return setJson(zi.dataPath(), zi)

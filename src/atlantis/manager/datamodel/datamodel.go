@@ -109,8 +109,8 @@ func Init(zkUri string) {
 	err := DbMap.CreateTablesIfNotExists()
 	if err != nil {
 	}
-	err = DbMap.TruncateTables()
-	if err != nil {
-	}
+//	err = DbMap.TruncateTables()
+//	if err != nil {
+//	}
 	DbMap.TraceOn("[gorp]", log.New(os.Stdout, "managerSQL:", log.Lmicroseconds))	
 }

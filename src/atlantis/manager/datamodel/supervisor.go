@@ -112,12 +112,18 @@ func (h ZkSupervisor) Touch() error {
 	_, err := Zk.Touch(h.path())
 	
 	////////////////// SQL /////////////////////
-	sup := SupervisorSql{string(h)}
-	err = DbMap.Insert(&sup)
-	if err != nil {
-		fmt.Printf("\n %v \n", err)
+	obj, err2 := DbMap.Get(SupervisorSql{}, string(h))
+	if err2 != nil {
+		fmt.Printf("\n failed getting super : %v \n", err)
 	}
-	///////////////////////////////////////////
+	if obj == nil {
+		sup := SupervisorSql{string(h)}
+		err = DbMap.Insert(&sup)
+		if err != nil {
+		fmt.Printf("\n %v \n", err)
+		}
+	}
+	//////////////////////////////////////////
 	
 	return err
 }
@@ -217,7 +223,10 @@ func (h ZkSupervisor) createOrUpdateContainer(container string, data *ContainerD
 	} else {
 		pMap.Port = int64(data.port)
 	}
-	err = DbMap.Insert(&pMap)
+	err = DbMap.Insert(&pMap)		
+	if err != nil {
+		fmt.Printf("\n Error inserting new portmapping \n")
+	}
 	///////////////////////////////////////////////////////
 
 	return setJson(h.containerPath(container), data)
@@ -232,6 +241,27 @@ func (h ZkSupervisor) path() string {
 }
 
 func (h ZkSupervisor) addRelation(container string, port uint16) (err error) {
+
+	/////////////////////// SQL ////////////////////////////
+	var pMap PortMap
+	err = DbMap.SelectOne(&pMap, "select * from portmap where instance=? AND supervisorId=?", container, string(h))
+	if err != nil {
+		fmt.Printf("\n PortMap Relation not found: %v \n", err)
+		newPMap := PortMap{ Instance: container, Port: int64(port), Supervisor: string(h) }
+		err = DbMap.Insert(&newPMap)
+		if err != nil {
+			fmt.Printf("\n Error inserting new pmap relation %v : %v \n", err, newPMap)
+		}
+		
+	} else {
+		pMap.Port = int64(port)
+		_, err := DbMap.Update(&pMap)
+		if err != nil {
+			fmt.Printf("\n Error updating previous p-map relation %v : %v \n", err, pMap)
+		}
+	}
+	//////////////////////////////////////////////////////
+
 	data := SupervisorData{}
 	err = getJson(h.path(), &data)
 	if err != nil {
@@ -248,26 +278,7 @@ func (h ZkSupervisor) addRelation(container string, port uint16) (err error) {
 	}
 
 
-	/////////////////////// SQL ////////////////////////////
-	var pMap PortMap
-	err = DbMap.SelectOne(&pMap, "select * from portmap where instance=? AND supervisorId=?", container, string(h))
-	if err != nil {
-		fmt.Printf("\n PortMap Relation not found: %v \n", err)
-		newPMap = PortMap{ Instance: container, Port: int64(port), Supervisor: string(h) }
-		err = DbMap.Insert(&newPMap)
-		if err != nil {
-			fmt.Printf("\n Error inserting new pmap relation %v : %v \n", err, newPMap)
-		}
-		
-	} else {
-		pMap.Port = int64(port)
-		_, err := DbMap.Update(&pMap)
-		if err != nil {
-			fmt.Printf("\n Error updating previous p-map relation %v : %v \n", err pMap)
-		}
-	}
-	//////////////////////////////////////////////////////
-
+	
 	return
 }
 
