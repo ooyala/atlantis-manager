@@ -63,6 +63,7 @@ func Deploy(w http.ResponseWriter, r *http.Request) {
 		App:            vars["App"],
 		Sha:            vars["Sha"],
 		Env:            vars["Env"],
+		Ticket:         vars["Ticket"],
 		Instances:      uint(instances),
 		CPUShares:      uint(cpushares),
 		MemoryLimit:    uint(memlimit),

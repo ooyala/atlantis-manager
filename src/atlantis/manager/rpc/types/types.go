@@ -454,6 +454,7 @@ type ManagerDeployArg struct {
 	App         string
 	Sha         string
 	Env         string
+	Ticket      string
 	Instances   uint
 	CPUShares   uint // relative shares
 	MemoryLimit uint // MBytes

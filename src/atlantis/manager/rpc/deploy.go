@@ -21,6 +21,7 @@ import (
 	. "atlantis/supervisor/rpc/types"
 	"errors"
 	"fmt"
+	"strings"
 )
 
 type DeployExecutor struct {
@@ -109,6 +110,16 @@ func (e *DeployExecutor) Execute(t *Task) error {
 		manifest.Instances = e.arg.Instances
 	} else if manifest.Instances == 0 {
 		manifest.Instances = uint(1) // default to 1 instance
+	}
+	if e.arg.Ticket != "" && !strings.HasPrefix(e.arg.Ticket, JIRAPrefix+"-") {
+		return errors.New("JIRA ticket provided in wrong project. Please supply a ticket in project " + JIRAPrefix)
+	} else {
+		// Update JIRA
+	}
+	if strings.Contains(e.arg.Env, "prod") && e.arg.Ticket == "" {
+		return errors.New(fmt.Sprintf("Deploying to environment %s without supplying a JIRA %s ticket is forbidden.", e.arg.Env, JIRAPrefix))
+	} else if strings.Contains(e.arg.Env, "staging") && e.arg.Ticket == "" {
+		t.AddWarning(fmt.Sprintf("Deploying to environment %s without supplying a JIRA %s ticket", JIRAPrefix))
 	}
 	if e.arg.Dev {
 		e.reply.Containers, err = devDeploy(&e.arg.ManagerAuthArg, manifest, e.arg.Sha, e.arg.Env, t)

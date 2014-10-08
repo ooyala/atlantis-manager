@@ -21,6 +21,7 @@ type DeployCommand struct {
 	App         string `short:"a" long:"app" description:"the app to deploy"`
 	Sha         string `short:"s" long:"sha" description:"the sha to deploy"`
 	Env         string `short:"e" long:"env" description:"the environment to deploy"`
+	Ticket      string `short:"t" long:"ticket" description:"the associated JIRA CR ticket. Required for prod, recommended otherwise"`
 	Instances   uint   `short:"i" long:"instances" default:"1" description:"the number of instances to deploy in each AZ"`
 	CPUShares   uint   `short:"c" long:"cpu-shares" default:"0" description:"the number of CPU shares per instance"`
 	MemoryLimit uint   `short:"m" long:"memory-limit" default:"0" description:"the MBytes of memory per instance"`
@@ -46,6 +47,7 @@ func (c *DeployCommand) Execute(args []string) error {
 		Instances:      c.Instances,
 		CPUShares:      c.CPUShares,
 		MemoryLimit:    c.MemoryLimit,
+		Ticket:         c.Ticket,
 		Dev:            c.Dev,
 	}
 	var reply atlantis.AsyncReply
