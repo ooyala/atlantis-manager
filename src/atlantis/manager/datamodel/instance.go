@@ -14,6 +14,7 @@ package datamodel
 import (
 	"atlantis/manager/helper"
 	"atlantis/supervisor/rpc/types"
+	"errors"
 	"log"
 )
 
@@ -37,6 +38,9 @@ func InstanceExists(id string) bool {
 func GetInstance(id string) (zi *ZkInstance, err error) {
 	zi = &ZkInstance{}
 	err = getJson(helper.GetBaseInstanceDataPath(id), zi)
+	if err != nil {
+		err = errors.New(err.Error() + "\nContainer " + id + " not found; is this the right region?")
+	}
 	return
 }
 
