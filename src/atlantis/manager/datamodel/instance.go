@@ -39,6 +39,10 @@ func GetInstance(id string) (zi *ZkInstance, err error) {
 	zi = &ZkInstance{}
 	err = getJson(helper.GetBaseInstanceDataPath(id), zi)
 	if err != nil {
+		/* NOTE(edanaher): The default error message here is typically from zookeeper, which is not very user
+		 * friendly.  And at Ooyala, we've had a number of users run into this because they're looking at the wrong
+		 * region.  So as long as that is the dominant source of this error, it makes sense to suggest this as the
+		 * cause, much like compilers will attempt to guess at missing semicolons. */
 		err = errors.New(err.Error() + "\nContainer " + id + " not found; is this the right region?")
 	}
 	return
