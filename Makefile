@@ -54,7 +54,7 @@ install-deps:
 	@mkdir -p $(VENDOR_PATH)/src/github.com/crowdmob && git clone https://github.com/crowdmob/goamz.git $(VENDOR_PATH)/src/github.com/crowdmob/goamz
 	@GOPATH=$(VENDOR_PATH) go get code.google.com/p/gographviz
 	@GOPATH=$(VENDOR_PATH) go get launchpad.net/gocheck
-	@GOPATH=$(VENDOR_PATH) go get github.com/plouc/go-jira-client
+	@GOPATH=$(VENDOR_PATH) go get github.com/jbhat/go-jira-client
 	@git clone ssh://git@github.com/ooyala/atlantis-builder $(BUILDER_PATH)
 	@git clone ssh://git@github.com/ooyala/atlantis $(ATLANTIS_PATH)
 	@git clone ssh://git@github.com/ooyala/atlantis-supervisor $(SUPERVISOR_PATH)
