@@ -74,6 +74,10 @@ type ServerConfig struct {
 	SMTPAddr                   string `toml:"smtp_addr"`
 	SMTPFrom                   string `toml:"smtp_from"`
 	SMTPCC                     string `toml:"smtp_cc"`
+	JiraPrefix				   string `toml:"jira_prefix"`
+	JiraHost                   string `toml:"jira_host"`
+	JiraApiPath                string `toml:"jira_api_path"`
+	JiraActivityPath           string `toml:"jira_activity_path"`
 }
 
 type ServerOpts struct {
@@ -138,6 +142,10 @@ func New() *ManagerServer {
 			SMTPAddr:                   "",
 			SMTPFrom:                   "",
 			SMTPCC:                     "",
+			JiraPrefix: 				DefaultJiraPrefix,
+			JiraHost:                   DefaultJiraHost,
+			JiraApiPath:                DefaultJiraApiPath,
+			JiraActivityPath:           DefaultJiraActivityPath,
 		},
 	}
 	manager.parser.Parse()
@@ -174,6 +182,10 @@ func (m *ManagerServer) Run(bldr builder.Builder) {
 	datamodel.Init(m.Config.ZookeeperUri)
 	datamodel.MinRouterPort = m.Config.MinRouterPort
 	datamodel.MaxRouterPort = m.Config.MaxRouterPort
+	rpc.JiraPrefix = m.Config.JiraPrefix
+	rpc.JiraHost = m.Config.JiraHost
+	rpc.JiraApiPath = m.Config.JiraApiPath
+	rpc.JiraActivityPath = m.Config.JiraActivityPath
 	resultDuration, err := time.ParseDuration(m.Config.ResultDuration)
 	if err != nil {
 		panic(fmt.Sprintf("Could not parse Result Duration: %s", err.Error()))

@@ -111,15 +111,19 @@ func (e *DeployExecutor) Execute(t *Task) error {
 	} else if manifest.Instances == 0 {
 		manifest.Instances = uint(1) // default to 1 instance
 	}
-	if e.arg.Ticket != "" && !strings.HasPrefix(e.arg.Ticket, JIRAPrefix+"-") {
-		return errors.New("JIRA ticket provided in wrong project. Please supply a ticket in project " + JIRAPrefix)
+	if e.arg.Ticket != "" && !strings.HasPrefix(e.arg.Ticket, JiraPrefix+"-") {
+		return errors.New("JIRA ticket provided in wrong project. Please supply a ticket in project " + JiraPrefix)
 	} else {
-		// Update JIRA
+		comment := ""
+		err = e.jiraComment(e.arg.Ticket, comment)
+		if err != nil {
+			return err
+		}
 	}
 	if strings.Contains(e.arg.Env, "prod") && e.arg.Ticket == "" {
-		return errors.New(fmt.Sprintf("Deploying to environment %s without supplying a JIRA %s ticket is forbidden.", e.arg.Env, JIRAPrefix))
+		return errors.New(fmt.Sprintf("Deploying to environment %s without supplying a JIRA %s ticket is forbidden.", e.arg.Env, JiraPrefix))
 	} else if strings.Contains(e.arg.Env, "staging") && e.arg.Ticket == "" {
-		t.AddWarning(fmt.Sprintf("Deploying to environment %s without supplying a JIRA %s ticket", JIRAPrefix))
+		t.AddWarning(fmt.Sprintf("Deploying to environment %s without supplying a JIRA %s ticket", JiraPrefix))
 	}
 	if e.arg.Dev {
 		e.reply.Containers, err = devDeploy(&e.arg.ManagerAuthArg, manifest, e.arg.Sha, e.arg.Env, t)

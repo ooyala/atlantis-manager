@@ -24,6 +24,7 @@ import (
 	. "atlantis/supervisor/rpc/types"
 	"errors"
 	"fmt"
+	"github.com/jbhat/go-jira-client"
 	"strconv"
 )
 
@@ -575,4 +576,19 @@ func getContainerIDsToTeardown(t *Task, arg ManagerTeardownArg) (hostMap map[str
 		return
 	}
 	return nil, errors.New("Invalid Arguments")
+}
+
+func (e *DeployExecutor) jiraComment(issue, comment string) (err error) {
+	jira := gojira.NewJira(
+		JiraHost,
+		JiraApiPath,
+		JiraActivityPath,
+		&gojira.Auth{e.arg.ManagerAuthArg.User, e.arg.ManagerAuthArg.Password},
+	)
+	i, err := jira.Issue(issue)
+	if err != nil {
+		return
+	}
+	err = jira.AddComment(&i, comment)
+	return
 }

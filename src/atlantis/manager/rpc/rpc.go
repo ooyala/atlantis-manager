@@ -40,6 +40,10 @@ var (
 	CPUSharesIncrement   = uint(1) // default to no increment
 	MemoryLimitIncrement = uint(1) // default to no increment
 	superUserOnly        = false
+	JiraPrefix			 string
+	JiraHost             string
+	JiraApiPath          string
+	JiraActivityPath     string
 )
 
 func SuperUserOnlyChecker(file string, interval time.Duration) {

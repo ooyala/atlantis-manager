@@ -461,8 +461,6 @@ type ManagerDeployArg struct {
 	Dev         bool // if true, only install 1 instance in 1 zone
 }
 
-const JIRAPrefix = "CR"
-
 type ManagerDeployReply struct {
 	Status     string
 	Containers []*Container

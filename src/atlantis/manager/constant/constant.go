@@ -38,4 +38,8 @@ const (
 	DefaultSuperUserOnlyCheckInterval = "5s"
 	DefaultMinRouterPort              = uint16(49152)
 	DefaultMaxRouterPort              = uint16(65535)
+	DefaultJiraPrefix				  = "CR"
+	DefaultJiraHost                   = "https://jira.corp.ooyala.com"
+	DefaultJiraApiPath                = "/rest/api/latest"
+	DefaultJiraActivityPath           = "/activity"
 )
