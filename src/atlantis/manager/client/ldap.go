@@ -15,6 +15,7 @@ import (
 	. "atlantis/manager/rpc/types"
 	"errors"
 	"fmt"
+	"github.com/BurntSushi/toml"
 	"github.com/mewpkg/gopass"
 	"io/ioutil"
 	"os"
@@ -603,25 +604,46 @@ func PromptPassword(pass *string) error {
 }
 
 func GetSecret() (string, string, error) {
+	user, secrets, _ := GetSecrets()
+	return user, secrets[rpcClient.Opts.RPCHostAndPort()], nil
+}
+
+type TokenFileFormat struct {
+	User    string
+	Secrets map[string]string
+}
+
+func GetSecrets() (string, map[string]string, error) {
 	path := strings.Replace(cfg.KeyPath, "~", os.Getenv("HOME"), 1)
 	var filePath string = path + "/" + tokenFile
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		return "", "", nil
+		return "", map[string]string{}, nil
 	}
-	secret, err := ioutil.ReadFile(filePath)
+	tokenData, err := ioutil.ReadFile(filePath)
 	if err != nil {
-		return "", "", err
+		return "", map[string]string{}, err
 	}
-	f := strings.Split(string(secret), "\n")
-	return f[0], f[1], nil
+	var token TokenFileFormat
+	if _, err := toml.Decode(string(tokenData), &token); err != nil {
+		return "", map[string]string{}, err
+	}
+	return token.User, token.Secrets, nil
 }
 
-func SaveSecret(user, secret string) error {
+func SaveSecret(user string, secret string) error {
+	_, secrets, _ := GetSecrets()
+	secrets[rpcClient.Opts.RPCHostAndPort()] = secret
+
 	path := strings.Replace(cfg.KeyPath, "~", os.Getenv("HOME"), 1)
 	if err := os.MkdirAll(path, 0700); err != nil {
 		return err
 	}
-	if err := ioutil.WriteFile(path+"/"+tokenFile, []byte(user+"\n"+secret), 0600); err != nil {
+	file, err := os.Create(path + "/" + tokenFile)
+	if err != nil {
+		return err
+	}
+	token := TokenFileFormat{user, secrets}
+	if err := toml.NewEncoder(file).Encode(token); err != nil {
 		return err
 	}
 	return nil
