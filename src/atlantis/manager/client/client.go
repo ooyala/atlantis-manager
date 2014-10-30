@@ -14,6 +14,7 @@ package client
 import (
 	. "atlantis/manager/constant"
 	"atlantis/manager/rpc/client"
+	rpcTypes "atlantis/manager/rpc/types"
 	"encoding/json"
 	"fmt"
 	"github.com/BurntSushi/toml"
@@ -218,6 +219,7 @@ type ClientOpts struct {
 var clientOpts = &ClientOpts{}
 var cfg = &ClientConfig{"localhost", DefaultManagerRPCPort, DefaultManagerKeyPath}
 var rpcClient = &client.ManagerRPCClient{*client.NewManagerRPCClientWithConfig(cfg), "", map[string]string{}}
+var dummyAuthArg = rpcTypes.ManagerAuthArg{"", "", ""}
 
 type ManagerClient struct {
 	*flags.Parser
