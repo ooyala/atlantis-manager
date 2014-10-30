@@ -26,6 +26,8 @@ type LoginCommand struct {
 	Password string `short:"p" long:"password" description:"the password of the user"`
 }
 
+const tokenFile = "manager-tokens"
+
 func (c *LoginCommand) Execute(args []string) error {
 	overlayConfig()
 	var err error
@@ -602,7 +604,7 @@ func PromptPassword(pass *string) error {
 
 func GetSecret() (string, string, error) {
 	path := strings.Replace(cfg.KeyPath, "~", os.Getenv("HOME"), 1)
-	var filePath string = path + "/token"
+	var filePath string = path + "/" + tokenFile
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
 		return "", "", nil
 	}
@@ -619,7 +621,7 @@ func SaveSecret(user, secret string) error {
 	if err := os.MkdirAll(path, 0700); err != nil {
 		return err
 	}
-	if err := ioutil.WriteFile(path+"/token", []byte(user+"\n"+secret), 0600); err != nil {
+	if err := ioutil.WriteFile(path+"/"+tokenFile, []byte(user+"\n"+secret), 0600); err != nil {
 		return err
 	}
 	return nil
