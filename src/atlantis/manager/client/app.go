@@ -30,19 +30,14 @@ func (c *RequestAppDependencyCommand) Execute(args []string) error {
 	}
 	Log("Request App Dependency...")
 	args = ExtractArgs([]*string{&c.App, &c.Dependency}, args)
-	user, secret, err := GetSecret()
-	if err != nil {
-		return OutputError(err)
-	}
-	authArg := ManagerAuthArg{user, "", secret}
 	arg := ManagerRequestAppDependencyArg{
-		ManagerAuthArg: authArg,
+		ManagerAuthArg: dummyAuthArg,
 		App:            c.App,
 		Dependency:     c.Dependency,
 		Envs:           c.Envs,
 	}
 	var reply ManagerRequestAppDependencyReply
-	err = rpcClient.Call("RequestAppDependency", arg, &reply)
+	err = rpcClient.CallAuthed("RequestAppDependency", &arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}
@@ -66,10 +61,6 @@ func (c *AddDependerAppDataCommand) Execute(args []string) error {
 	}
 	Log("Add Depender App...")
 	args = ExtractArgs([]*string{&c.App, &c.FromFile}, args)
-	user, secret, err := GetSecret()
-	if err != nil {
-		return OutputError(err)
-	}
 	data := &DependerAppData{}
 	file, err := os.Open(c.FromFile)
 	if err != nil {
@@ -79,10 +70,9 @@ func (c *AddDependerAppDataCommand) Execute(args []string) error {
 	if err := jsonDec.Decode(data); err != nil {
 		return OutputError(err)
 	}
-	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerAddDependerAppDataArg{ManagerAuthArg: authArg, App: c.App, DependerAppData: data}
+  arg := ManagerAddDependerAppDataArg{ManagerAuthArg: dummyAuthArg, App: c.App, DependerAppData: data}
 	var reply ManagerAddDependerAppDataReply
-	err = rpcClient.Call("AddDependerAppData", arg, &reply)
+	err = rpcClient.CallAuthed("AddDependerAppData", &arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}
@@ -103,14 +93,9 @@ func (c *RemoveDependerAppDataCommand) Execute(args []string) error {
 	}
 	Log("Remove Depender App...")
 	args = ExtractArgs([]*string{&c.App, &c.Depender}, args)
-	user, secret, err := GetSecret()
-	if err != nil {
-		return OutputError(err)
-	}
-	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerRemoveDependerAppDataArg{ManagerAuthArg: authArg, App: c.App, Depender: c.Depender}
+	arg := ManagerRemoveDependerAppDataArg{ManagerAuthArg: dummyAuthArg, App: c.App, Depender: c.Depender}
 	var reply ManagerRemoveDependerAppDataReply
-	err = rpcClient.Call("RemoveDependerAppData", arg, &reply)
+	err = rpcClient.CallAuthed("RemoveDependerAppData", &arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}
@@ -131,14 +116,9 @@ func (c *GetDependerAppDataCommand) Execute(args []string) error {
 	}
 	Log("Get Depender App...")
 	args = ExtractArgs([]*string{&c.App, &c.Depender}, args)
-	user, secret, err := GetSecret()
-	if err != nil {
-		return OutputError(err)
-	}
-	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerGetDependerAppDataArg{ManagerAuthArg: authArg, App: c.App, Depender: c.Depender}
+	arg := ManagerGetDependerAppDataArg{ManagerAuthArg: dummyAuthArg, App: c.App, Depender: c.Depender}
 	var reply ManagerGetDependerAppDataReply
-	err = rpcClient.Call("GetDependerAppData", arg, &reply)
+	err = rpcClient.CallAuthed("GetDependerAppData", &arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}
@@ -164,10 +144,6 @@ func (c *AddDependerEnvDataCommand) Execute(args []string) error {
 	}
 	Log("Add Depender Env...")
 	args = ExtractArgs([]*string{&c.App, &c.FromFile}, args)
-	user, secret, err := GetSecret()
-	if err != nil {
-		return OutputError(err)
-	}
 	data := &DependerEnvData{}
 	file, err := os.Open(c.FromFile)
 	if err != nil {
@@ -177,10 +153,9 @@ func (c *AddDependerEnvDataCommand) Execute(args []string) error {
 	if err := jsonDec.Decode(data); err != nil {
 		return OutputError(err)
 	}
-	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerAddDependerEnvDataArg{ManagerAuthArg: authArg, App: c.App, DependerEnvData: data}
+	arg := ManagerAddDependerEnvDataArg{ManagerAuthArg: dummyAuthArg, App: c.App, DependerEnvData: data}
 	var reply ManagerAddDependerEnvDataReply
-	err = rpcClient.Call("AddDependerEnvData", arg, &reply)
+	err = rpcClient.CallAuthed("AddDependerEnvData", &arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}
@@ -201,14 +176,9 @@ func (c *RemoveDependerEnvDataCommand) Execute(args []string) error {
 	}
 	Log("Remove Depender Env...")
 	args = ExtractArgs([]*string{&c.App, &c.Env}, args)
-	user, secret, err := GetSecret()
-	if err != nil {
-		return OutputError(err)
-	}
-	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerRemoveDependerEnvDataArg{ManagerAuthArg: authArg, Env: c.Env, App: c.App}
+	arg := ManagerRemoveDependerEnvDataArg{ManagerAuthArg: dummyAuthArg, Env: c.Env, App: c.App}
 	var reply ManagerRemoveDependerEnvDataReply
-	err = rpcClient.Call("RemoveDependerEnvData", arg, &reply)
+	err = rpcClient.CallAuthed("RemoveDependerEnvData", &arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}
@@ -229,14 +199,9 @@ func (c *GetDependerEnvDataCommand) Execute(args []string) error {
 	}
 	Log("Get Depender Env...")
 	args = ExtractArgs([]*string{&c.App, &c.Env}, args)
-	user, secret, err := GetSecret()
-	if err != nil {
-		return OutputError(err)
-	}
-	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerGetDependerEnvDataArg{ManagerAuthArg: authArg, Env: c.Env, App: c.App}
+	arg := ManagerGetDependerEnvDataArg{ManagerAuthArg: dummyAuthArg, Env: c.Env, App: c.App}
 	var reply ManagerGetDependerEnvDataReply
-	err = rpcClient.Call("GetDependerEnvData", arg, &reply)
+	err = rpcClient.CallAuthed("GetDependerEnvData", &arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}
@@ -263,10 +228,6 @@ func (c *AddDependerEnvDataForDependerAppCommand) Execute(args []string) error {
 	}
 	Log("Add Depender Env For Depender App...")
 	args = ExtractArgs([]*string{&c.App, &c.FromFile}, args)
-	user, secret, err := GetSecret()
-	if err != nil {
-		return OutputError(err)
-	}
 	data := &DependerEnvData{}
 	file, err := os.Open(c.FromFile)
 	if err != nil {
@@ -276,15 +237,14 @@ func (c *AddDependerEnvDataForDependerAppCommand) Execute(args []string) error {
 	if err := jsonDec.Decode(data); err != nil {
 		return OutputError(err)
 	}
-	authArg := ManagerAuthArg{user, "", secret}
 	arg := ManagerAddDependerEnvDataForDependerAppArg{
-		ManagerAuthArg:  authArg,
+		ManagerAuthArg:  dummyAuthArg,
 		App:             c.App,
 		Depender:        c.Depender,
 		DependerEnvData: data,
 	}
 	var reply ManagerAddDependerEnvDataForDependerAppReply
-	err = rpcClient.Call("AddDependerEnvDataForDependerApp", arg, &reply)
+	err = rpcClient.CallAuthed("AddDependerEnvDataForDependerApp", &arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}
@@ -306,19 +266,14 @@ func (c *RemoveDependerEnvDataForDependerAppCommand) Execute(args []string) erro
 	}
 	Log("Remove Depender Env For Depender App...")
 	args = ExtractArgs([]*string{&c.App, &c.Env}, args)
-	user, secret, err := GetSecret()
-	if err != nil {
-		return OutputError(err)
-	}
-	authArg := ManagerAuthArg{user, "", secret}
 	arg := ManagerRemoveDependerEnvDataForDependerAppArg{
-		ManagerAuthArg: authArg,
+		ManagerAuthArg: dummyAuthArg,
 		Env:            c.Env,
 		Depender:       c.Depender,
 		App:            c.App,
 	}
 	var reply ManagerRemoveDependerEnvDataForDependerAppReply
-	err = rpcClient.Call("RemoveDependerEnvDataForDependerApp", arg, &reply)
+	err = rpcClient.CallAuthed("RemoveDependerEnvDataForDependerApp", &arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}
@@ -340,19 +295,14 @@ func (c *GetDependerEnvDataForDependerAppCommand) Execute(args []string) error {
 	}
 	Log("Get Depender Env For Depender App...")
 	args = ExtractArgs([]*string{&c.App, &c.Env}, args)
-	user, secret, err := GetSecret()
-	if err != nil {
-		return OutputError(err)
-	}
-	authArg := ManagerAuthArg{user, "", secret}
 	arg := ManagerGetDependerEnvDataForDependerAppArg{
-		ManagerAuthArg: authArg,
+		ManagerAuthArg: dummyAuthArg,
 		Env:            c.Env,
 		Depender:       c.Depender,
 		App:            c.App,
 	}
 	var reply ManagerGetDependerEnvDataForDependerAppReply
-	err = rpcClient.Call("GetDependerEnvDataForDependerApp", arg, &reply)
+	err = rpcClient.CallAuthed("GetDependerEnvDataForDependerApp", &arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}

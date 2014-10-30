@@ -27,18 +27,13 @@ func (c *UpdateIPGroupCommand) Execute(args []string) error {
 	}
 	Log("Update IP Group...")
 	args = ExtractArgs([]*string{&c.Name}, args)
-	user, secret, err := GetSecret()
-	if err != nil {
-		return OutputError(err)
-	}
-	authArg := ManagerAuthArg{user, "", secret}
 	arg := ManagerUpdateIPGroupArg{
-		ManagerAuthArg: authArg,
+		ManagerAuthArg: dummyAuthArg,
 		Name:           c.Name,
 		IPs:            c.IPs,
 	}
 	var reply ManagerUpdateIPGroupReply
-	err = rpcClient.Call("UpdateIPGroup", arg, &reply)
+	err = rpcClient.CallAuthed("UpdateIPGroup", &arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}
@@ -57,17 +52,12 @@ func (c *DeleteIPGroupCommand) Execute(args []string) error {
 	}
 	Log("Delete IP Group...")
 	args = ExtractArgs([]*string{&c.Name}, args)
-	user, secret, err := GetSecret()
-	if err != nil {
-		return OutputError(err)
-	}
-	authArg := ManagerAuthArg{user, "", secret}
 	arg := ManagerDeleteIPGroupArg{
-		ManagerAuthArg: authArg,
+		ManagerAuthArg: dummyAuthArg,
 		Name:           c.Name,
 	}
 	var reply ManagerDeleteIPGroupReply
-	err = rpcClient.Call("DeleteIPGroup", arg, &reply)
+	err = rpcClient.CallAuthed("DeleteIPGroup", &arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}
@@ -86,17 +76,12 @@ func (c *GetIPGroupCommand) Execute(args []string) error {
 	}
 	Log("Get IP Group...")
 	args = ExtractArgs([]*string{&c.Name}, args)
-	user, secret, err := GetSecret()
-	if err != nil {
-		return OutputError(err)
-	}
-	authArg := ManagerAuthArg{user, "", secret}
 	arg := ManagerGetIPGroupArg{
-		ManagerAuthArg: authArg,
+		ManagerAuthArg: dummyAuthArg,
 		Name:           c.Name,
 	}
 	var reply ManagerGetIPGroupReply
-	err = rpcClient.Call("GetIPGroup", arg, &reply)
+	err = rpcClient.CallAuthed("GetIPGroup", &arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}

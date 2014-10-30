@@ -30,7 +30,7 @@ const (
 	DefaultManagerHost                = "localhost"
 	DefaultManagerRPCPort             = uint16(1338)
 	DefaultManagerAPIPort             = uint16(443)
-	DefaultManagerKeyPath             = "~/.manager"
+	DefaultManagerKeyPath             = "~/.atlantis"
 	DefaultResultDuration             = "30m"
 	DefaultMaintenanceFile            = "/etc/atlantis/manager/maint"
 	DefaultMaintenanceCheckInterval   = "5s"

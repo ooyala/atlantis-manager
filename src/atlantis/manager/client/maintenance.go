@@ -26,14 +26,10 @@ func (c *ContainerMaintenanceCommand) Execute(args []string) error {
 	}
 	args = ExtractArgs([]*string{&c.Container}, args)
 	Log("ContainerMaintenance ...")
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	arg := ManagerContainerMaintenanceArg{ManagerAuthArg: ManagerAuthArg{user, "", secret},
+	arg := ManagerContainerMaintenanceArg{ManagerAuthArg: dummyAuthArg,
 		ContainerID: c.Container, Maintenance: c.Maintenance}
 	var reply ManagerContainerMaintenanceReply
-	err = rpcClient.Call("ContainerMaintenance", arg, &reply)
+  err := rpcClient.CallAuthed("ContainerMaintenance", &arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}

@@ -809,6 +809,13 @@ type ManagerLoginArg struct {
 	Secret string
 }
 
+func (a *ManagerLoginArg) SetCredentials(user, secret string) {
+	if a.Pass == "" {
+		a.User = user
+		a.Secret = secret
+	}
+}
+
 type ManagerLoginReply struct {
 	LoggedIn bool
 	Secret   string
@@ -1066,6 +1073,13 @@ type ManagerAuthArg struct {
 	User     string
 	Password string
 	Secret   string
+}
+
+func (a *ManagerAuthArg) SetCredentials(user, secret string) {
+	if a.Password == "" {
+		a.User = user
+		a.Secret = secret
+	}
 }
 
 func (o *ManagerAuthArg) Credentials() (user, password, secret string) {

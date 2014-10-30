@@ -13,7 +13,6 @@ package client
 
 import (
 	. "atlantis/common"
-	. "atlantis/manager/rpc/types"
 	"errors"
 	"time"
 )
@@ -119,13 +118,8 @@ func (c *ListTaskIDsCommand) Execute(args []string) error {
 		return OutputError(err)
 	}
 	Log("List Task IDs...")
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	authArg := ManagerAuthArg{user, "", secret}
 	var ids []string
-	if err := rpcClient.Call("ListTaskIDs", authArg, &ids); err != nil {
+	if err := rpcClient.CallAuthed("ListTaskIDs", &dummyAuthArg, &ids); err != nil {
 		return OutputError(err)
 	}
 	return Output(map[string]interface{}{"ids": ids}, ids, nil)

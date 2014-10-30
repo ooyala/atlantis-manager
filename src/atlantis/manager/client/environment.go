@@ -26,14 +26,9 @@ func (c *UpdateDepCommand) Execute(args []string) error {
 		return OutputError(err)
 	}
 	Log("Update Dep...")
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerDepArg{authArg, c.Env, c.Name, c.Value}
+	arg := ManagerDepArg{dummyAuthArg, c.Env, c.Name, c.Value}
 	var reply ManagerDepReply
-	if err := rpcClient.Call("UpdateDep", arg, &reply); err != nil {
+	if err := rpcClient.CallAuthed("UpdateDep", &arg, &reply); err != nil {
 		return OutputError(err)
 	}
 	Log("-> status: %s", reply.Status)
@@ -52,14 +47,9 @@ func (c *ResolveDepsCommand) Execute(args []string) error {
 		return OutputError(err)
 	}
 	Log("Resolve Deps...")
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerResolveDepsArg{ManagerAuthArg: authArg, App: c.App, Env: c.Env, DepNames: c.DepNames}
+	arg := ManagerResolveDepsArg{ManagerAuthArg: dummyAuthArg, App: c.App, Env: c.Env, DepNames: c.DepNames}
 	var reply ManagerResolveDepsReply
-	if err := rpcClient.Call("ResolveDeps", arg, &reply); err != nil {
+	if err := rpcClient.CallAuthed("ResolveDeps", &arg, &reply); err != nil {
 		return OutputError(err)
 	}
 	Log("-> status: %s", reply.Status)
@@ -83,14 +73,9 @@ func (c *GetDepCommand) Execute(args []string) error {
 		return OutputError(err)
 	}
 	Log("Get Dep...")
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerDepArg{authArg, c.Env, c.Name, ""}
+	arg := ManagerDepArg{dummyAuthArg, c.Env, c.Name, ""}
 	var reply ManagerDepReply
-	if err := rpcClient.Call("GetDep", arg, &reply); err != nil {
+	if err := rpcClient.CallAuthed("GetDep", &arg, &reply); err != nil {
 		return OutputError(err)
 	}
 	Log("-> status: %s", reply.Status)
@@ -108,14 +93,9 @@ func (c *DeleteDepCommand) Execute(args []string) error {
 		return OutputError(err)
 	}
 	Log("Delete Dep...")
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerDepArg{authArg, c.Env, c.Name, ""}
+	arg := ManagerDepArg{dummyAuthArg, c.Env, c.Name, ""}
 	var reply ManagerDepReply
-	if err := rpcClient.Call("DeleteDep", arg, &reply); err != nil {
+	if err := rpcClient.CallAuthed("DeleteDep", &arg, &reply); err != nil {
 		return OutputError(err)
 	}
 	Log("-> status: %s", reply.Status)
@@ -132,14 +112,9 @@ func (c *UpdateEnvCommand) Execute(args []string) error {
 		return OutputError(err)
 	}
 	Log("Update Env...")
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerEnvArg{authArg, c.Name}
+	arg := ManagerEnvArg{dummyAuthArg, c.Name}
 	var reply ManagerEnvReply
-	if err := rpcClient.Call("UpdateEnv", arg, &reply); err != nil {
+	if err := rpcClient.CallAuthed("UpdateEnv", &arg, &reply); err != nil {
 		return OutputError(err)
 	}
 	Log("-> status: %s", reply.Status)
@@ -155,14 +130,9 @@ func (c *DeleteEnvCommand) Execute(args []string) error {
 		return OutputError(err)
 	}
 	Log("Delete Env...")
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerEnvArg{authArg, c.Name}
+	arg := ManagerEnvArg{dummyAuthArg, c.Name}
 	var reply ManagerEnvReply
-	if err := rpcClient.Call("DeleteEnv", arg, &reply); err != nil {
+	if err := rpcClient.CallAuthed("DeleteEnv", &arg, &reply); err != nil {
 		return OutputError(err)
 	}
 	Log("-> status: %s", reply.Status)

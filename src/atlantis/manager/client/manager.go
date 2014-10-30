@@ -48,14 +48,9 @@ func (c *AddRoleCommand) Execute(args []string) error {
 	}
 	Log("Add Role...")
 	args = ExtractArgs([]*string{&c.Region, &c.Host}, args)
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerRoleArg{ManagerAuthArg: authArg, Region: c.Region, Host: c.Host, Role: c.Role, Type: c.Type}
+	arg := ManagerRoleArg{ManagerAuthArg: dummyAuthArg, Region: c.Region, Host: c.Host, Role: c.Role, Type: c.Type}
 	var reply ManagerRoleReply
-	err = rpcClient.Call("AddRole", arg, &reply)
+	err = rpcClient.CallAuthed("AddRole", &arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}
@@ -76,14 +71,9 @@ func (c *RemoveRoleCommand) Execute(args []string) error {
 	}
 	Log("Remove Role...")
 	args = ExtractArgs([]*string{&c.Region, &c.Host}, args)
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerRoleArg{ManagerAuthArg: authArg, Region: c.Region, Host: c.Host, Role: c.Role, Type: c.Type}
+	arg := ManagerRoleArg{ManagerAuthArg: dummyAuthArg, Region: c.Region, Host: c.Host, Role: c.Role, Type: c.Type}
 	var reply ManagerRoleReply
-	err = rpcClient.Call("RemoveRole", arg, &reply)
+	err = rpcClient.CallAuthed("RemoveRole", &arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}
@@ -104,14 +94,9 @@ func (c *HasRoleCommand) Execute(args []string) error {
 	}
 	Log("Has Role...")
 	args = ExtractArgs([]*string{&c.Region, &c.Host}, args)
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerRoleArg{ManagerAuthArg: authArg, Region: c.Region, Host: c.Host, Role: c.Role, Type: c.Type}
+	arg := ManagerRoleArg{ManagerAuthArg: dummyAuthArg, Region: c.Region, Host: c.Host, Role: c.Role, Type: c.Type}
 	var reply ManagerHasRoleReply
-	err = rpcClient.Call("HasRole", arg, &reply)
+	err = rpcClient.CallAuthed("HasRole", &arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}
