@@ -554,7 +554,10 @@ func AutoLoginDefault() error {
 func AutoLogin(overrideUser, overridePassword string) (ManagerLoginReply, error) {
 	var reply ManagerLoginReply
 	password := ""
-	user, secret, err := GetSecret()
+	user, secrets, err := GetSecrets()
+	rpcClient.User = user
+	rpcClient.Secrets = secrets
+	secret := secrets[rpcClient.Opts.RPCHostAndPort()]
 	if err != nil {
 		return reply, err
 	}
@@ -633,6 +636,9 @@ func GetSecrets() (string, map[string]string, error) {
 func SaveSecret(user string, secret string) error {
 	_, secrets, _ := GetSecrets()
 	secrets[rpcClient.Opts.RPCHostAndPort()] = secret
+
+	rpcClient.User = user
+	rpcClient.Secrets = secrets
 
 	path := strings.Replace(cfg.KeyPath, "~", os.Getenv("HOME"), 1)
 	if err := os.MkdirAll(path, 0700); err != nil {

@@ -217,7 +217,7 @@ type ClientOpts struct {
 
 var clientOpts = &ClientOpts{}
 var cfg = &ClientConfig{"localhost", DefaultManagerRPCPort, DefaultManagerKeyPath}
-var rpcClient = client.NewManagerRPCClientWithConfig(cfg)
+var rpcClient = &client.ManagerRPCClient{*client.NewManagerRPCClientWithConfig(cfg), "", map[string]string{}}
 
 type ManagerClient struct {
 	*flags.Parser

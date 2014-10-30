@@ -16,6 +16,22 @@ import (
 	. "atlantis/manager/constant"
 )
 
+type ManagerRPCClient struct {
+	atlantis.RPCClient
+	User    string
+	Secrets map[string]string
+}
+
+type authedArg interface {
+	SetCredentials(string, string)
+}
+
+func (r *ManagerRPCClient) CallAuthed(name string, arg authedArg, reply interface{}) error {
+	arg.SetCredentials(r.User, r.Secrets[r.Opts.RPCHostAndPort()])
+
+	return r.RPCClient.Call(name, arg, reply)
+}
+
 func NewManagerRPCClient(hostAndPort string) *atlantis.RPCClient {
 	return atlantis.NewRPCClient(hostAndPort, "ManagerRPC", ManagerRPCVersion, true)
 }
