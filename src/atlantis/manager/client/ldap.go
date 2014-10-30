@@ -589,7 +589,7 @@ func AutoLogin(overrideUser, overridePassword string) (ManagerLoginReply, error)
 func PromptUsername(user *string) {
 	*user = ""
 	for *user == "" {
-		fmt.Printf("Username: ")
+		fmt.Printf("LDAP Username: ")
 		fmt.Scanln(user)
 	}
 }
@@ -598,7 +598,7 @@ func PromptPassword(pass *string) error {
 	*pass = ""
 	var err error
 	for *pass == "" {
-		*pass, err = gopass.GetPass("Password: ")
+		*pass, err = gopass.GetPass("LDAP Password: ")
 		if err != nil {
 			return err
 		}
