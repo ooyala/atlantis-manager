@@ -32,20 +32,15 @@ func (c *UpdatePoolCommand) Execute(args []string) error {
 		return OutputError(err)
 	}
 	Log("Update Pool...")
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	authArg := ManagerAuthArg{user, "", secret}
 	hosts := make(map[string]config.Host, len(c.Hosts))
 	for _, host := range c.Hosts {
 		hosts[host] = config.Host{Address: host}
 	}
-	arg := ManagerUpdatePoolArg{authArg, config.Pool{Name: c.Name, Hosts: hosts, Internal: c.Internal,
+	arg := ManagerUpdatePoolArg{dummyAuthArg, config.Pool{Name: c.Name, Hosts: hosts, Internal: c.Internal,
 		Config: config.PoolConfig{HealthzEvery: c.HealthCheckEvery, HealthzTimeout: c.HealthzTimeout,
 			RequestTimeout: c.RequestTimeout, Status: c.Status}}}
 	var reply ManagerUpdatePoolReply
-	err = rpcClient.Call("UpdatePool", arg, &reply)
+	err = rpcClient.CallAuthed("UpdatePool", &arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}
@@ -64,14 +59,9 @@ func (c *DeletePoolCommand) Execute(args []string) error {
 		return OutputError(err)
 	}
 	Log("Delete Pool...")
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerDeletePoolArg{authArg, c.Name, c.Internal}
+	arg := ManagerDeletePoolArg{dummyAuthArg, c.Name, c.Internal}
 	var reply ManagerDeletePoolReply
-	err = rpcClient.Call("DeletePool", arg, &reply)
+	err = rpcClient.CallAuthed("DeletePool", &arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}
@@ -90,14 +80,9 @@ func (c *GetPoolCommand) Execute(args []string) error {
 		return OutputError(err)
 	}
 	Log("Get Pool...")
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerGetPoolArg{authArg, c.Name, c.Internal}
+	arg := ManagerGetPoolArg{dummyAuthArg, c.Name, c.Internal}
 	var reply ManagerGetPoolReply
-	err = rpcClient.Call("GetPool", arg, &reply)
+	err = rpcClient.CallAuthed("GetPool", &arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}
@@ -116,14 +101,9 @@ func (c *ListPoolsCommand) Execute(args []string) error {
 		return OutputError(err)
 	}
 	Log("List Pools...")
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerListPoolsArg{authArg, c.Internal}
+	arg := ManagerListPoolsArg{dummyAuthArg, c.Internal}
 	var reply ManagerListPoolsReply
-	err = rpcClient.Call("ListPools", arg, &reply)
+	err = rpcClient.CallAuthed("ListPools", &arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}
@@ -150,15 +130,10 @@ func (c *UpdateRuleCommand) Execute(args []string) error {
 		return OutputError(err)
 	}
 	Log("Update Rule...")
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerUpdateRuleArg{authArg, config.Rule{Name: c.Name, Type: c.Type, Value: c.Value, Next: c.Next,
+	arg := ManagerUpdateRuleArg{dummyAuthArg, config.Rule{Name: c.Name, Type: c.Type, Value: c.Value, Next: c.Next,
 		Pool: c.Pool, Internal: c.Internal}}
 	var reply ManagerUpdateRuleReply
-	err = rpcClient.Call("UpdateRule", arg, &reply)
+	err = rpcClient.Call("UpdateRule", &arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}
@@ -177,14 +152,9 @@ func (c *DeleteRuleCommand) Execute(args []string) error {
 		return OutputError(err)
 	}
 	Log("Delete Rule...")
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerDeleteRuleArg{authArg, c.Name, c.Internal}
+	arg := ManagerDeleteRuleArg{dummyAuthArg, c.Name, c.Internal}
 	var reply ManagerDeleteRuleReply
-	err = rpcClient.Call("DeleteRule", arg, &reply)
+	err = rpcClient.CallAuthed("DeleteRule", &arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}
@@ -203,14 +173,9 @@ func (c *GetRuleCommand) Execute(args []string) error {
 		return OutputError(err)
 	}
 	Log("Get Rule...")
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerGetRuleArg{authArg, c.Name, c.Internal}
+	arg := ManagerGetRuleArg{dummyAuthArg, c.Name, c.Internal}
 	var reply ManagerGetRuleReply
-	err = rpcClient.Call("GetRule", arg, &reply)
+	err = rpcClient.Call("GetRule", &arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}
@@ -229,14 +194,9 @@ func (c *ListRulesCommand) Execute(args []string) error {
 		return OutputError(err)
 	}
 	Log("List Rules...")
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerListRulesArg{authArg, c.Internal}
+	arg := ManagerListRulesArg{dummyAuthArg, c.Internal}
 	var reply ManagerListRulesReply
-	err = rpcClient.Call("ListRules", arg, &reply)
+	err = rpcClient.CallAuthed("ListRules", &arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}
@@ -260,14 +220,9 @@ func (c *UpdateTrieCommand) Execute(args []string) error {
 		return OutputError(err)
 	}
 	Log("Update Trie...")
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerUpdateTrieArg{authArg, config.Trie{Name: c.Name, Rules: c.Rules, Internal: c.Internal}}
+	arg := ManagerUpdateTrieArg{dummyAuthArg, config.Trie{Name: c.Name, Rules: c.Rules, Internal: c.Internal}}
 	var reply ManagerUpdateTrieReply
-	err = rpcClient.Call("UpdateTrie", arg, &reply)
+	err = rpcClient.CallAuthed("UpdateTrie", &arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}
@@ -286,14 +241,9 @@ func (c *DeleteTrieCommand) Execute(args []string) error {
 		return OutputError(err)
 	}
 	Log("Delete Trie...")
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerDeleteTrieArg{authArg, c.Name, c.Internal}
+	arg := ManagerDeleteTrieArg{dummyAuthArg, c.Name, c.Internal}
 	var reply ManagerDeleteTrieReply
-	err = rpcClient.Call("DeleteTrie", arg, &reply)
+	err = rpcClient.CallAuthed("DeleteTrie", &arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}
@@ -312,14 +262,9 @@ func (c *GetTrieCommand) Execute(args []string) error {
 		return OutputError(err)
 	}
 	Log("Get Trie...")
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerGetTrieArg{authArg, c.Name, c.Internal}
+	arg := ManagerGetTrieArg{dummyAuthArg, c.Name, c.Internal}
 	var reply ManagerGetTrieReply
-	err = rpcClient.Call("GetTrie", arg, &reply)
+	err = rpcClient.CallAuthed("GetTrie", &arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}
@@ -338,14 +283,9 @@ func (c *ListTriesCommand) Execute(args []string) error {
 		return OutputError(err)
 	}
 	Log("List Tries...")
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerListTriesArg{authArg, c.Internal}
+	arg := ManagerListTriesArg{dummyAuthArg, c.Internal}
 	var reply ManagerListTriesReply
-	err = rpcClient.Call("ListTries", arg, &reply)
+	err = rpcClient.CallAuthed("ListTries", &arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}
@@ -369,13 +309,8 @@ func (c *UpdatePortCommand) Execute(args []string) error {
 		return OutputError(err)
 	}
 	Log("Update Port...")
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	authArg := ManagerAuthArg{user, "", secret}
 	arg := ManagerUpdatePortArg{
-		ManagerAuthArg: authArg,
+		ManagerAuthArg: dummyAuthArg,
 		Port: config.Port{
 			Port:     c.Port,
 			Trie:     c.Trie,
@@ -383,7 +318,7 @@ func (c *UpdatePortCommand) Execute(args []string) error {
 		},
 	}
 	var reply ManagerUpdatePortReply
-	err = rpcClient.Call("UpdatePort", arg, &reply)
+	err = rpcClient.CallAuthed("UpdatePort", &arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}
@@ -402,14 +337,9 @@ func (c *DeletePortCommand) Execute(args []string) error {
 		return OutputError(err)
 	}
 	Log("Delete Port...")
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerDeletePortArg{authArg, c.Port, c.Internal}
+	arg := ManagerDeletePortArg{dummyAuthArg, c.Port, c.Internal}
 	var reply ManagerDeletePortReply
-	err = rpcClient.Call("DeletePort", arg, &reply)
+	err = rpcClient.CallAuthed("DeletePort", &arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}
@@ -428,14 +358,9 @@ func (c *GetPortCommand) Execute(args []string) error {
 		return OutputError(err)
 	}
 	Log("Get Port...")
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerGetPortArg{authArg, c.Port, c.Internal}
+	arg := ManagerGetPortArg{dummyAuthArg, c.Port, c.Internal}
 	var reply ManagerGetPortReply
-	err = rpcClient.Call("GetPort", arg, &reply)
+	err = rpcClient.CallAuthed("GetPort", &arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}
@@ -454,14 +379,9 @@ func (c *ListPortsCommand) Execute(args []string) error {
 		return OutputError(err)
 	}
 	Log("List Ports...")
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerListPortsArg{authArg, c.Internal}
+	arg := ManagerListPortsArg{dummyAuthArg, c.Internal}
 	var reply ManagerListPortsReply
-	err = rpcClient.Call("ListPorts", arg, &reply)
+	err = rpcClient.CallAuthed("ListPorts", &arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}
@@ -485,18 +405,13 @@ func (c *GetAppEnvPortCommand) Execute(args []string) error {
 		return OutputError(err)
 	}
 	Log("Get AppEnv Port...")
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	authArg := ManagerAuthArg{user, "", secret}
 	arg := ManagerGetAppEnvPortArg{
-		ManagerAuthArg: authArg,
+		ManagerAuthArg: dummyAuthArg,
 		App:            c.App,
 		Env:            c.Env,
 	}
 	var reply ManagerGetAppEnvPortReply
-	err = rpcClient.Call("GetAppEnvPort", arg, &reply)
+	err = rpcClient.CallAuthed("GetAppEnvPort", &arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}
@@ -515,14 +430,9 @@ func (c *ListAppEnvsWithPortCommand) Execute(args []string) error {
 		return OutputError(err)
 	}
 	Log("List AppEnvs With Ports...")
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerListAppEnvsWithPortArg{authArg, c.Internal}
+	arg := ManagerListAppEnvsWithPortArg{dummyAuthArg, c.Internal}
 	var reply ManagerListAppEnvsWithPortReply
-	err = rpcClient.Call("ListAppEnvsWithPort", arg, &reply)
+	err = rpcClient.CallAuthed("ListAppEnvsWithPort", &arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}

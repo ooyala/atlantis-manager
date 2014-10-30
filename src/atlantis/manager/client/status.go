@@ -24,13 +24,8 @@ func (c *UsageCommand) Execute(args []string) error {
 		return OutputError(err)
 	}
 	Log("Usage...")
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	authArg := ManagerAuthArg{user, "", secret}
 	var reply ManagerUsageReply
-	err = rpcClient.Call("Usage", ManagerUsageArg{authArg}, &reply)
+	err = rpcClient.CallAuthed("Usage", &ManagerUsageArg{dummyAuthArg}, &reply)
 	if err != nil {
 		return OutputError(err)
 	}

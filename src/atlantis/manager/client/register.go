@@ -31,20 +31,15 @@ func (c *RegisterRouterCommand) Execute(args []string) error {
 	}
 	Log("Register Router...")
 	args = ExtractArgs([]*string{&c.Zone, &c.Host, &c.IP}, args)
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	authArg := ManagerAuthArg{user, "", secret}
 	arg := ManagerRegisterRouterArg{
-		ManagerAuthArg: authArg,
+		ManagerAuthArg: dummyAuthArg,
 		Internal:       c.Internal,
 		Zone:           c.Zone,
 		Host:           c.Host,
 		IP:             c.IP,
 	}
 	var reply atlantis.AsyncReply
-	err = rpcClient.Call("RegisterRouter", arg, &reply)
+	err = rpcClient.CallAuthed("RegisterRouter", &arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}
@@ -69,19 +64,14 @@ func (c *UnregisterRouterCommand) Execute(args []string) error {
 	}
 	Log("Unregister Router...")
 	args = ExtractArgs([]*string{&c.Zone, &c.Host}, args)
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	authArg := ManagerAuthArg{user, "", secret}
 	arg := ManagerRegisterRouterArg{
-		ManagerAuthArg: authArg,
+		ManagerAuthArg: dummyAuthArg,
 		Internal:       c.Internal,
 		Zone:           c.Zone,
 		Host:           c.Host,
 	}
 	var reply atlantis.AsyncReply
-	err = rpcClient.Call("UnregisterRouter", arg, &reply)
+	err = rpcClient.CallAuthed("UnregisterRouter", &arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}
@@ -153,14 +143,9 @@ func (c *GetRouterCommand) Execute(args []string) error {
 	}
 	Log("Get Router...")
 	args = ExtractArgs([]*string{&c.Zone, &c.Host}, args)
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerGetRouterArg{ManagerAuthArg: authArg, Internal: c.Internal, Zone: c.Zone, Host: c.Host}
+	arg := ManagerGetRouterArg{ManagerAuthArg: dummyAuthArg, Internal: c.Internal, Zone: c.Zone, Host: c.Host}
 	var reply ManagerGetRouterReply
-	err = rpcClient.Call("GetRouter", arg, &reply)
+	err = rpcClient.CallAuthed("GetRouter", &arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}
@@ -185,14 +170,9 @@ func (c *ListRoutersCommand) Execute(args []string) error {
 		return OutputError(err)
 	}
 	Log("List Routers..")
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerListRoutersArg{ManagerAuthArg: authArg, Internal: c.Internal}
+	arg := ManagerListRoutersArg{ManagerAuthArg: dummyAuthArg, Internal: c.Internal}
 	var reply ManagerListRoutersReply
-	err = rpcClient.Call("ListRouters", arg, &reply)
+	err = rpcClient.CallAuthed("ListRouters", &arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}
@@ -222,13 +202,8 @@ func (c *RegisterAppCommand) Execute(args []string) error {
 	}
 	Log("Register App...")
 	args = ExtractArgs([]*string{&c.App, &c.Repo, &c.Root}, args)
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	authArg := ManagerAuthArg{user, "", secret}
 	arg := ManagerRegisterAppArg{
-		ManagerAuthArg: authArg,
+		ManagerAuthArg: dummyAuthArg,
 		NonAtlantis:    c.NonAtlantis,
 		Internal:       c.Internal,
 		Name:           c.App,
@@ -237,7 +212,7 @@ func (c *RegisterAppCommand) Execute(args []string) error {
 		Email:          c.Email,
 	}
 	var reply ManagerRegisterAppReply
-	err = rpcClient.Call("RegisterApp", arg, &reply)
+	err = rpcClient.CallAuthed("RegisterApp", &arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}
@@ -261,13 +236,8 @@ func (c *UpdateAppCommand) Execute(args []string) error {
 	}
 	Log("Update App...")
 	args = ExtractArgs([]*string{&c.App, &c.Repo, &c.Root}, args)
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	authArg := ManagerAuthArg{user, "", secret}
 	arg := ManagerRegisterAppArg{
-		ManagerAuthArg: authArg,
+		ManagerAuthArg: dummyAuthArg,
 		NonAtlantis:    c.NonAtlantis,
 		Internal:       c.Internal,
 		Name:           c.App,
@@ -276,7 +246,7 @@ func (c *UpdateAppCommand) Execute(args []string) error {
 		Email:          c.Email,
 	}
 	var reply ManagerRegisterAppReply
-	err = rpcClient.Call("UpdateApp", arg, &reply)
+	err = rpcClient.CallAuthed("UpdateApp", &arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}
@@ -295,14 +265,9 @@ func (c *UnregisterAppCommand) Execute(args []string) error {
 	}
 	Log("Unregister App...")
 	args = ExtractArgs([]*string{&c.App}, args)
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerRegisterAppArg{ManagerAuthArg: authArg, Name: c.App}
+	arg := ManagerRegisterAppArg{ManagerAuthArg: dummyAuthArg, Name: c.App}
 	var reply ManagerRegisterAppReply
-	err = rpcClient.Call("UnregisterApp", arg, &reply)
+	err = rpcClient.CallAuthed("UnregisterApp", &arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}
@@ -357,14 +322,9 @@ func (c *GetAppCommand) Execute(args []string) error {
 	}
 	Log("Get App...")
 	args = ExtractArgs([]*string{&c.App}, args)
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerGetAppArg{ManagerAuthArg: authArg, Name: c.App}
+	arg := ManagerGetAppArg{ManagerAuthArg: dummyAuthArg, Name: c.App}
 	var reply ManagerGetAppReply
-	err = rpcClient.Call("GetApp", arg, &reply)
+	err = rpcClient.CallAuthed("GetApp", &arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}
@@ -382,14 +342,9 @@ func (c *ListRegisteredAppsCommand) Execute(args []string) error {
 		return OutputError(err)
 	}
 	Log("List Registered Apps..")
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerListRegisteredAppsArg{authArg}
+	arg := ManagerListRegisteredAppsArg{dummyAuthArg}
 	var reply ManagerListRegisteredAppsReply
-	err = rpcClient.Call("ListRegisteredApps", arg, &reply)
+	err = rpcClient.CallAuthed("ListRegisteredApps", &arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}
@@ -409,14 +364,9 @@ func (c *ListAuthorizedRegisteredAppsCommand) Execute(args []string) error {
 		return OutputError(err)
 	}
 	Log("List Authorized Registered Apps..")
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerListRegisteredAppsArg{authArg}
+	arg := ManagerListRegisteredAppsArg{dummyAuthArg}
 	var reply ManagerListRegisteredAppsReply
-	err = rpcClient.Call("ListAuthorizedRegisteredApps", arg, &reply)
+	err = rpcClient.CallAuthed("ListAuthorizedRegisteredApps", &arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}
@@ -459,20 +409,15 @@ func (c *RegisterManagerCommand) Execute(args []string) error {
 	}
 	Log("Register Manager...")
 	args = ExtractArgs([]*string{&c.Host, &c.Region}, args)
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	authArg := ManagerAuthArg{user, "", secret}
 	arg := ManagerRegisterManagerArg{
-		ManagerAuthArg: authArg,
+		ManagerAuthArg: dummyAuthArg,
 		Host:           c.Host,
 		Region:         c.Region,
 		ManagerCName:   c.ManagerCName,
 		RegistryCName:  c.RegistryCName,
 	}
 	var reply atlantis.AsyncReply
-	err = rpcClient.Call("RegisterManager", arg, &reply)
+	err = rpcClient.CallAuthed("RegisterManager", &arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}
@@ -496,14 +441,9 @@ func (c *UnregisterManagerCommand) Execute(args []string) error {
 	}
 	Log("Unregister Manager...")
 	args = ExtractArgs([]*string{&c.Host, &c.Region}, args)
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerRegisterManagerArg{ManagerAuthArg: authArg, Host: c.Host, Region: c.Region}
+	arg := ManagerRegisterManagerArg{ManagerAuthArg: dummyAuthArg, Host: c.Host, Region: c.Region}
 	var reply atlantis.AsyncReply
-	err = rpcClient.Call("UnregisterManager", arg, &reply)
+	err = rpcClient.CallAuthed("UnregisterManager", &arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}
@@ -571,14 +511,9 @@ func (c *ListManagersCommand) Execute(args []string) error {
 		return OutputError(err)
 	}
 	Log("List Managers..")
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerListManagersArg{authArg}
+	arg := ManagerListManagersArg{dummyAuthArg}
 	var reply ManagerListManagersReply
-	err = rpcClient.Call("ListManagers", arg, &reply)
+	err = rpcClient.CallAuthed("ListManagers", &arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}
@@ -623,14 +558,9 @@ func (c *GetManagerCommand) Execute(args []string) error {
 	}
 	Log("Get Manager...")
 	args = ExtractArgs([]*string{&c.Region, &c.Host}, args)
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerGetManagerArg{ManagerAuthArg: authArg, Region: c.Region, Host: c.Host}
+	arg := ManagerGetManagerArg{ManagerAuthArg: dummyAuthArg, Region: c.Region, Host: c.Host}
 	var reply ManagerGetManagerReply
-	err = rpcClient.Call("GetManager", arg, &reply)
+	err = rpcClient.CallAuthed("GetManager", &arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}
@@ -646,14 +576,9 @@ func (c *GetSelfCommand) Execute(args []string) error {
 		return OutputError(err)
 	}
 	Log("Get Self...")
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerGetSelfArg{ManagerAuthArg: authArg}
+	arg := ManagerGetSelfArg{ManagerAuthArg: dummyAuthArg}
 	var reply ManagerGetManagerReply
-	err = rpcClient.Call("GetSelf", arg, &reply)
+	err = rpcClient.CallAuthed("GetSelf", &arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}
@@ -672,14 +597,9 @@ func (c *RegisterSupervisorCommand) Execute(args []string) error {
 	}
 	Log("Register Supervisor...")
 	args = ExtractArgs([]*string{&c.Host}, args)
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerRegisterSupervisorArg{authArg, c.Host}
+	arg := ManagerRegisterSupervisorArg{dummyAuthArg, c.Host}
 	var reply atlantis.AsyncReply
-	err = rpcClient.Call("RegisterSupervisor", arg, &reply)
+	err = rpcClient.CallAuthed("RegisterSupervisor", &arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}
@@ -702,14 +622,9 @@ func (c *UnregisterSupervisorCommand) Execute(args []string) error {
 	}
 	Log("Unregister Supervisor...")
 	args = ExtractArgs([]*string{&c.Host}, args)
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerRegisterSupervisorArg{authArg, c.Host}
+	arg := ManagerRegisterSupervisorArg{dummyAuthArg, c.Host}
 	var reply atlantis.AsyncReply
-	err = rpcClient.Call("UnregisterSupervisor", arg, &reply)
+	err = rpcClient.CallAuthed("UnregisterSupervisor", &arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}
@@ -770,14 +685,9 @@ func (c *ListSupervisorsCommand) Execute(args []string) error {
 		return OutputError(err)
 	}
 	Log("List Supervisors..")
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerListSupervisorsArg{authArg}
+	arg := ManagerListSupervisorsArg{dummyAuthArg}
 	var reply ManagerListSupervisorsReply
-	err = rpcClient.Call("ListSupervisors", arg, &reply)
+	err = rpcClient.CallAuthed("ListSupervisors", &arg, &reply)
 	if err != nil {
 		return OutputError(err)
 	}
