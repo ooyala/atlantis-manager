@@ -33,13 +33,8 @@ func (c *DeployCommand) Execute(args []string) error {
 		return OutputError(err)
 	}
 	Log("Deploy...")
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	authArg := ManagerAuthArg{user, "", secret}
 	arg := ManagerDeployArg{
-		ManagerAuthArg: authArg,
+		ManagerAuthArg: dummyAuthArg,
 		App:            c.App,
 		Sha:            c.Sha,
 		Env:            c.Env,
@@ -49,7 +44,7 @@ func (c *DeployCommand) Execute(args []string) error {
 		Dev:            c.Dev,
 	}
 	var reply atlantis.AsyncReply
-	if err := rpcClient.Call("Deploy", arg, &reply); err != nil {
+	if err := rpcClient.CallAuthed("Deploy", &arg, &reply); err != nil {
 		return OutputError(err)
 	}
 	Log("-> ID: %s", reply.ID)
@@ -70,14 +65,9 @@ func (c *DeployContainerCommand) Execute(args []string) error {
 		return OutputError(err)
 	}
 	Log("DeployContainer...")
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerDeployContainerArg{ManagerAuthArg: authArg, ContainerID: c.ContainerID, Instances: c.Instances}
+	arg := ManagerDeployContainerArg{ManagerAuthArg: dummyAuthArg, ContainerID: c.ContainerID, Instances: c.Instances}
 	var reply atlantis.AsyncReply
-	if err := rpcClient.Call("DeployContainer", arg, &reply); err != nil {
+	if err := rpcClient.CallAuthed("DeployContainer", &arg, &reply); err != nil {
 		return OutputError(err)
 	}
 	Log("-> ID: %s", reply.ID)
@@ -99,19 +89,14 @@ func (c *CopyContainerCommand) Execute(args []string) error {
 		return OutputError(err)
 	}
 	Log("CopyContainer...")
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	authArg := ManagerAuthArg{user, "", secret}
 	arg := ManagerCopyContainerArg{
-		ManagerAuthArg: authArg,
+		ManagerAuthArg: dummyAuthArg,
 		ContainerID:    c.ContainerID,
 		ToHost:         c.ToHost,
 		PostCopy:       c.PostCopy,
 	}
 	var reply atlantis.AsyncReply
-	if err := rpcClient.Call("CopyContainer", arg, &reply); err != nil {
+	if err := rpcClient.CallAuthed("CopyContainer", &arg, &reply); err != nil {
 		return OutputError(err)
 	}
 	Log("-> ID: %s", reply.ID)
@@ -165,14 +150,9 @@ func (c *TeardownCommand) Execute(args []string) error {
 		return OutputError(err)
 	}
 	Log("Teardown...")
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerTeardownArg{authArg, c.App, c.Sha, c.Env, c.Container, c.All}
+	arg := ManagerTeardownArg{dummyAuthArg, c.App, c.Sha, c.Env, c.Container, c.All}
 	var reply atlantis.AsyncReply
-	if err := rpcClient.Call("Teardown", arg, &reply); err != nil {
+	if err := rpcClient.CallAuthed("Teardown", &arg, &reply); err != nil {
 		return OutputError(err)
 	}
 	Log("-> ID: %s", reply.ID)
@@ -220,14 +200,9 @@ func (c *GetContainerCommand) Execute(args []string) error {
 	}
 	args = ExtractArgs([]*string{&c.Container}, args)
 	Log("Get Container...")
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerGetContainerArg{authArg, c.Container}
+	arg := ManagerGetContainerArg{dummyAuthArg, c.Container}
 	var reply ManagerGetContainerReply
-	if err := rpcClient.Call("GetContainer", arg, &reply); err != nil {
+	if err := rpcClient.CallAuthed("GetContainer", &arg, &reply); err != nil {
 		return OutputError(err)
 	}
 	Log("-> status: %s", reply.Status)
@@ -248,14 +223,9 @@ func (c *ListContainersCommand) Execute(args []string) error {
 	}
 	args = ExtractArgs([]*string{&c.App, &c.Sha, &c.Env}, args)
 	Log("List Containers...")
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerListContainersArg{authArg, c.App, c.Sha, c.Env}
+	arg := ManagerListContainersArg{dummyAuthArg, c.App, c.Sha, c.Env}
 	var reply ManagerListContainersReply
-	if err := rpcClient.Call("ListContainers", arg, &reply); err != nil {
+	if err := rpcClient.CallAuthed("ListContainers", &arg, &reply); err != nil {
 		return OutputError(err)
 	}
 	Log("-> status: %s", reply.Status)
@@ -278,14 +248,9 @@ func (c *ListEnvsCommand) Execute(args []string) error {
 	}
 	args = ExtractArgs([]*string{&c.App, &c.Sha}, args)
 	Log("List Envs...")
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerListEnvsArg{authArg, c.App, c.Sha}
+	arg := ManagerListEnvsArg{dummyAuthArg, c.App, c.Sha}
 	var reply ManagerListEnvsReply
-	if err := rpcClient.Call("ListEnvs", arg, &reply); err != nil {
+	if err := rpcClient.CallAuthed("ListEnvs", &arg, &reply); err != nil {
 		return OutputError(err)
 	}
 	Log("-> status: %s", reply.Status)
@@ -306,14 +271,9 @@ func (c *ListShasCommand) Execute(args []string) error {
 	}
 	args = ExtractArgs([]*string{&c.App}, args)
 	Log("List Shas...")
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerListShasArg{authArg, c.App}
+	arg := ManagerListShasArg{dummyAuthArg, c.App}
 	var reply ManagerListShasReply
-	if err := rpcClient.Call("ListShas", arg, &reply); err != nil {
+	if err := rpcClient.CallAuthed("ListShas", &arg, &reply); err != nil {
 		return OutputError(err)
 	}
 	Log("-> status: %s", reply.Status)
@@ -332,14 +292,9 @@ func (c *ListAppsCommand) Execute(args []string) error {
 		return OutputError(err)
 	}
 	Log("List Apps...")
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	authArg := ManagerAuthArg{user, "", secret}
-	arg := ManagerListAppsArg{authArg}
+	arg := ManagerListAppsArg{dummyAuthArg}
 	var reply ManagerListAppsReply
-	if err := rpcClient.Call("ListApps", arg, &reply); err != nil {
+	if err := rpcClient.CallAuthed("ListApps", &arg, &reply); err != nil {
 		return OutputError(err)
 	}
 	Log("-> status: %s", reply.Status)
