@@ -27,9 +27,21 @@ type authedArg interface {
 }
 
 func (r *ManagerRPCClient) CallAuthed(name string, arg authedArg, reply interface{}) error {
-	arg.SetCredentials(r.User, r.Secrets[r.Opts[0].RPCHostAndPort()])
-
-	return r.RPCClient.Call(name, arg, reply)
+	/* This is a terrible hack, but any other fix I can think of either requires changing a commonly used
+	 * interface, and thus breaks a whole bunch of other code, or is a worse hack.  */
+	replies := map[string]interface{}{}
+	originalOpts := r.Opts
+	for _, opt := range originalOpts {
+		arg.SetCredentials(r.User, r.Secrets[opt.RPCHostAndPort()])
+		err := r.RPCClient.Call(name, arg, reply)
+		if err != nil {
+			return err
+		}
+		replies[opt.RPCHostAndPort()] = reply
+		r.Opts = r.Opts[1:]
+	}
+	r.Opts = originalOpts
+	return nil
 }
 
 func NewManagerRPCClient(hostAndPort string) *atlantis.RPCClient {
