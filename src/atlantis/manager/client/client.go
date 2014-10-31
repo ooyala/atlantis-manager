@@ -12,6 +12,7 @@
 package client
 
 import (
+	"atlantis/common"
 	. "atlantis/manager/constant"
 	"atlantis/manager/rpc/client"
 	rpcTypes "atlantis/manager/rpc/types"
@@ -206,18 +207,18 @@ func (c *ClientConfig) RPCHostAndPort() string {
 
 type ClientOpts struct {
 	// Only use capital letters here. Also, "H" is off limits. kthxbye.
-	Host       string `short:"M" long:"manager-host" description:"the manager host"`
-	Port       uint16 `short:"P" long:"manager-port" description:"the manager port"`
-	Config     string `short:"F" long:"config-file" default:"" description:"the config file to use"`
-	Region     string `short:"R" long:"manager-region" default:"us-east-1" description:"the region to use"`
-	KeyPath    string `short:"K" long:"key-path" description:"path to store the LDAP secret key"`
-	Json       bool   `long:"json" description:"print the output as JSON. useful for scripting."`
-	PrettyJson bool   `long:"pretty-json" description:"print the output as pretty JSON. useful for scripting."`
-	Quiet      bool   `long:"quiet" description:"no logs, only print relevant output. useful for scripting."`
+	Host       string   `short:"M" long:"manager-host" description:"the manager host"`
+	Port       uint16   `short:"P" long:"manager-port" description:"the manager port"`
+	Config     string   `short:"F" long:"config-file" default:"" description:"the config file to use"`
+	Region     []string `short:"R" long:"manager-region" default:"us-east-1" description:"the regions to use"`
+	KeyPath    string   `short:"K" long:"key-path" description:"path to store the LDAP secret key"`
+	Json       bool     `long:"json" description:"print the output as JSON. useful for scripting."`
+	PrettyJson bool     `long:"pretty-json" description:"print the output as pretty JSON. useful for scripting."`
+	Quiet      bool     `long:"quiet" description:"no logs, only print relevant output. useful for scripting."`
 }
 
 var clientOpts = &ClientOpts{}
-var cfg = &ClientConfig{"localhost", DefaultManagerRPCPort, DefaultManagerKeyPath}
+var cfg = []common.RPCServerOpts{}
 var rpcClient = &client.ManagerRPCClient{*client.NewManagerRPCClientWithConfig(cfg), "", map[string]string{}}
 var dummyAuthArg = rpcTypes.ManagerAuthArg{"", "", ""}
 
@@ -379,38 +380,60 @@ func exists(path string) (bool, error) {
 }
 
 func overlayConfig() {
-	configFileFound := false
 	if clientOpts.Config != "" {
-		_, err := toml.DecodeFile(clientOpts.Config, cfg)
+		var curCfg ClientConfig
+		_, err := toml.DecodeFile(clientOpts.Config, curCfg)
 		if err != nil {
 			fmt.Print("Error parsing config file " + clientOpts.Config + ":\n" + err.Error() + "\n")
 			os.Exit(1)
 		}
-	} else if clientOpts.Region != "" {
-		for _, path := range configDirs {
-			filename := path + "client." + clientOpts.Region + ".toml"
-			if ok, _ := exists(filename); ok {
-				_, err := toml.DecodeFile(filename, cfg)
-				if err != nil {
-					fmt.Print("Error parsing config file " + filename + ":\n" + err.Error() + "\n")
-					os.Exit(1)
+		cfg = append(cfg, &curCfg)
+	} else {
+		/* NOTE(edanaher): The default doesn't get removed if other options are added.  *sigh* */
+		regions := clientOpts.Region
+		if len(regions) > 1 {
+			regions = regions[1:]
+		}
+		for _, region := range regions {
+			configFileFound := false
+			for _, path := range configDirs {
+				filename := path + "client." + region + ".toml"
+				if ok, _ := exists(filename); ok {
+					var curCfg ClientConfig
+					_, err := toml.DecodeFile(filename, &curCfg)
+					if err != nil {
+						fmt.Print("Error parsing config file " + filename + ":\n" + err.Error() + "\n")
+						os.Exit(1)
+					}
+					if curCfg.Port == 0 {
+						curCfg.Port = DefaultManagerRPCPort
+					}
+					if curCfg.KeyPath == "" {
+						curCfg.KeyPath = DefaultManagerKeyPath
+					}
+					cfg = append(cfg, &curCfg)
+					configFileFound = true
+					break
 				}
-				configFileFound = true
-				break
+			}
+			if !configFileFound {
+				fmt.Print("Error: could not find config file for " + region + "\n")
+				os.Exit(1)
 			}
 		}
-		if !configFileFound {
-			fmt.Print("Error: could not find config file for " + clientOpts.Region + "\n")
-			os.Exit(1)
-		}
 	}
+	/* NOTE(edanaher): The array has to be of interfaces, not of objects satisfying the interfaces.  So we have
+	 * to cast it back out.  The more I use interfaces, the less I like them.
+	 * See https://code.google.com/p/go-wiki/wiki/InterfaceSlice for details.
+	 */
 	if clientOpts.Host != "" {
-		cfg.Host = clientOpts.Host
+		cfg[0].(*ClientConfig).Host = clientOpts.Host
 	}
 	if clientOpts.Port != 0 {
-		cfg.Port = clientOpts.Port
+		cfg[0].(*ClientConfig).Port = clientOpts.Port
 	}
 	if clientOpts.KeyPath != "" {
-		cfg.KeyPath = clientOpts.KeyPath
+		cfg[0].(*ClientConfig).KeyPath = clientOpts.KeyPath
 	}
+	rpcClient.Opts = cfg
 }

@@ -27,7 +27,7 @@ type authedArg interface {
 }
 
 func (r *ManagerRPCClient) CallAuthed(name string, arg authedArg, reply interface{}) error {
-	arg.SetCredentials(r.User, r.Secrets[r.Opts.RPCHostAndPort()])
+	arg.SetCredentials(r.User, r.Secrets[r.Opts[0].RPCHostAndPort()])
 
 	return r.RPCClient.Call(name, arg, reply)
 }
@@ -36,6 +36,6 @@ func NewManagerRPCClient(hostAndPort string) *atlantis.RPCClient {
 	return atlantis.NewRPCClient(hostAndPort, "ManagerRPC", ManagerRPCVersion, true)
 }
 
-func NewManagerRPCClientWithConfig(cfg atlantis.RPCServerOpts) *atlantis.RPCClient {
-	return atlantis.NewRPCClientWithConfig(cfg, "ManagerRPC", ManagerRPCVersion, true)
+func NewManagerRPCClientWithConfig(cfg []atlantis.RPCServerOpts) *atlantis.RPCClient {
+	return atlantis.NewMultiRPCClientWithConfig(cfg, "ManagerRPC", ManagerRPCVersion, true)
 }

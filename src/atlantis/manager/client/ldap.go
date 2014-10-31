@@ -557,32 +557,37 @@ func AutoLogin(overrideUser, overridePassword string) (ManagerLoginReply, error)
 	user, secrets, err := GetSecrets()
 	rpcClient.User = user
 	rpcClient.Secrets = secrets
-	secret := secrets[rpcClient.Opts.RPCHostAndPort()]
-	if err != nil {
-		return reply, err
-	}
-	if overrideUser != "" {
-		user = overrideUser
-	}
-	if overridePassword != "" {
-		password = overridePassword
-	}
-	if user == "" {
-		PromptUsername(&user)
-	}
-	if secret == "" && overridePassword == "" {
-		PromptPassword(&password)
-	}
-	// Attempt to Auto-Login assuming we have user/secret
-	arg := ManagerLoginArg{user, password, secret}
-	if err := rpcClient.Call("Login", arg, &reply); err != nil {
-		return reply, err
-	}
-	if reply.LoggedIn {
-		if err := SaveSecret(arg.User, reply.Secret); err != nil {
+	originalOpts := rpcClient.Opts
+	for _, opt := range originalOpts {
+		secret := secrets[opt.RPCHostAndPort()]
+		if err != nil {
 			return reply, err
 		}
+		if overrideUser != "" {
+			user = overrideUser
+		}
+		if overridePassword != "" {
+			password = overridePassword
+		}
+		if user == "" {
+			PromptUsername(&user)
+		}
+		if secret == "" && overridePassword == "" && password == "" {
+			PromptPassword(&password)
+		}
+		// Attempt to Auto-Login assuming we have user/secret
+		arg := ManagerLoginArg{user, password, secret}
+		if err := rpcClient.Call("Login", arg, &reply); err != nil {
+			return reply, err
+		}
+		if reply.LoggedIn {
+			if err := SaveSecret(opt.RPCHostAndPort(), arg.User, reply.Secret); err != nil {
+				return reply, err
+			}
+		}
+		rpcClient.Opts = rpcClient.Opts[1:]
 	}
+	rpcClient.Opts = originalOpts
 	return reply, nil
 }
 
@@ -608,7 +613,7 @@ func PromptPassword(pass *string) error {
 
 func GetSecret() (string, string, error) {
 	user, secrets, _ := GetSecrets()
-	return user, secrets[rpcClient.Opts.RPCHostAndPort()], nil
+	return user, secrets[rpcClient.Opts[0].RPCHostAndPort()], nil
 }
 
 type TokenFileFormat struct {
@@ -617,7 +622,7 @@ type TokenFileFormat struct {
 }
 
 func GetSecrets() (string, map[string]string, error) {
-	path := strings.Replace(cfg.KeyPath, "~", os.Getenv("HOME"), 1)
+	path := strings.Replace(cfg[0].(*ClientConfig).KeyPath, "~", os.Getenv("HOME"), 1)
 	var filePath string = path + "/" + tokenFile
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
 		return "", map[string]string{}, nil
@@ -633,14 +638,14 @@ func GetSecrets() (string, map[string]string, error) {
 	return token.User, token.Secrets, nil
 }
 
-func SaveSecret(user string, secret string) error {
+func SaveSecret(hostname string, user string, secret string) error {
 	_, secrets, _ := GetSecrets()
-	secrets[rpcClient.Opts.RPCHostAndPort()] = secret
+	secrets[hostname] = secret
 
 	rpcClient.User = user
 	rpcClient.Secrets = secrets
 
-	path := strings.Replace(cfg.KeyPath, "~", os.Getenv("HOME"), 1)
+	path := strings.Replace(cfg[0].(*ClientConfig).KeyPath, "~", os.Getenv("HOME"), 1)
 	if err := os.MkdirAll(path, 0700); err != nil {
 		return err
 	}
