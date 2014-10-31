@@ -294,13 +294,18 @@ func (c *ListAppsCommand) Execute(args []string) error {
 	Log("List Apps...")
 	arg := ManagerListAppsArg{dummyAuthArg}
 	var reply ManagerListAppsReply
-	if err := rpcClient.CallAuthed("ListApps", &arg, &reply); err != nil {
+	replies, err := rpcClient.CallAuthedMulti("ListApps", &arg, &reply)
+	if err != nil {
 		return OutputError(err)
 	}
 	Log("-> status: %s", reply.Status)
 	Log("-> apps:")
-	for _, app := range reply.Apps {
-		Log("->   %s", app)
+	for region, reply := range replies {
+		reply := reply.(ManagerListAppsReply)
+		Log("->   %s: ", region)
+		for _, app := range reply.Apps {
+			Log("->     %s", app)
+		}
 	}
-	return Output(map[string]interface{}{"status": reply.Status, "apps": reply.Apps}, reply.Apps, nil)
+	return Output(map[string]interface{}{"status": reply.Status, "apps": replies}, reply.Apps, nil)
 }

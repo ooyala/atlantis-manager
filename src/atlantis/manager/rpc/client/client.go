@@ -14,6 +14,7 @@ package client
 import (
 	atlantis "atlantis/common"
 	. "atlantis/manager/constant"
+	"reflect"
 )
 
 type ManagerRPCClient struct {
@@ -27,6 +28,14 @@ type authedArg interface {
 }
 
 func (r *ManagerRPCClient) CallAuthed(name string, arg authedArg, reply interface{}) error {
+	_, err := r.CallAuthedMulti(name, arg, reply)
+	return err
+}
+
+
+/* This should be the only Call.  But in the interest of not having to change every request all at the same
+* time... */
+func (r *ManagerRPCClient) CallAuthedMulti(name string, arg authedArg, reply interface{}) (map[string]interface{}, error) {
 	/* This is a terrible hack, but any other fix I can think of either requires changing a commonly used
 	 * interface, and thus breaks a whole bunch of other code, or is a worse hack.  */
 	replies := map[string]interface{}{}
@@ -35,13 +44,14 @@ func (r *ManagerRPCClient) CallAuthed(name string, arg authedArg, reply interfac
 		arg.SetCredentials(r.User, r.Secrets[opt.RPCHostAndPort()])
 		err := r.RPCClient.Call(name, arg, reply)
 		if err != nil {
-			return err
+			return replies, err
 		}
-		replies[opt.RPCHostAndPort()] = reply
+		// NOTE(edanaher): reply is a pointer.  We need to copy it.  This apparently requires reflection.
+		replies[opt.RPCHostAndPort()] = reflect.ValueOf(reply).Elem().Interface()
 		r.Opts = r.Opts[1:]
 	}
 	r.Opts = originalOpts
-	return nil
+	return replies, nil
 }
 
 func NewManagerRPCClient(hostAndPort string) *atlantis.RPCClient {
