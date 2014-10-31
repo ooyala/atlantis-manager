@@ -70,7 +70,7 @@ func (c *AddDependerAppDataCommand) Execute(args []string) error {
 	if err := jsonDec.Decode(data); err != nil {
 		return OutputError(err)
 	}
-  arg := ManagerAddDependerAppDataArg{ManagerAuthArg: dummyAuthArg, App: c.App, DependerAppData: data}
+	arg := ManagerAddDependerAppDataArg{ManagerAuthArg: dummyAuthArg, App: c.App, DependerAppData: data}
 	var reply ManagerAddDependerAppDataReply
 	err = rpcClient.CallAuthed("AddDependerAppData", &arg, &reply)
 	if err != nil {
