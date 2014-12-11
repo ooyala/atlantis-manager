@@ -35,72 +35,43 @@ func OutputRoleReply(reply *ManagerRoleReply) error {
 }
 
 type AddRoleCommand struct {
-	Region string `short:"r" long:"region" description:"the region to add a role for"`
-	Host   string `short:"H" long:"host" description:"the host to add a role for"`
-	Role   string `short:"l" long:"role" description:"the role to add"`
-	Type   string `short:"t" long:"type" description:"the type to add"`
+	Region     string `short:"r" long:"region" description:"the region to add a role for"`
+	Host       string `short:"H" long:"host" description:"the host to add a role for"`
+	Role       string `short:"l" long:"role" description:"the role to add"`
+	Type       string `short:"t" long:"type" description:"the type to add"`
+	Properties string `field:"Manager"`
+	Arg        ManagerRoleArg
+	Reply      ManagerRoleReply
 }
 
 func (c *AddRoleCommand) Execute(args []string) error {
-	err := Init()
-	if err != nil {
-		return OutputError(err)
-	}
-	Log("Add Role...")
-	args = ExtractArgs([]*string{&c.Region, &c.Host}, args)
-	arg := ManagerRoleArg{ManagerAuthArg: dummyAuthArg, Region: c.Region, Host: c.Host, Role: c.Role, Type: c.Type}
-	var reply ManagerRoleReply
-	err = rpcClient.CallAuthed("AddRole", &arg, &reply)
-	if err != nil {
-		return OutputError(err)
-	}
-	return OutputRoleReply(&reply)
+	return genericExecuter(c, args)
 }
 
 type RemoveRoleCommand struct {
-	Region string `short:"r" long:"region" description:"the region to remove a role for"`
-	Host   string `short:"H" long:"host" description:"the host to remove a role for"`
-	Role   string `short:"l" long:"role" description:"the role to remove"`
-	Type   string `short:"t" long:"type" description:"the type to remove"`
+	Region     string `short:"r" long:"region" description:"the region to remove a role for"`
+	Host       string `short:"H" long:"host" description:"the host to remove a role for"`
+	Role       string `short:"l" long:"role" description:"the role to remove"`
+	Type       string `short:"t" long:"type" description:"the type to remove"`
+	Properties string `field:"Manager" name:"Manager"`
+	Arg        ManagerRoleArg
+	Reply      ManagerRoleReply
 }
 
 func (c *RemoveRoleCommand) Execute(args []string) error {
-	err := Init()
-	if err != nil {
-		return OutputError(err)
-	}
-	Log("Remove Role...")
-	args = ExtractArgs([]*string{&c.Region, &c.Host}, args)
-	arg := ManagerRoleArg{ManagerAuthArg: dummyAuthArg, Region: c.Region, Host: c.Host, Role: c.Role, Type: c.Type}
-	var reply ManagerRoleReply
-	err = rpcClient.CallAuthed("RemoveRole", &arg, &reply)
-	if err != nil {
-		return OutputError(err)
-	}
-	return OutputRoleReply(&reply)
+	return genericExecuter(c, args)
 }
 
 type HasRoleCommand struct {
-	Region string `short:"r" long:"region" description:"the region to check a role for"`
-	Host   string `short:"H" long:"host" description:"the host to check a role for"`
-	Role   string `short:"l" long:"role" description:"the role to check"`
-	Type   string `short:"t" long:"type" description:"the type to check"`
+	Region     string `short:"r" long:"region" description:"the region to check a role for"`
+	Host       string `short:"H" long:"host" description:"the host to check a role for"`
+	Role       string `short:"l" long:"role" description:"the role to check"`
+	Type       string `short:"t" long:"type" description:"the type to check"`
+	Properties string `field:"HasRole" name:"HasRole"`
+	Arg        ManagerRoleArg
+	Reply      ManagerHasRoleReply
 }
 
 func (c *HasRoleCommand) Execute(args []string) error {
-	err := Init()
-	if err != nil {
-		return OutputError(err)
-	}
-	Log("Has Role...")
-	args = ExtractArgs([]*string{&c.Region, &c.Host}, args)
-	arg := ManagerRoleArg{ManagerAuthArg: dummyAuthArg, Region: c.Region, Host: c.Host, Role: c.Role, Type: c.Type}
-	var reply ManagerHasRoleReply
-	err = rpcClient.CallAuthed("HasRole", &arg, &reply)
-	if err != nil {
-		return OutputError(err)
-	}
-	Log("-> Status: %s", reply.Status)
-	Log("-> HasRole: %t", reply.HasRole)
-	return Output(map[string]interface{}{"status": reply.Status, "hasRole": reply.HasRole}, nil, nil)
+	return genericExecuter(c, args)
 }
