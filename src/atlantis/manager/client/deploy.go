@@ -14,7 +14,6 @@ package client
 import (
 	atlantis "atlantis/common"
 	. "atlantis/manager/rpc/types"
-	"fmt"
 )
 
 type DeployCommand struct {
@@ -26,55 +25,24 @@ type DeployCommand struct {
 	MemoryLimit uint   `short:"m" long:"memory-limit" default:"0" description:"the MBytes of memory per instance"`
 	Dev         bool   `long:"dev" description:"only deploy 1 instance in 1 AZ"`
 	Wait        bool   `long:"wait" description:"wait until the deploy is done before exiting"`
+	Arg         ManagerDeployArg
+	Reply       atlantis.AsyncReply
 }
 
 func (c *DeployCommand) Execute(args []string) error {
-	if err := Init(); err != nil {
-		return OutputError(err)
-	}
-	Log("Deploy...")
-	arg := ManagerDeployArg{
-		ManagerAuthArg: dummyAuthArg,
-		App:            c.App,
-		Sha:            c.Sha,
-		Env:            c.Env,
-		Instances:      c.Instances,
-		CPUShares:      c.CPUShares,
-		MemoryLimit:    c.MemoryLimit,
-		Dev:            c.Dev,
-	}
-	var reply atlantis.AsyncReply
-	if err := rpcClient.CallAuthed("Deploy", &arg, &reply); err != nil {
-		return OutputError(err)
-	}
-	Log("-> ID: %s", reply.ID)
-	if !c.Wait {
-		return Output(map[string]interface{}{"id": reply.ID}, reply.ID, nil)
-	}
-	return (&WaitCommand{reply.ID}).Execute(args)
+	return genericExecuter(c, args)
 }
 
 type DeployContainerCommand struct {
 	ContainerID string `short:"c" long:"container" description:"the id of the container to replicate"`
 	Instances   uint   `short:"i" long:"instances" default:"1" description:"the number of instances to deploy in each AZ"`
 	Wait        bool   `long:"wait" description:"wait until the deploy is done before exiting"`
+	Arg         ManagerDeployArg
+	Reply       atlantis.AsyncReply
 }
 
 func (c *DeployContainerCommand) Execute(args []string) error {
-	if err := Init(); err != nil {
-		return OutputError(err)
-	}
-	Log("DeployContainer...")
-	arg := ManagerDeployContainerArg{ManagerAuthArg: dummyAuthArg, ContainerID: c.ContainerID, Instances: c.Instances}
-	var reply atlantis.AsyncReply
-	if err := rpcClient.CallAuthed("DeployContainer", &arg, &reply); err != nil {
-		return OutputError(err)
-	}
-	Log("-> ID: %s", reply.ID)
-	if !c.Wait {
-		return Output(map[string]interface{}{"id": reply.ID}, reply.ID, nil)
-	}
-	return (&WaitCommand{reply.ID}).Execute(args)
+	return genericExecuter(c, args)
 }
 
 type CopyContainerCommand struct {
@@ -82,28 +50,12 @@ type CopyContainerCommand struct {
 	ToHost      string `short:"H" long:"host" description:"the host to copy to"`
 	PostCopy    int    `short:"p" long:"post" description:"what to do after the copy. (0 = nothing, 1 = cleanup datamodel only, 2 = teardown)"`
 	Wait        bool   `long:"wait" description:"wait until the deploy is done before exiting"`
+	Arg         ManagerCopyContainerArg
+	Reply       atlantis.AsyncReply
 }
 
 func (c *CopyContainerCommand) Execute(args []string) error {
-	if err := Init(); err != nil {
-		return OutputError(err)
-	}
-	Log("CopyContainer...")
-	arg := ManagerCopyContainerArg{
-		ManagerAuthArg: dummyAuthArg,
-		ContainerID:    c.ContainerID,
-		ToHost:         c.ToHost,
-		PostCopy:       c.PostCopy,
-	}
-	var reply atlantis.AsyncReply
-	if err := rpcClient.CallAuthed("CopyContainer", &arg, &reply); err != nil {
-		return OutputError(err)
-	}
-	Log("-> ID: %s", reply.ID)
-	if !c.Wait {
-		return Output(map[string]interface{}{"id": reply.ID}, reply.ID, nil)
-	}
-	return (&WaitCommand{reply.ID}).Execute(args)
+	return genericExecuter(c, args)
 }
 
 func OutputDeployReply(reply *ManagerDeployReply) error {
@@ -137,29 +89,18 @@ func (c *DeployResultCommand) Execute(args []string) error {
 }
 
 type TeardownCommand struct {
-	App       string `short:"a" long:"app" description:"the app to teardown"`
-	Sha       string `short:"s" long:"sha" description:"the sha to teardown"`
-	Env       string `short:"e" long:"env" description:"the environment to teardown"`
-	Container string `short:"c" long:"container" description:"the container to teardown"`
-	All       bool   `long:"all" description:"teardown all containers in every supervisor"`
-	Wait      bool   `long:"wait" description:"wait until the teardown is done before exiting"`
+	App         string `short:"a" long:"app" description:"the app to teardown"`
+	Sha         string `short:"s" long:"sha" description:"the sha to teardown"`
+	Env         string `short:"e" long:"env" description:"the environment to teardown"`
+	ContainerID string `short:"c" long:"container" description:"the container to teardown"`
+	All         bool   `long:"all" description:"teardown all containers in every supervisor"`
+	Wait        bool   `long:"wait" description:"wait until the teardown is done before exiting"`
+	Arg         ManagerTeardownArg
+	Reply       atlantis.AsyncReply
 }
 
 func (c *TeardownCommand) Execute(args []string) error {
-	if err := Init(); err != nil {
-		return OutputError(err)
-	}
-	Log("Teardown...")
-	arg := ManagerTeardownArg{dummyAuthArg, c.App, c.Sha, c.Env, c.Container, c.All}
-	var reply atlantis.AsyncReply
-	if err := rpcClient.CallAuthed("Teardown", &arg, &reply); err != nil {
-		return OutputError(err)
-	}
-	Log("-> ID: %s", reply.ID)
-	if !c.Wait {
-		return Output(map[string]interface{}{"id": reply.ID}, reply.ID, nil)
-	}
-	return (&WaitCommand{reply.ID}).Execute(args)
+	return genericExecuter(c, args)
 }
 
 func OutputTeardownReply(reply *ManagerTeardownReply) error {
@@ -191,116 +132,54 @@ func (c *TeardownResultCommand) Execute(args []string) error {
 }
 
 type GetContainerCommand struct {
-	Container string `short:"c" long:"container" description:"the container to get"`
+	ContainerID string `short:"c" long:"container" description:"the container to get"`
+	Arg         ManagerGetContainerArg
+	Reply       ManagerGetContainerReply
 }
 
 func (c *GetContainerCommand) Execute(args []string) error {
-	if err := Init(); err != nil {
-		return OutputError(err)
-	}
-	args = ExtractArgs([]*string{&c.Container}, args)
-	Log("Get Container...")
-	arg := ManagerGetContainerArg{dummyAuthArg, c.Container}
-	var reply ManagerGetContainerReply
-	if err := rpcClient.CallAuthed("GetContainer", &arg, &reply); err != nil {
-		return OutputError(err)
-	}
-	Log("-> status: %s", reply.Status)
-	Log("-> %s", reply.Container.String())
-	return Output(map[string]interface{}{"status": reply.Status, "container": reply.Container},
-		fmt.Sprintf("%s:%d", reply.Container.Host, reply.Container.PrimaryPort), nil)
+	return genericExecuter(c, args)
 }
 
 type ListContainersCommand struct {
-	App string `short:"a" long:"app" description:"the app to list"`
-	Sha string `short:"s" long:"sha" description:"the sha to list"`
-	Env string `short:"e" long:"env" description:"the environment to list"`
+	App        string `short:"a" long:"app" description:"the app to list"`
+	Sha        string `short:"s" long:"sha" description:"the sha to list"`
+	Env        string `short:"e" long:"env" description:"the environment to list"`
+	Properties string `field:"ContainerIDs" name:"containers"`
+	Arg        ManagerListContainersArg
+	Reply      ManagerListContainersReply
 }
 
 func (c *ListContainersCommand) Execute(args []string) error {
-	if err := Init(); err != nil {
-		return OutputError(err)
-	}
-	args = ExtractArgs([]*string{&c.App, &c.Sha, &c.Env}, args)
-	Log("List Containers...")
-	arg := ManagerListContainersArg{dummyAuthArg, c.App, c.Sha, c.Env}
-	var reply ManagerListContainersReply
-	if err := rpcClient.CallAuthed("ListContainers", &arg, &reply); err != nil {
-		return OutputError(err)
-	}
-	Log("-> status: %s", reply.Status)
-	Log("-> containers:")
-	for _, cont := range reply.ContainerIDs {
-		Log("->   %s", cont)
-	}
-	return Output(map[string]interface{}{"status": reply.Status, "containerIDs": reply.ContainerIDs},
-		reply.ContainerIDs, nil)
+	return genericExecuter(c, args)
 }
 
 type ListEnvsCommand struct {
-	App string `short:"a" long:"app" description:"the app to list (empty for all available envs)"`
-	Sha string `short:"s" long:"sha" description:"the sha to list (empty for all available envs)"`
+	App   string `short:"a" long:"app" description:"the app to list (empty for all available envs)"`
+	Sha   string `short:"s" long:"sha" description:"the sha to list (empty for all available envs)"`
+	Arg   ManagerListEnvsArg
+	Reply ManagerListEnvsReply
 }
 
 func (c *ListEnvsCommand) Execute(args []string) error {
-	if err := Init(); err != nil {
-		return OutputError(err)
-	}
-	args = ExtractArgs([]*string{&c.App, &c.Sha}, args)
-	Log("List Envs...")
-	arg := ManagerListEnvsArg{dummyAuthArg, c.App, c.Sha}
-	var reply ManagerListEnvsReply
-	if err := rpcClient.CallAuthed("ListEnvs", &arg, &reply); err != nil {
-		return OutputError(err)
-	}
-	Log("-> status: %s", reply.Status)
-	Log("-> envs:")
-	for _, env := range reply.Envs {
-		Log("->   %s", env)
-	}
-	return Output(map[string]interface{}{"status": reply.Status, "envs": reply.Envs}, reply.Envs, nil)
+	return genericExecuter(c, args)
 }
 
 type ListShasCommand struct {
-	App string `short:"a" long:"app" description:"the app to list"`
+	App   string `short:"a" long:"app" description:"the app to list"`
+	Arg   ManagerListShasArg
+	Reply ManagerListShasReply
 }
 
 func (c *ListShasCommand) Execute(args []string) error {
-	if err := Init(); err != nil {
-		return OutputError(err)
-	}
-	args = ExtractArgs([]*string{&c.App}, args)
-	Log("List Shas...")
-	arg := ManagerListShasArg{dummyAuthArg, c.App}
-	var reply ManagerListShasReply
-	if err := rpcClient.CallAuthed("ListShas", &arg, &reply); err != nil {
-		return OutputError(err)
-	}
-	Log("-> status: %s", reply.Status)
-	Log("-> shas:")
-	for _, sha := range reply.Shas {
-		Log("->   %s", sha)
-	}
-	return Output(map[string]interface{}{"status": reply.Status, "shas": reply.Shas}, reply.Shas, nil)
+	return genericExecuter(c, args)
 }
 
 type ListAppsCommand struct {
+	Arg   ManagerListAppsArg
+	Reply ManagerListAppsReply
 }
 
 func (c *ListAppsCommand) Execute(args []string) error {
-	if err := Init(); err != nil {
-		return OutputError(err)
-	}
-	Log("List Apps...")
-	arg := ManagerListAppsArg{dummyAuthArg}
-	var reply ManagerListAppsReply
-	if err := rpcClient.CallAuthed("ListApps", &arg, &reply); err != nil {
-		return OutputError(err)
-	}
-	Log("-> status: %s", reply.Status)
-	Log("-> apps:")
-	for _, app := range reply.Apps {
-		Log("->   %s", app)
-	}
-	return Output(map[string]interface{}{"status": reply.Status, "apps": reply.Apps}, reply.Apps, nil)
+	return genericExecuter(c, args)
 }
