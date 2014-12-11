@@ -22,11 +22,11 @@ type ManagerRPCClient struct {
 	Secrets map[string]string
 }
 
-type authedArg interface {
+type AuthedArg interface {
 	SetCredentials(string, string)
 }
 
-func (r *ManagerRPCClient) CallAuthed(name string, arg authedArg, reply interface{}) error {
+func (r *ManagerRPCClient) CallAuthed(name string, arg AuthedArg, reply interface{}) error {
 	arg.SetCredentials(r.User, r.Secrets[r.Opts.RPCHostAndPort()])
 
 	return r.RPCClient.Call(name, arg, reply)
