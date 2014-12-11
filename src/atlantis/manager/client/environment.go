@@ -16,125 +16,70 @@ import (
 )
 
 type UpdateDepCommand struct {
-	Name  string `short:"n" long:"name" description:"the name of the dependency"`
-	Value string `short:"v" long:"value" description:"the value of the dependency"`
-	Env   string `short:"e" long:"env" description:"the environment of the dependency"`
+	Name       string `short:"n" long:"name" description:"the name of the dependency"`
+	Value      string `short:"v" long:"value" description:"the value of the dependency"`
+	Env        string `short:"e" long:"env" description:"the environment of the dependency"`
+	Properties string `field:"Value" name:"value"`
+	Arg        ManagerDepArg
+	Reply      ManagerDepReply
 }
 
 func (c *UpdateDepCommand) Execute(args []string) error {
-	if err := Init(); err != nil {
-		return OutputError(err)
-	}
-	Log("Update Dep...")
-	arg := ManagerDepArg{dummyAuthArg, c.Env, c.Name, c.Value}
-	var reply ManagerDepReply
-	if err := rpcClient.CallAuthed("UpdateDep", &arg, &reply); err != nil {
-		return OutputError(err)
-	}
-	Log("-> status: %s", reply.Status)
-	Log("-> value: %s", reply.Value)
-	return Output(map[string]interface{}{"status": reply.Status, "value": reply.Value}, reply.Value, nil)
+	return genericExecuter(c, args)
 }
 
 type ResolveDepsCommand struct {
 	App      string   `short:"a" long:"app" description:"the app the resolve dependencies for"`
 	Env      string   `short:"e" long:"env" description:"the environment of the dependencies to resolve"`
 	DepNames []string `short:"d" long:"dep" description:"the dep names to resolve"`
+	Arg      ManagerResolveDepsArg
+	Reply    ManagerResolveDepsReply
 }
 
 func (c *ResolveDepsCommand) Execute(args []string) error {
-	if err := Init(); err != nil {
-		return OutputError(err)
-	}
-	Log("Resolve Deps...")
-	arg := ManagerResolveDepsArg{ManagerAuthArg: dummyAuthArg, App: c.App, Env: c.Env, DepNames: c.DepNames}
-	var reply ManagerResolveDepsReply
-	if err := rpcClient.CallAuthed("ResolveDeps", &arg, &reply); err != nil {
-		return OutputError(err)
-	}
-	Log("-> status: %s", reply.Status)
-	Log("-> deps:")
-	for zone, deps := range reply.Deps {
-		Log("->   %s", zone)
-		for name, value := range deps {
-			Log("->     %s : %s", name, value)
-		}
-	}
-	return Output(map[string]interface{}{"status": reply.Status, "Deps": reply.Deps}, reply.Deps, nil)
+	return genericExecuter(c, args)
 }
 
 type GetDepCommand struct {
-	Name string `short:"n" long:"name" description:"the name of the dependency"`
-	Env  string `short:"e" long:"env" description:"the environment of the dependency"`
+	Name       string `short:"n" long:"name" description:"the name of the dependency"`
+	Env        string `short:"e" long:"env" description:"the environment of the dependency"`
+	Properties string `field:"Value" name:"value"`
+	Arg        ManagerDepArg
+	Reply      ManagerDepReply
 }
 
 func (c *GetDepCommand) Execute(args []string) error {
-	if err := Init(); err != nil {
-		return OutputError(err)
-	}
-	Log("Get Dep...")
-	arg := ManagerDepArg{dummyAuthArg, c.Env, c.Name, ""}
-	var reply ManagerDepReply
-	if err := rpcClient.CallAuthed("GetDep", &arg, &reply); err != nil {
-		return OutputError(err)
-	}
-	Log("-> status: %s", reply.Status)
-	Log("-> value: %s", reply.Value)
-	return Output(map[string]interface{}{"status": reply.Status, "value": reply.Value}, reply.Value, nil)
+	return genericExecuter(c, args)
 }
 
 type DeleteDepCommand struct {
-	Name string `short:"n" long:"name" description:"the name of the dependency"`
-	Env  string `short:"e" long:"env" description:"the environment of the dependency"`
+	Name       string `short:"n" long:"name" description:"the name of the dependency"`
+	Env        string `short:"e" long:"env" description:"the environment of the dependency"`
+	Properties string `field:"Value" name:"value"`
+	Arg        ManagerDepArg
+	Reply      ManagerDepReply
 }
 
 func (c *DeleteDepCommand) Execute(args []string) error {
-	if err := Init(); err != nil {
-		return OutputError(err)
-	}
-	Log("Delete Dep...")
-	arg := ManagerDepArg{dummyAuthArg, c.Env, c.Name, ""}
-	var reply ManagerDepReply
-	if err := rpcClient.CallAuthed("DeleteDep", &arg, &reply); err != nil {
-		return OutputError(err)
-	}
-	Log("-> status: %s", reply.Status)
-	Log("-> value: %s", reply.Value)
-	return Output(map[string]interface{}{"status": reply.Status, "value": reply.Value}, reply.Value, nil)
+	return genericExecuter(c, args)
 }
 
 type UpdateEnvCommand struct {
-	Name string `short:"n" long:"name" description:"the name of the environment"`
+	Name  string `short:"n" long:"name" description:"the name of the environment"`
+	Arg   ManagerEnvArg
+	Reply ManagerEnvReply
 }
 
 func (c *UpdateEnvCommand) Execute(args []string) error {
-	if err := Init(); err != nil {
-		return OutputError(err)
-	}
-	Log("Update Env...")
-	arg := ManagerEnvArg{dummyAuthArg, c.Name}
-	var reply ManagerEnvReply
-	if err := rpcClient.CallAuthed("UpdateEnv", &arg, &reply); err != nil {
-		return OutputError(err)
-	}
-	Log("-> status: %s", reply.Status)
-	return Output(map[string]interface{}{"status": reply.Status}, nil, nil)
+	return genericExecuter(c, args)
 }
 
 type DeleteEnvCommand struct {
-	Name string `short:"n" long:"name" description:"the name of the environment"`
+	Name  string `short:"n" long:"name" description:"the name of the environment"`
+	Arg   ManagerEnvArg
+	Reply ManagerEnvReply
 }
 
 func (c *DeleteEnvCommand) Execute(args []string) error {
-	if err := Init(); err != nil {
-		return OutputError(err)
-	}
-	Log("Delete Env...")
-	arg := ManagerEnvArg{dummyAuthArg, c.Name}
-	var reply ManagerEnvReply
-	if err := rpcClient.CallAuthed("DeleteEnv", &arg, &reply); err != nil {
-		return OutputError(err)
-	}
-	Log("-> status: %s", reply.Status)
-	return Output(map[string]interface{}{"status": reply.Status}, nil, nil)
+	return genericExecuter(c, args)
 }
