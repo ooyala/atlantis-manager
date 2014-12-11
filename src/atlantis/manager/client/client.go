@@ -22,6 +22,8 @@ import (
 	"log"
 	"os"
 	"reflect"
+	"regexp"
+	"strings"
 )
 
 // Directories to be searched for client configuration files.
@@ -365,6 +367,190 @@ func Init() error {
 
 func InitNoLogin() {
 	overlayConfig()
+}
+
+// Go through any positional arguments and add them to empty flag arguments
+func genericExtractArgs(command reflect.Value, args []string) []string {
+	for f := 0; f < command.NumField(); f++ {
+		if len(args) == 0 {
+			return args
+		}
+		if tp := command.Type().Field(f).Name; tp == "Properties" || tp == "Arg" || tp == "Reply" {
+			continue
+		}
+		if str, ok := command.Field(f).Interface().(string); ok {
+			if str == "" {
+				command.Field(f).Set(reflect.ValueOf(args[0]))
+				args = args[1:]
+			}
+		}
+	}
+	return args
+}
+
+// Copy arguments from the CLI Command struct to the RPCarg struct
+func genericCopyArgs(command reflect.Value, arg reflect.Value) {
+	for f := 0; f < arg.NumField(); f++ {
+		name := arg.Type().Field(f).Name
+		if v := command.FieldByName(name); v.IsValid() {
+			arg.Field(f).Set(v)
+		}
+	}
+}
+
+// Pretty-print any random data we get back from the server
+func genericLogData(name string, v reflect.Value, indent string) {
+	prefix := "->" + indent
+	if name != "" {
+		prefix = "-> " + indent + name + ":"
+	}
+	switch v.Kind() {
+	case reflect.Ptr:
+		genericLogData(name, v.Elem(), indent)
+	case reflect.Struct:
+		Log("%s\n", prefix)
+		for f := 0; f < v.NumField(); f++ {
+			name := v.Type().Field(f).Name
+			genericLogData(name, v.Field(f), indent+"  ")
+		}
+	case reflect.Array:
+		fallthrough
+	case reflect.Slice:
+		Log("%s\n", prefix)
+		for i := 0; i < v.Len(); i++ {
+			genericLogData("", v.Index(i), indent+"  ")
+		}
+	case reflect.Map:
+		Log("%s\n", prefix)
+		for _, k := range v.MapKeys() {
+			if name, ok := k.Interface().(string); ok {
+				genericLogData(name, v.MapIndex(k), indent+"  ")
+			} else {
+				genericLogData("Unknown field", v.MapIndex(k), indent+"  ")
+			}
+		}
+	default:
+    Log("%s %v", prefix, v.Interface())
+	}
+}
+
+func executeFlags(rv reflect.Value) (message, rpc, field, name string, noauth, async, wait bool) {
+	// Use flags from the Properties field, if it exists.
+	if properties, ok := rv.Type().FieldByName("Properties"); ok {
+		message = properties.Tag.Get("message")
+		rpc = properties.Tag.Get("rpc")
+		field = properties.Tag.Get("field")
+		name = properties.Tag.Get("name")
+		noauth = properties.Tag.Get("noauth") != ""
+	}
+
+	// The base name of the command is extracted from the Command type; e.g., client.ListAppsCommand is ListApps
+	baseNameRegexp := regexp.MustCompile(".*\\.([A-Za-z]*)Command$")
+	baseName := baseNameRegexp.ReplaceAll([]byte(rv.Type().String()), []byte("$1"))
+
+	// The default RPC name is the base name.
+	if rpc == "" {
+		rpc = string(baseName)
+	}
+
+	// The default message is the base name with spaces; e.g. "List Apps"
+	if message == "" {
+		messageRegexp := regexp.MustCompile("(.)([A-Z])")
+		message = string(messageRegexp.ReplaceAll(baseName, []byte("$1 $2")))
+	}
+
+	// The default field to print is the last component of the base name; e.g., Apps
+	if field == "" {
+		fieldRegexp := regexp.MustCompile("[A-Z][a-z]*$")
+		field = string(fieldRegexp.Find(baseName))
+	}
+
+	// The default name for the field (for output) is the lowercase field name
+	if name == "" {
+		name = strings.ToLower(field)
+	}
+
+	// Async commands are weird; we get back an ID to wait on, and there's always an boolean --wait flag.
+	if waitField := rv.FieldByName("Wait"); waitField.Kind() == reflect.Bool {
+		async = true
+		field = "ID"
+		name = "ID"
+		wait = waitField.Bool()
+	}
+	return
+}
+
+func genericExecuter(command interface{}, args []string) error {
+	rv := reflect.ValueOf(command).Elem()
+	// Extract all the configuration flags from the Command struct
+	message, rpc, field, name, noauth, async, wait := executeFlags(rv)
+
+	// Some command require auth, some don't
+	if noauth {
+		InitNoLogin()
+	} else {
+		if err := Init(); err != nil {
+			return OutputError(err)
+		}
+	}
+
+	// Set up the arg and reply objects based on types in the Command struct.
+	argv := reflect.New(rv.FieldByName("Arg").Type())
+	replyv := reflect.New(rv.FieldByName("Reply").Type())
+	reply := replyv.Interface()
+
+	// Copy args from the CLI arguments to the RPC arguments, and handle any positional ones.
+	genericExtractArgs(rv, args)
+	genericCopyArgs(rv, argv.Elem())
+
+	Log(message + "...")
+
+	// Actually make the request, either with or without auth.
+	if noauth {
+		arg := argv.Interface()
+		if err := rpcClient.Call(rpc, arg, reply); err != nil {
+			return OutputError(err)
+		}
+	} else {
+		arg := argv.Interface().(client.AuthedArg)
+		if err := rpcClient.CallAuthed(rpc, arg, reply); err != nil {
+			return OutputError(err)
+		}
+	}
+
+	// Extract that status and desired field from the RPC result.
+	status := "Unknown"
+	if v := replyv.Elem().FieldByName("Status"); v.IsValid() {
+		status = v.Interface().(string)
+	}
+	var data interface{}
+	data = "Unknown"
+	if v := replyv.Elem().FieldByName(field); v.IsValid() {
+		data = v.Interface()
+	}
+
+	// Async results don't give back status immediately.
+	if !async {
+		Log("-> status: %s", status)
+	}
+
+	// Log the output under the desired field in a pretty format
+	if field != "" {
+		if r := replyv.Elem().FieldByName(field); r.IsValid() {
+			genericLogData(name, r, "")
+		}
+	}
+
+	// If we're waiting on an async command, use the magic WaitCommand on the async ID to poll until finished.
+	if wait {
+		if idv := replyv.Elem().FieldByName("ID"); idv.IsValid() {
+			return (&WaitCommand{idv.String()}).Execute(args)
+		} else {
+			Log("Error: No async ID found in response")
+		}
+	}
+
+	return Output(map[string]interface{}{"status": status, name: data}, reply, nil)
 }
 
 func exists(path string) (bool, error) {
