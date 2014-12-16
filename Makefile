@@ -21,14 +21,33 @@ SUPERVISOR_PATH := $(LIB_PATH)/atlantis-supervisor
 ROUTER_PATH := $(LIB_PATH)/atlantis-router
 BUILDER_PATH := $(LIB_PATH)/atlantis-builder
 
+DEB_STAGING := $(PROJECT_ROOT)/staging
+PKG_BIN_DIR := $(DEB_STAGING)/opt/atlantis-manager/bin
+
+ifndef VERSION
+	VERSION := "0.1.0"
+endif
+
 GOPATH := $(PROJECT_ROOT):$(VENDOR_PATH):$(ATLANTIS_PATH):$(SUPERVISOR_PATH):$(ROUTER_PATH):$(BUILDER_PATH)
 export GOPATH
 
-all: test
+build: install-deps example
+
+deb: clean build
+	@cp -a $(PROJECT_ROOT)/deb $(DEB_STAGING)
+	@mkdir -p $(PKG_BIN_DIR)
+
+	@cp example/manager $(PKG_BIN_DIR)
+	@cp example/client $(PKG_BIN_DIR)
+
+	@sed -ri "s/__VERSION__/$(VERSION)/" $(DEB_STAGING)/DEBIAN/control
+	@sed -ri "s/__PACKAGE__/atlantis-manager/" $(DEB_STAGING)/DEBIAN/control
+	@dpkg -b $(DEB_STAGING) .
 
 clean:
 	@rm -rf $(ATLANTIS_PATH)/src/atlantis/crypto/key.go $(PROJECT_ROOT)/src/atlantis/manager/crypto/cert.go
 	@rm -f example/client example/manager
+	@rm -rf $(DEB_STAGING) atlantis-manager_*.deb
 
 copy-key: clean
 	@mkdir -p $(ATLANTIS_PATH)/src/atlantis/crypto
