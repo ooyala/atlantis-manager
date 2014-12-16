@@ -207,7 +207,7 @@ func (z *zkGraph) ProcessTrie(zc *zCfg, name string, t Trie, poolm map[string]bo
 					}
 				}
 				if !z.Edges.Rules["rules_"+v+"_pool_"+c.Pool] {
-					z.Graph.AddEdge("\""+rulePath+"/"+v+"\"", ":f4", "\""+poolPath+"/"+c.Pool+"\"", "", true, RuleEdgeAttr)
+					z.Graph.AddEdge("\""+rulePath+"/"+v+"\":f4", "\""+poolPath+"/"+c.Pool+"\"", true, RuleEdgeAttr)
 					z.Edges.Rules["rules_"+v+"_pool_"+c.Pool] = true
 				}
 			} else {
@@ -218,7 +218,7 @@ func (z *zkGraph) ProcessTrie(zc *zCfg, name string, t Trie, poolm map[string]bo
 						z.ProcessTrie(zc, c.Next, zc.Tries[c.Next], poolm, rulem, triesm)
 					}
 					if !z.Edges.Rules["rules_"+v+"_trie_"+c.Next] {
-						z.Graph.AddEdge("\""+rulePath+"/"+v+"\"", ":f3", "\""+triePath+"/"+c.Next+"\"", "", true, RuleEdgeAttr)
+						z.Graph.AddEdge("\""+rulePath+"/"+v+"\":f3", "\""+triePath+"/"+c.Next+"\"", true, RuleEdgeAttr)
 						z.Edges.Rules["rules_"+v+"_trie_"+c.Next] = true
 					}
 
@@ -227,7 +227,7 @@ func (z *zkGraph) ProcessTrie(zc *zCfg, name string, t Trie, poolm map[string]bo
 		}
 		if !z.Edges.Rules["trie_"+name+"_rule_"+v] {
 			z.Edges.Rules["trie_"+name+"_rule_"+v] = true
-			z.Graph.AddEdge("\""+triePath+"/"+name+"\"", ":f1", "\""+rulePath+"/"+v+"\"", "", true, EdgeAttr)
+			z.Graph.AddEdge("\""+triePath+"/"+name+"\":f1", "\""+rulePath+"/"+v+"\"", true, EdgeAttr)
 		}
 	}
 }
@@ -277,5 +277,5 @@ func DrawHosts(graph *ggv.Graph, parentName string, hosts []string) {
 	attr["fontname"] = font
 	attr["style"] = "\"filled\""
 	graph.AddNode(graphName, "\""+fpath+"\"", attr)
-	graph.AddEdge("\""+poolPath+"/"+parentName+"\"", "", "\""+fpath+"\"", "", true, PoolEdgeAttr)
+	graph.AddEdge("\""+poolPath+"/"+parentName+"\"", "\""+fpath+"\"", true, PoolEdgeAttr)
 }
