@@ -25,10 +25,6 @@ type RequestAppDependencyCommand struct {
 	Reply      ManagerRequestAppDependencyReply
 }
 
-func (c *RequestAppDependencyCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
-}
-
 // ----------------------------------------------------------------------------------------------------------
 // Depender App Data Methods
 // ----------------------------------------------------------------------------------------------------------
@@ -40,19 +36,11 @@ type AddDependerAppDataCommand struct {
 	Reply    ManagerRequestAppDependencyReply
 }
 
-func (c *AddDependerAppDataCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
-}
-
 type RemoveDependerAppDataCommand struct {
 	App      string `short:"a" long:"app" description:"the app to remove a depender from"`
 	Depender string `short:"r" long:"depender" description:"the depender app to remove"`
 	Arg      ManagerRemoveDependerAppDataArg
 	Reply    ManagerRemoveDependerAppDataReply
-}
-
-func (c *RemoveDependerAppDataCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
 }
 
 type GetDependerAppDataCommand struct {
@@ -61,10 +49,6 @@ type GetDependerAppDataCommand struct {
 	Properties string `message:"Get Depender App" field:"DependerAppData" name:"DependerAppData"`
 	Arg        ManagerGetDependerAppDataArg
 	Reply      ManagerGetDependerAppDataReply
-}
-
-func (c *GetDependerAppDataCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
 }
 
 // ----------------------------------------------------------------------------------------------------------
@@ -111,19 +95,11 @@ type RemoveDependerEnvDataCommand struct {
 	Reply      ManagerRemoveDependerEnvDataReply
 }
 
-func (c *RemoveDependerEnvDataCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
-}
-
 type GetDependerEnvDataCommand struct {
 	App   string `short:"a" long:"app" description:"the app to get an env from"`
 	Env   string `short:"e" long:"depender" description:"the env to get"`
 	Arg   ManagerGetDependerEnvDataArg
 	Reply ManagerGetDependerEnvDataReply
-}
-
-func (c *GetDependerEnvDataCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
 }
 
 // ----------------------------------------------------------------------------------------------------------
@@ -176,10 +152,6 @@ type RemoveDependerEnvDataForDependerAppCommand struct {
 	Reply    ManagerRemoveDependerEnvDataForDependerAppReply
 }
 
-func (c *RemoveDependerEnvDataForDependerAppCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
-}
-
 type GetDependerEnvDataForDependerAppCommand struct {
 	App        string `short:"a" long:"app" description:"the app to get an env from"`
 	Depender   string `short:"r" long:"depender" description:"the depender to add an env for"`
@@ -187,8 +159,4 @@ type GetDependerEnvDataForDependerAppCommand struct {
 	Properties string `field:"DependerEnvData"`
 	Arg        ManagerGetDependerEnvDataForDependerAppArg
 	Reply      ManagerGetDependerEnvDataForDependerAppReply
-}
-
-func (c *GetDependerEnvDataForDependerAppCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
 }

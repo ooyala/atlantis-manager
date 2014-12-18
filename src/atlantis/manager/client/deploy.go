@@ -29,20 +29,12 @@ type DeployCommand struct {
 	Reply       atlantis.AsyncReply
 }
 
-func (c *DeployCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
-}
-
 type DeployContainerCommand struct {
 	ContainerID string `short:"c" long:"container" description:"the id of the container to replicate"`
 	Instances   uint   `short:"i" long:"instances" default:"1" description:"the number of instances to deploy in each AZ"`
 	Wait        bool   `long:"wait" description:"wait until the deploy is done before exiting"`
 	Arg         ManagerDeployArg
 	Reply       atlantis.AsyncReply
-}
-
-func (c *DeployContainerCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
 }
 
 type CopyContainerCommand struct {
@@ -52,10 +44,6 @@ type CopyContainerCommand struct {
 	Wait        bool   `long:"wait" description:"wait until the deploy is done before exiting"`
 	Arg         ManagerCopyContainerArg
 	Reply       atlantis.AsyncReply
-}
-
-func (c *CopyContainerCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
 }
 
 func OutputDeployReply(reply *ManagerDeployReply) error {
@@ -99,10 +87,6 @@ type TeardownCommand struct {
 	Reply       atlantis.AsyncReply
 }
 
-func (c *TeardownCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
-}
-
 func OutputTeardownReply(reply *ManagerTeardownReply) error {
 	Log("-> Status: %s", reply.Status)
 	Log("-> Torn Containers:")
@@ -137,10 +121,6 @@ type GetContainerCommand struct {
 	Reply       ManagerGetContainerReply
 }
 
-func (c *GetContainerCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
-}
-
 type ListContainersCommand struct {
 	App        string `short:"a" long:"app" description:"the app to list"`
 	Sha        string `short:"s" long:"sha" description:"the sha to list"`
@@ -150,19 +130,11 @@ type ListContainersCommand struct {
 	Reply      ManagerListContainersReply
 }
 
-func (c *ListContainersCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
-}
-
 type ListEnvsCommand struct {
 	App   string `short:"a" long:"app" description:"the app to list (empty for all available envs)"`
 	Sha   string `short:"s" long:"sha" description:"the sha to list (empty for all available envs)"`
 	Arg   ManagerListEnvsArg
 	Reply ManagerListEnvsReply
-}
-
-func (c *ListEnvsCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
 }
 
 type ListShasCommand struct {
@@ -171,15 +143,7 @@ type ListShasCommand struct {
 	Reply ManagerListShasReply
 }
 
-func (c *ListShasCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
-}
-
 type ListAppsCommand struct {
 	Arg   ManagerListAppsArg
 	Reply ManagerListAppsReply
-}
-
-func (c *ListAppsCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
 }

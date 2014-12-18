@@ -24,20 +24,12 @@ type UpdateDepCommand struct {
 	Reply      ManagerDepReply
 }
 
-func (c *UpdateDepCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
-}
-
 type ResolveDepsCommand struct {
 	App      string   `short:"a" long:"app" description:"the app the resolve dependencies for"`
 	Env      string   `short:"e" long:"env" description:"the environment of the dependencies to resolve"`
 	DepNames []string `short:"d" long:"dep" description:"the dep names to resolve"`
 	Arg      ManagerResolveDepsArg
 	Reply    ManagerResolveDepsReply
-}
-
-func (c *ResolveDepsCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
 }
 
 type GetDepCommand struct {
@@ -48,10 +40,6 @@ type GetDepCommand struct {
 	Reply      ManagerDepReply
 }
 
-func (c *GetDepCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
-}
-
 type DeleteDepCommand struct {
 	Name       string `short:"n" long:"name" description:"the name of the dependency"`
 	Env        string `short:"e" long:"env" description:"the environment of the dependency"`
@@ -60,26 +48,14 @@ type DeleteDepCommand struct {
 	Reply      ManagerDepReply
 }
 
-func (c *DeleteDepCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
-}
-
 type UpdateEnvCommand struct {
 	Name  string `short:"n" long:"name" description:"the name of the environment"`
 	Arg   ManagerEnvArg
 	Reply ManagerEnvReply
 }
 
-func (c *UpdateEnvCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
-}
-
 type DeleteEnvCommand struct {
 	Name  string `short:"n" long:"name" description:"the name of the environment"`
 	Arg   ManagerEnvArg
 	Reply ManagerEnvReply
-}
-
-func (c *DeleteEnvCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
 }

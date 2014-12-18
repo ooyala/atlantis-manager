@@ -26,10 +26,6 @@ type RegisterRouterCommand struct {
 	Reply    atlantis.AsyncReply
 }
 
-func (c *RegisterRouterCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
-}
-
 type UnregisterRouterCommand struct {
 	Wait     bool   `long:"wait" description:"wait until done before exiting"`
 	Internal bool   `long:"internal" description:"true to list internal routers"`
@@ -37,10 +33,6 @@ type UnregisterRouterCommand struct {
 	Host     string `short:"H" long:"host" description:"the host to unregister"`
 	Arg      ManagerRegisterRouterArg
 	Reply    atlantis.AsyncReply
-}
-
-func (c *UnregisterRouterCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
 }
 
 func OutputRegisterRouterReply(reply *ManagerRegisterRouterReply) error {
@@ -127,10 +119,6 @@ type ListRoutersCommand struct {
 	Reply    ManagerListRoutersReply
 }
 
-func (c *ListRoutersCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
-}
-
 type RegisterAppCommand struct {
 	Name        string `short:"a" long:"app" description:"the app to register"`
 	NonAtlantis bool   `short:"n" long:"non-atlantis" description:"true if this is a non-atlantis app"`
@@ -140,10 +128,6 @@ type RegisterAppCommand struct {
 	Email       string `short:"e" long:"email" description"the email of the app's owner"`
 	Arg         ManagerRegisterAppArg
 	Reply       ManagerRegisterAppReply
-}
-
-func (c *RegisterAppCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
 }
 
 type UpdateAppCommand struct {
@@ -184,10 +168,6 @@ type UnregisterAppCommand struct {
 	App   string `short:"a" long:"app" description:"the app to unregister"`
 	Arg   ManagerRegisterAppArg
 	Reply ManagerRegisterAppReply
-}
-
-func (c *UnregisterAppCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
 }
 
 func LogDependerEnvData(indent string, envData *DependerEnvData) {
@@ -232,26 +212,14 @@ type GetAppCommand struct {
 	Reply ManagerGetAppReply
 }
 
-func (c *GetAppCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
-}
-
 type ListRegisteredAppsCommand struct {
 	Arg   ManagerListRegisteredAppsArg
 	Reply ManagerListRegisteredAppsReply
 }
 
-func (c *ListRegisteredAppsCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
-}
-
 type ListAuthorizedRegisteredAppsCommand struct {
 	Arg   ManagerListRegisteredAppsArg
 	Reply ManagerListRegisteredAppsReply
-}
-
-func (c *ListAuthorizedRegisteredAppsCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
 }
 
 type HealthCommand struct {
@@ -281,20 +249,12 @@ type RegisterManagerCommand struct {
 	Reply         atlantis.AsyncReply
 }
 
-func (c *RegisterManagerCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
-}
-
 type UnregisterManagerCommand struct {
 	Wait   bool   `long:"wait" description:"wait until done before exiting"`
 	Host   string `short:"H" long:"host" description:"the host to register"`
 	Region string `short:"r" long:"region" description:"the region to unregister"`
 	Arg    ManagerRegisterManagerArg
 	Reply  atlantis.AsyncReply
-}
-
-func (c *UnregisterManagerCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
 }
 
 func OutputRegisterManagerReply(reply *ManagerRegisterManagerReply) error {
@@ -350,10 +310,6 @@ type ListManagersCommand struct {
 	Reply ManagerListManagersReply
 }
 
-func (c *ListManagersCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
-}
-
 func OutputGetManagerReply(reply *ManagerGetManagerReply) error {
 	Log("-> Status: %s", reply.Status)
 	if reply.Manager != nil {
@@ -380,17 +336,9 @@ type GetManagerCommand struct {
 	Reply  ManagerGetManagerReply
 }
 
-func (c *GetManagerCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
-}
-
 type GetSelfCommand struct {
 	Arg   ManagerGetSelfArg
 	Reply ManagerGetManagerReply
-}
-
-func (c *GetSelfCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
 }
 
 type RegisterSupervisorCommand struct {
@@ -400,19 +348,11 @@ type RegisterSupervisorCommand struct {
 	Reply atlantis.AsyncReply
 }
 
-func (c *RegisterSupervisorCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
-}
-
 type UnregisterSupervisorCommand struct {
 	Wait  bool   `long:"wait" description:"wait until done before exiting"`
 	Host  string `short:"H" long:"host" description:"the supervisor host to register"`
 	Arg   ManagerRegisterSupervisorArg
 	Reply atlantis.AsyncReply
-}
-
-func (c *UnregisterSupervisorCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
 }
 
 func OutputRegisterSupervisorReply(reply *ManagerRegisterSupervisorReply) error {
@@ -459,8 +399,4 @@ func (c *UnregisterSupervisorResultCommand) Execute(args []string) error {
 type ListSupervisorsCommand struct {
 	Arg   ManagerListSupervisorsArg
 	Reply ManagerListSupervisorsReply
-}
-
-func (c *ListSupervisorsCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
 }

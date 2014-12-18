@@ -44,10 +44,6 @@ type AddRoleCommand struct {
 	Reply      ManagerRoleReply
 }
 
-func (c *AddRoleCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
-}
-
 type RemoveRoleCommand struct {
 	Region     string `short:"r" long:"region" description:"the region to remove a role for"`
 	Host       string `short:"H" long:"host" description:"the host to remove a role for"`
@@ -58,10 +54,6 @@ type RemoveRoleCommand struct {
 	Reply      ManagerRoleReply
 }
 
-func (c *RemoveRoleCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
-}
-
 type HasRoleCommand struct {
 	Region     string `short:"r" long:"region" description:"the region to check a role for"`
 	Host       string `short:"H" long:"host" description:"the host to check a role for"`
@@ -70,8 +62,4 @@ type HasRoleCommand struct {
 	Properties string `field:"HasRole" name:"HasRole"`
 	Arg        ManagerRoleArg
 	Reply      ManagerHasRoleReply
-}
-
-func (c *HasRoleCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
 }

@@ -19,7 +19,3 @@ type UsageCommand struct {
 	Arg   ManagerUsageArg
 	Reply ManagerUsageReply
 }
-
-func (c *UsageCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
-}

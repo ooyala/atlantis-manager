@@ -22,16 +22,8 @@ type ContainerMaintenanceCommand struct {
 	Reply       ManagerContainerMaintenanceReply
 }
 
-func (c *ContainerMaintenanceCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
-}
-
 type IdleCommand struct {
 	Properties string `noauth:"true"`
 	Arg        ManagerIdleArg
 	Reply      ManagerIdleReply
-}
-
-func (c *IdleCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
 }

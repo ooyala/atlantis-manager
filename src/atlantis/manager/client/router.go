@@ -55,10 +55,6 @@ type DeletePoolCommand struct {
 	Reply    ManagerDeletePoolReply
 }
 
-func (c *DeletePoolCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
-}
-
 type GetPoolCommand struct {
 	Name     string `short:"n" long:"name" description:"the name of the pool"`
 	Internal bool   `short:"i" long:"internal" description:"true if internal"`
@@ -66,18 +62,10 @@ type GetPoolCommand struct {
 	Reply    ManagerGetPoolReply
 }
 
-func (c *GetPoolCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
-}
-
 type ListPoolsCommand struct {
 	Internal bool `short:"i" long:"internal" description:"true if internal"`
 	Arg      ManagerListPoolsArg
 	Reply    ManagerListPoolsReply
-}
-
-func (c *ListPoolsCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
 }
 
 type UpdateRuleCommand struct {
@@ -91,19 +79,11 @@ type UpdateRuleCommand struct {
 	Reply    ManagerUpdateRuleReply
 }
 
-func (c *UpdateRuleCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
-}
-
 type DeleteRuleCommand struct {
 	Name     string `short:"n" long:"name" description:"the name of the rule"`
 	Internal bool   `short:"i" long:"internal" description:"true if internal"`
 	Arg      ManagerDeleteRuleArg
 	Reply    ManagerDeleteRuleReply
-}
-
-func (c *DeleteRuleCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
 }
 
 type GetRuleCommand struct {
@@ -113,18 +93,10 @@ type GetRuleCommand struct {
 	Reply    ManagerGetRuleReply
 }
 
-func (c *GetRuleCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
-}
-
 type ListRulesCommand struct {
 	Internal bool `short:"i" long:"internal" description:"true if internal"`
 	Arg      ManagerListRulesArg
 	Reply    ManagerListRulesReply
-}
-
-func (c *ListRulesCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
 }
 
 type UpdateTrieCommand struct {
@@ -135,19 +107,11 @@ type UpdateTrieCommand struct {
 	Reply    ManagerUpdateTrieReply
 }
 
-func (c *UpdateTrieCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
-}
-
 type DeleteTrieCommand struct {
 	Name     string `short:"n" long:"name" description:"the name of the trie"`
 	Internal bool   `short:"i" long:"internal" description:"true if internal"`
 	Arg      ManagerDeleteTrieArg
 	Reply    ManagerDeleteTrieReply
-}
-
-func (c *DeleteTrieCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
 }
 
 type GetTrieCommand struct {
@@ -157,18 +121,10 @@ type GetTrieCommand struct {
 	Reply    ManagerGetTrieReply
 }
 
-func (c *GetTrieCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
-}
-
 type ListTriesCommand struct {
 	Internal bool `short:"i" long:"internal" description:"true if internal"`
 	Arg      ManagerListTriesArg
 	Reply    ManagerListTriesReply
-}
-
-func (c *ListTriesCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
 }
 
 type UpdatePortCommand struct {
@@ -179,19 +135,11 @@ type UpdatePortCommand struct {
 	Reply    ManagerUpdatePortReply
 }
 
-func (c *UpdatePortCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
-}
-
 type DeletePortCommand struct {
 	Port     uint16 `short:"p" long:"port" description:"the port number"`
 	Internal bool   `short:"i" long:"internal" description:"true if internal"`
 	Arg      ManagerDeletePortArg
 	Reply    ManagerDeletePortReply
-}
-
-func (c *DeletePortCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
 }
 
 type GetPortCommand struct {
@@ -201,18 +149,10 @@ type GetPortCommand struct {
 	Reply    ManagerGetPortReply
 }
 
-func (c *GetPortCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
-}
-
 type ListPortsCommand struct {
 	Internal bool `short:"i" long:"internal" description:"true if internal"`
 	Arg      ManagerListPortsArg
 	Reply    ManagerListPortsReply
-}
-
-func (c *ListPortsCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
 }
 
 type GetAppEnvPortCommand struct {
@@ -224,17 +164,9 @@ type GetAppEnvPortCommand struct {
 	Reply      ManagerGetAppEnvPortReply
 }
 
-func (c *GetAppEnvPortCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
-}
-
 type ListAppEnvsWithPortCommand struct {
 	Internal   bool   `short:"i" long:"internal" description:"true if internal"`
 	Properties string `message:"List AppEnvs With Ports" field:"AppEnvs" name:"app+envs"`
 	Arg        ManagerListAppEnvsWithPortArg
 	Reply      ManagerListAppEnvsWithPortReply
-}
-
-func (c *ListAppEnvsWithPortCommand) Execute(args []string) error {
-	return genericExecuter(c, args)
 }
