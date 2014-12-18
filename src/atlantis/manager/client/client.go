@@ -223,8 +223,25 @@ var cfg = &ClientConfig{"localhost", DefaultManagerRPCPort, DefaultManagerKeyPat
 var rpcClient = &client.ManagerRPCClient{*client.NewManagerRPCClientWithConfig(cfg), "", map[string]string{}}
 var dummyAuthArg = rpcTypes.ManagerAuthArg{"", "", ""}
 
+type commandWrapper struct {
+	Command interface{}
+}
+
+func (c *commandWrapper) Execute(args []string) error {
+	// If the command has an Execute method, honor it.  Otherwise, fall back to the generic Execute.
+	if command, ok := c.Command.(flags.Command); ok {
+		return command.Execute(args)
+	} else {
+		return genericExecuter(c.Command, args)
+	}
+}
+
 type ManagerClient struct {
 	*flags.Parser
+}
+
+func (m *ManagerClient) AddCommand(name, short, long string, data interface{}) {
+	m.Parser.AddCommand(name, short, long, &commandWrapper{data})
 }
 
 func New() *ManagerClient {
