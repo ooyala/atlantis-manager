@@ -498,7 +498,7 @@ func executeFlags(rv reflect.Value) (message, rpc, field, name string, noauth, a
 	return
 }
 
-func genericExecuter(command interface{}, args []string) error {
+func genericResult(command interface{}, args []string) (string, interface{}, string, interface{}, *WaitCommand, error) {
 	rv := reflect.ValueOf(command).Elem()
 	// Extract all the configuration flags from the Command struct
 	message, rpc, field, name, noauth, async, wait := executeFlags(rv)
@@ -508,7 +508,7 @@ func genericExecuter(command interface{}, args []string) error {
 		InitNoLogin()
 	} else {
 		if err := Init(); err != nil {
-			return OutputError(err)
+			return "", nil, "", nil, nil, OutputError(err)
 		}
 	}
 
@@ -527,12 +527,12 @@ func genericExecuter(command interface{}, args []string) error {
 	if noauth {
 		arg := argv.Interface()
 		if err := rpcClient.Call(rpc, arg, reply); err != nil {
-			return OutputError(err)
+			return "", nil, "", nil, nil, OutputError(err)
 		}
 	} else {
 		arg := argv.Interface().(client.AuthedArg)
 		if err := rpcClient.CallAuthed(rpc, arg, reply); err != nil {
-			return OutputError(err)
+			return "", nil, "", nil, nil, OutputError(err)
 		}
 	}
 
@@ -543,29 +543,43 @@ func genericExecuter(command interface{}, args []string) error {
 	}
 	var data interface{}
 	data = "Unknown"
-	if v := replyv.Elem().FieldByName(field); v.IsValid() {
-		data = v.Interface()
+	if field != "" {
+		if v := replyv.Elem().FieldByName(field); v.IsValid() {
+			data = v.Interface()
+		}
 	}
 
 	// Async results don't give back status immediately.
-	if !async {
-		Log("-> status: %s", status)
+	if async {
+		status = ""
 	}
 
-	// Log the output under the desired field in a pretty format
-	if field != "" {
-		if r := replyv.Elem().FieldByName(field); r.IsValid() {
-			genericLogData(name, r, "")
-		}
-	}
-
-	// If we're waiting on an async command, use the magic WaitCommand on the async ID to poll until finished.
+	// If we're waiting on an async command, return the magic WaitCommand on the asyncID to poll until finished.
+	var waitCommand *WaitCommand
 	if wait {
 		if idv := replyv.Elem().FieldByName("ID"); idv.IsValid() {
-			return (&WaitCommand{idv.String()}).Execute(args)
+			waitCommand = &WaitCommand{idv.String()}
 		} else {
 			Log("Error: No async ID found in response")
 		}
+	}
+	return status, reply, name, data, waitCommand, nil
+}
+
+func genericExecuter(command interface{}, args []string) error {
+	status, reply, name, data, waitCommand, err := genericResult(command, args)
+	if err != nil {
+		return err
+	}
+
+	if status != "" {
+		Log("-> status: %s", status)
+	}
+	if data != nil {
+		genericLogData(name, reflect.ValueOf(data), "")
+	}
+	if waitCommand != nil {
+		return waitCommand.Execute(args)
 	}
 
 	return Output(map[string]interface{}{"status": status, name: data}, reply, nil)
