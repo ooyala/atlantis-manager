@@ -12,7 +12,6 @@
 package client
 
 import (
-	atlantis "atlantis/common"
 	. "atlantis/manager/rpc/types"
 )
 
@@ -23,7 +22,7 @@ type RegisterRouterCommand struct {
 	Host     string `short:"H" long:"host" description:"the host to register"`
 	IP       string `short:"i" long:"ip" description:"the ip to register"`
 	Arg      ManagerRegisterRouterArg
-	Reply    atlantis.AsyncReply
+	Reply    ManagerRegisterRouterReply
 }
 
 type UnregisterRouterCommand struct {
@@ -32,7 +31,7 @@ type UnregisterRouterCommand struct {
 	Zone     string `short:"z" long:"zone" description:"the zone to register in"`
 	Host     string `short:"H" long:"host" description:"the host to unregister"`
 	Arg      ManagerRegisterRouterArg
-	Reply    atlantis.AsyncReply
+	Reply    ManagerRegisterRouterReply
 }
 
 func OutputRegisterRouterReply(reply *ManagerRegisterRouterReply) error {
@@ -165,7 +164,7 @@ func (c *UpdateAppCommand) Execute(args []string) error {
 }
 
 type UnregisterAppCommand struct {
-	App   string `short:"a" long:"app" description:"the app to unregister"`
+	Name  string `short:"a" long:"app" description:"the app to unregister"`
 	Arg   ManagerRegisterAppArg
 	Reply ManagerRegisterAppReply
 }
@@ -246,7 +245,7 @@ type RegisterManagerCommand struct {
 	ManagerCName  string `long:"manager-cname" description:"the manager's cname if it already has one"`
 	RegistryCName string `long:"registry-cname" description:"the registry's cname if it already has one"`
 	Arg           ManagerRegisterManagerArg
-	Reply         atlantis.AsyncReply
+	Reply         ManagerRegisterManagerReply
 }
 
 type UnregisterManagerCommand struct {
@@ -254,7 +253,7 @@ type UnregisterManagerCommand struct {
 	Host   string `short:"H" long:"host" description:"the host to register"`
 	Region string `short:"r" long:"region" description:"the region to unregister"`
 	Arg    ManagerRegisterManagerArg
-	Reply  atlantis.AsyncReply
+	Reply  ManagerRegisterManagerReply
 }
 
 func OutputRegisterManagerReply(reply *ManagerRegisterManagerReply) error {
@@ -345,14 +344,14 @@ type RegisterSupervisorCommand struct {
 	Wait  bool   `long:"wait" description:"wait until done before exiting"`
 	Host  string `short:"H" long:"host" description:"the supervisor host to register"`
 	Arg   ManagerRegisterSupervisorArg
-	Reply atlantis.AsyncReply
+	Reply ManagerRegisterSupervisorReply
 }
 
 type UnregisterSupervisorCommand struct {
 	Wait  bool   `long:"wait" description:"wait until done before exiting"`
 	Host  string `short:"H" long:"host" description:"the supervisor host to register"`
 	Arg   ManagerRegisterSupervisorArg
-	Reply atlantis.AsyncReply
+	Reply ManagerRegisterSupervisorReply
 }
 
 func OutputRegisterSupervisorReply(reply *ManagerRegisterSupervisorReply) error {

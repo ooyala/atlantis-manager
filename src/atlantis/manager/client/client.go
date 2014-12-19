@@ -12,6 +12,7 @@
 package client
 
 import (
+	atlantis "atlantis/common"
 	. "atlantis/manager/constant"
 	"atlantis/manager/rpc/client"
 	rpcTypes "atlantis/manager/rpc/types"
@@ -24,6 +25,7 @@ import (
 	"reflect"
 	"regexp"
 	"strings"
+	"time"
 )
 
 // Directories to be searched for client configuration files.
@@ -448,7 +450,7 @@ func genericLogData(name string, v reflect.Value, indent string) {
 			}
 		}
 	default:
-    Log("%s %v", prefix, v.Interface())
+		Log("%s %v", prefix, v.Interface())
 	}
 }
 
@@ -491,14 +493,12 @@ func executeFlags(rv reflect.Value) (message, rpc, field, name string, noauth, a
 	// Async commands are weird; we get back an ID to wait on, and there's always an boolean --wait flag.
 	if waitField := rv.FieldByName("Wait"); waitField.Kind() == reflect.Bool {
 		async = true
-		field = "ID"
-		name = "ID"
 		wait = waitField.Bool()
 	}
 	return
 }
 
-func genericResult(command interface{}, args []string) (string, interface{}, string, interface{}, *WaitCommand, error) {
+func genericResult(command interface{}, args []string) (string, interface{}, string, interface{}, error) {
 	rv := reflect.ValueOf(command).Elem()
 	// Extract all the configuration flags from the Command struct
 	message, rpc, field, name, noauth, async, wait := executeFlags(rv)
@@ -508,7 +508,7 @@ func genericResult(command interface{}, args []string) (string, interface{}, str
 		InitNoLogin()
 	} else {
 		if err := Init(); err != nil {
-			return "", nil, "", nil, nil, OutputError(err)
+			return "", nil, "", nil, OutputError(err)
 		}
 	}
 
@@ -516,6 +516,17 @@ func genericResult(command interface{}, args []string) (string, interface{}, str
 	argv := reflect.New(rv.FieldByName("Arg").Type())
 	replyv := reflect.New(rv.FieldByName("Reply").Type())
 	reply := replyv.Interface()
+
+	// Async replies come back as type AsyncReply.
+	if async {
+		reply = &atlantis.AsyncReply{}
+		replyv = reflect.ValueOf(reply)
+		// And if we're not waiting, pass the ID out to the caller.
+		if !wait {
+			field = "ID"
+			name = "ID"
+		}
+	}
 
 	// Copy args from the CLI arguments to the RPC arguments, and handle any positional ones.
 	genericExtractArgs(rv, args)
@@ -527,12 +538,26 @@ func genericResult(command interface{}, args []string) (string, interface{}, str
 	if noauth {
 		arg := argv.Interface()
 		if err := rpcClient.Call(rpc, arg, reply); err != nil {
-			return "", nil, "", nil, nil, OutputError(err)
+			return "", nil, "", nil, OutputError(err)
 		}
 	} else {
 		arg := argv.Interface().(client.AuthedArg)
 		if err := rpcClient.CallAuthed(rpc, arg, reply); err != nil {
-			return "", nil, "", nil, nil, OutputError(err)
+			return "", nil, "", nil, OutputError(err)
+		}
+	}
+
+	// If we're waiting on an async command, update the reply when it comes back.
+	if wait {
+		if idv := replyv.Elem().FieldByName("ID"); idv.IsValid() {
+			Log("-> ID: %v", replyv.Elem().FieldByName("ID"))
+			replyv = reflect.New(rv.FieldByName("Reply").Type())
+			reply = replyv.Interface()
+			if err := genericWait(command, rpc, idv.String(), reply); err != nil {
+				return "", nil, "", nil, OutputError(err)
+			}
+		} else {
+			Log("Error: No async ID found in response")
 		}
 	}
 
@@ -550,24 +575,41 @@ func genericResult(command interface{}, args []string) (string, interface{}, str
 	}
 
 	// Async results don't give back status immediately.
-	if async {
+	if async && !wait {
 		status = ""
 	}
 
-	// If we're waiting on an async command, return the magic WaitCommand on the asyncID to poll until finished.
-	var waitCommand *WaitCommand
-	if wait {
-		if idv := replyv.Elem().FieldByName("ID"); idv.IsValid() {
-			waitCommand = &WaitCommand{idv.String()}
-		} else {
-			Log("Error: No async ID found in response")
+	return status, reply, name, data, nil
+}
+
+func genericWait(command interface{}, rpc, id string, reply interface{}) error {
+	Log("Waiting...")
+	var statusReply atlantis.TaskStatus
+	var currentStatus string
+	if err := rpcClient.Call("Status", id, &statusReply); err != nil {
+		return OutputError(err)
+	}
+	for !statusReply.Done {
+		if currentStatus != statusReply.Status {
+			currentStatus = statusReply.Status
+			Log(currentStatus)
+		}
+		time.Sleep(waitPollInterval)
+		if err := rpcClient.Call("Status", id, &statusReply); err != nil {
+			return OutputError(err)
 		}
 	}
-	return status, reply, name, data, waitCommand, nil
+
+	// And it's done!  Fetch the result
+	if err := rpcClient.Call(rpc+"Result", id, reply); err != nil {
+		return OutputError(err)
+	}
+
+	return nil
 }
 
 func genericExecuter(command interface{}, args []string) error {
-	status, reply, name, data, waitCommand, err := genericResult(command, args)
+	status, reply, name, data, err := genericResult(command, args)
 	if err != nil {
 		return err
 	}
@@ -577,9 +619,6 @@ func genericExecuter(command interface{}, args []string) error {
 	}
 	if data != nil {
 		genericLogData(name, reflect.ValueOf(data), "")
-	}
-	if waitCommand != nil {
-		return waitCommand.Execute(args)
 	}
 
 	return Output(map[string]interface{}{"status": status, name: data}, reply, nil)

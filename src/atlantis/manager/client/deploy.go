@@ -12,7 +12,6 @@
 package client
 
 import (
-	atlantis "atlantis/common"
 	. "atlantis/manager/rpc/types"
 )
 
@@ -25,16 +24,18 @@ type DeployCommand struct {
 	MemoryLimit uint   `short:"m" long:"memory-limit" default:"0" description:"the MBytes of memory per instance"`
 	Dev         bool   `long:"dev" description:"only deploy 1 instance in 1 AZ"`
 	Wait        bool   `long:"wait" description:"wait until the deploy is done before exiting"`
+	Properties  string `field:"Containers"`
 	Arg         ManagerDeployArg
-	Reply       atlantis.AsyncReply
+	Reply       ManagerDeployReply
 }
 
 type DeployContainerCommand struct {
 	ContainerID string `short:"c" long:"container" description:"the id of the container to replicate"`
 	Instances   uint   `short:"i" long:"instances" default:"1" description:"the number of instances to deploy in each AZ"`
 	Wait        bool   `long:"wait" description:"wait until the deploy is done before exiting"`
+	Properties  string `field:"Containers"`
 	Arg         ManagerDeployArg
-	Reply       atlantis.AsyncReply
+	Reply       ManagerDeployReply
 }
 
 type CopyContainerCommand struct {
@@ -42,8 +43,9 @@ type CopyContainerCommand struct {
 	ToHost      string `short:"H" long:"host" description:"the host to copy to"`
 	PostCopy    int    `short:"p" long:"post" description:"what to do after the copy. (0 = nothing, 1 = cleanup datamodel only, 2 = teardown)"`
 	Wait        bool   `long:"wait" description:"wait until the deploy is done before exiting"`
+	Properties  string `field:"Containers"`
 	Arg         ManagerCopyContainerArg
-	Reply       atlantis.AsyncReply
+	Reply       ManagerDeployReply
 }
 
 func OutputDeployReply(reply *ManagerDeployReply) error {
@@ -83,8 +85,9 @@ type TeardownCommand struct {
 	ContainerID string `short:"c" long:"container" description:"the container to teardown"`
 	All         bool   `long:"all" description:"teardown all containers in every supervisor"`
 	Wait        bool   `long:"wait" description:"wait until the teardown is done before exiting"`
+	Properties  string `field:"ContainerIDs" name:"containers"`
 	Arg         ManagerTeardownArg
-	Reply       atlantis.AsyncReply
+	Reply       ManagerTeardownReply
 }
 
 func OutputTeardownReply(reply *ManagerTeardownReply) error {
