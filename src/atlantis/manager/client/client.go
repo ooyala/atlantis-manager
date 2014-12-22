@@ -17,6 +17,7 @@ import (
 	"atlantis/manager/rpc/client"
 	rpcTypes "atlantis/manager/rpc/types"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/BurntSushi/toml"
 	"github.com/jigish/go-flags"
@@ -454,13 +455,15 @@ func genericLogData(name string, v reflect.Value, indent string) {
 	}
 }
 
-func executeFlags(rv reflect.Value) (message, rpc, field, name string, noauth, async, wait bool) {
+func executeFlags(rv reflect.Value) (message, rpc, field, name, fileName, fileField string, fileData interface{},
+	noauth, async, wait bool) {
 	// Use flags from the Properties field, if it exists.
 	if properties, ok := rv.Type().FieldByName("Properties"); ok {
 		message = properties.Tag.Get("message")
 		rpc = properties.Tag.Get("rpc")
 		field = properties.Tag.Get("field")
 		name = properties.Tag.Get("name")
+		fileField = properties.Tag.Get("filefield")
 		noauth = properties.Tag.Get("noauth") != ""
 	}
 
@@ -495,13 +498,27 @@ func executeFlags(rv reflect.Value) (message, rpc, field, name string, noauth, a
 		async = true
 		wait = waitField.Bool()
 	}
+
+	// If we need to read file data, get that set up
+	if fileDataField := rv.FieldByName("FileData"); fileDataField.IsValid() {
+		if fileNamev := rv.FieldByName("FromFile"); fileNamev.IsValid() {
+			fileDatav := reflect.New(fileDataField.Type())
+			fileData = fileDatav.Interface()
+			fileName = fileNamev.String()
+			if fileField == "" {
+				// The default name is the unqualified type: *types.DependerEnvData => DependerEnvData
+				components := strings.Split(fileDatav.Type().String(), ".")
+				fileField = components[len(components)-1]
+			}
+		}
+	}
 	return
 }
 
 func genericResult(command interface{}, args []string) (string, interface{}, string, interface{}, error) {
 	rv := reflect.ValueOf(command).Elem()
 	// Extract all the configuration flags from the Command struct
-	message, rpc, field, name, noauth, async, wait := executeFlags(rv)
+	message, rpc, field, name, fileName, fileField, fileData, noauth, async, wait := executeFlags(rv)
 
 	// Some command require auth, some don't
 	if noauth {
@@ -531,6 +548,19 @@ func genericResult(command interface{}, args []string) (string, interface{}, str
 	// Copy args from the CLI arguments to the RPC arguments, and handle any positional ones.
 	genericExtractArgs(rv, args)
 	genericCopyArgs(rv, argv.Elem())
+
+	// Read in file data if necessary
+	if fileData != nil {
+		file, err := os.Open(fileName)
+		if err != nil {
+			return "", nil, "", nil, OutputError(err)
+		}
+		jsonDec := json.NewDecoder(file)
+		if err := jsonDec.Decode(fileData); err != nil {
+			return "", nil, "", nil, OutputError(err)
+		}
+		argv.Elem().FieldByName(fileField).Set(reflect.ValueOf(fileData))
+	}
 
 	Log(message + "...")
 
