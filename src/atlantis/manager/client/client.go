@@ -451,7 +451,11 @@ func genericLogData(name string, v reflect.Value, indent string) {
 			}
 		}
 	default:
-		Log("%s %v", prefix, v.Interface())
+		if v.IsValid() {
+			Log("%s %v", prefix, v.Interface())
+		} else {
+			Log("%s <Invalid>", prefix)
+		}
 	}
 }
 
@@ -515,6 +519,14 @@ func executeFlags(rv reflect.Value) (message, rpc, field, name, fileName, fileFi
 	return
 }
 
+func copyType(rv reflect.Value, name string) (reflect.Value, error) {
+	field := rv.FieldByName(name)
+	if !field.IsValid() {
+		return rv, errors.New("Internal error: " + rv.Type().String() + " missing field " + name)
+	}
+	return reflect.New(field.Type()), nil
+}
+
 func genericResult(command interface{}, args []string) (string, interface{}, string, interface{}, error) {
 	rv := reflect.ValueOf(command).Elem()
 	// Extract all the configuration flags from the Command struct
@@ -530,8 +542,14 @@ func genericResult(command interface{}, args []string) (string, interface{}, str
 	}
 
 	// Set up the arg and reply objects based on types in the Command struct.
-	argv := reflect.New(rv.FieldByName("Arg").Type())
-	replyv := reflect.New(rv.FieldByName("Reply").Type())
+	argv, err := copyType(rv, "Arg")
+	if err != nil {
+		return "", nil, "", nil, OutputError(err)
+	}
+	replyv, err := copyType(rv, "Reply")
+	if err != nil {
+		return "", nil, "", nil, OutputError(err)
+	}
 	reply := replyv.Interface()
 
 	// Async replies come back as type AsyncReply.
