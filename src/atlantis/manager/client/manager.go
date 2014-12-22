@@ -15,25 +15,6 @@ import (
 	. "atlantis/manager/rpc/types"
 )
 
-func OutputRoleReply(reply *ManagerRoleReply) error {
-	Log("-> Status: %s", reply.Status)
-	if reply.Manager != nil {
-		Log("-> Manager:")
-		Log("->   Region:         %s", reply.Manager.Region)
-		Log("->   Host:           %s", reply.Manager.Host)
-		Log("->   Registry CName: %s", reply.Manager.RegistryCName)
-		Log("->   Manager CName:  %s", reply.Manager.ManagerCName)
-		Log("->   Roles:")
-		for role, typeMap := range reply.Manager.Roles {
-			Log("->     %s", role)
-			for typeName, val := range typeMap {
-				Log("->       %s : %t", typeName, val)
-			}
-		}
-	}
-	return Output(map[string]interface{}{"status": reply.Status, "manager": reply.Manager}, nil, nil)
-}
-
 type AddRoleCommand struct {
 	Region     string `short:"r" long:"region" description:"the region to add a role for"`
 	Host       string `short:"H" long:"host" description:"the host to add a role for"`

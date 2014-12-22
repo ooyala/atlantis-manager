@@ -147,42 +147,6 @@ type UnregisterAppCommand struct {
 	Reply ManagerRegisterAppReply
 }
 
-func LogDependerEnvData(indent string, envData *DependerEnvData) {
-	Log("->%s Name: %s", indent, envData.Name)
-	Log("->%s SecurityGroup: %v", indent, envData.SecurityGroup)
-	Log("->%s EncryptedData: %s", indent, envData.EncryptedData)
-	Log("->%s DataMap: %v", indent, envData.DataMap)
-}
-
-func LogDependerAppData(indent string, appData *DependerAppData) {
-	Log("->%s Name: %s", indent, appData.Name)
-	Log("->%s DependerEnvData:", indent)
-	for env, envData := range appData.DependerEnvData {
-		Log("->%s   %s:", indent, env)
-		Log("->%s     Name: %s", indent, envData.Name)
-		Log("->%s     SecurityGroup: %v", indent, envData.SecurityGroup)
-		Log("->%s     EncryptedData: %s", indent, envData.EncryptedData)
-		Log("->%s     DataMap: %v", indent, envData.DataMap)
-	}
-}
-
-func LogApp(app *App) {
-	Log("-> Name:  %s", app.Name)
-	Log("-> Repo:  %s", app.Repo)
-	Log("-> Root:  %s", app.Root)
-	Log("-> Email: %s", app.Email)
-	Log("-> DependerEnvData:")
-	for env, envData := range app.DependerEnvData {
-		Log("->   %s:", env)
-		LogDependerEnvData("    ", envData)
-	}
-	Log("-> DependerAppData:")
-	for app, appData := range app.DependerAppData {
-		Log("->   %s:", app)
-		LogDependerAppData("    ", appData)
-	}
-}
-
 type GetAppCommand struct {
 	Name  string `short:"a" long:"app" description:"the app to get"`
 	Arg   ManagerGetAppArg
