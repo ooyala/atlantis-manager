@@ -13,8 +13,6 @@ package client
 
 import (
 	. "atlantis/manager/rpc/types"
-	"encoding/json"
-	"os"
 )
 
 type RequestAppDependencyCommand struct {
@@ -56,38 +54,12 @@ type GetDependerAppDataCommand struct {
 // ----------------------------------------------------------------------------------------------------------
 
 type AddDependerEnvDataCommand struct {
-	App      string `short:"a" long:"app" description:"the app to add an env for"`
-	FromFile string `short:"f" long:"file" description:"the file to pull the data from"`
-	Arg      ManagerAddDependerEnvDataArg
-	Reply    ManagerAddDependerEnvDataReply
-	FileData DependerEnvData
-}
-
-func (c *AddDependerEnvDataCommand) Execute(args []string) error {
-	err := Init()
-	if err != nil {
-		return OutputError(err)
-	}
-	Log("Add Depender Env...")
-	args = ExtractArgs([]*string{&c.App, &c.FromFile}, args)
-	data := &DependerEnvData{}
-	file, err := os.Open(c.FromFile)
-	if err != nil {
-		return OutputError(err)
-	}
-	jsonDec := json.NewDecoder(file)
-	if err := jsonDec.Decode(data); err != nil {
-		return OutputError(err)
-	}
-	arg := ManagerAddDependerEnvDataArg{ManagerAuthArg: dummyAuthArg, App: c.App, DependerEnvData: data}
-	var reply ManagerAddDependerEnvDataReply
-	err = rpcClient.CallAuthed("AddDependerEnvData", &arg, &reply)
-	if err != nil {
-		return OutputError(err)
-	}
-	Log("-> Status: %s", reply.Status)
-	LogApp(reply.App)
-	return Output(map[string]interface{}{"status": reply.Status, "app": reply.App}, nil, nil)
+	App        string `short:"a" long:"app" description:"the app to add an env for"`
+	FromFile   string `short:"f" long:"file" description:"the file to pull the data from"`
+	Properties string `field:"App"`
+	Arg        ManagerAddDependerEnvDataArg
+	Reply      ManagerAddDependerEnvDataReply
+	FileData   DependerEnvData
 }
 
 type RemoveDependerEnvDataCommand struct {

@@ -86,30 +86,8 @@ type GetRouterCommand struct {
 	Internal bool   `long:"internal" description:"true to list internal routers"`
 	Zone     string `short:"z" long:"zone" description:"the zone to register in"`
 	Host     string `short:"H" long:"host" description:"the host to get"`
-}
-
-func (c *GetRouterCommand) Execute(args []string) error {
-	err := Init()
-	if err != nil {
-		return OutputError(err)
-	}
-	Log("Get Router...")
-	args = ExtractArgs([]*string{&c.Zone, &c.Host}, args)
-	arg := ManagerGetRouterArg{ManagerAuthArg: dummyAuthArg, Internal: c.Internal, Zone: c.Zone, Host: c.Host}
-	var reply ManagerGetRouterReply
-	err = rpcClient.CallAuthed("GetRouter", &arg, &reply)
-	if err != nil {
-		return OutputError(err)
-	}
-	Log("-> Status: %s", reply.Status)
-	if reply.Router != nil {
-		Log("-> Router:")
-		Log("->   Internal : %t", reply.Router.Internal)
-		Log("->   Zone     : %s", reply.Router.Zone)
-		Log("->   Host     : %s", reply.Router.Host)
-		Log("->   CName    : %s", reply.Router.CName)
-	}
-	return Output(map[string]interface{}{"status": reply.Status, "router": reply.Router}, nil, nil)
+	Arg      ManagerGetRouterArg
+	Reply    ManagerGetRouterReply
 }
 
 type ListRoutersCommand struct {
