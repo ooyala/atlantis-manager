@@ -57,6 +57,7 @@ copy-key: clean
 
 install-deps:
 	@echo "Installing Dependencies..."
+	@sudo apt-get install -y bzr
 	@rm -rf $(VENDOR_PATH)
 	@mkdir -p $(VENDOR_PATH) || exit 2
 	@GOPATH=$(VENDOR_PATH) go get github.com/jigish/go-flags
