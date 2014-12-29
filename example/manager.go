@@ -30,6 +30,6 @@ func main() {
 		log.Fatalln(err)
 	}
 	log.Printf("Initializing Jenkins Builder with URI: %s", config.JenkinsURI)
-	bldr := builder.NewJenkinsBuilder(config.JenkinsURI)
+	bldr := builder.NewJenkinsBuilder(config.JenkinsURI, "Jenkins Builder")
 	managerd.Run(bldr)
 }
