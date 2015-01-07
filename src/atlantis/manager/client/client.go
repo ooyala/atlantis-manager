@@ -568,21 +568,11 @@ func genericResult(command interface{}, args []string) (string, interface{}, str
 	if err != nil {
 		return "", nil, "", nil, OutputError(err)
 	}
-	replyv, err := copyType(rv, "Reply")
-	if err != nil {
-		return "", nil, "", nil, OutputError(err)
-	}
-	reply := replyv.Interface()
 
-	// Async replies come back as type AsyncReply.
-	if async {
-		reply = &atlantis.AsyncReply{}
-		replyv = reflect.ValueOf(reply)
-		// And if we're not waiting, pass the ID out to the caller.
-		if !wait {
-			field = "ID"
-			name = "ID"
-		}
+	// Async replies should use the ID field, not the final response field
+	if async && !wait {
+		field = "ID"
+		name = "ID"
 	}
 
 	// Copy args from the CLI arguments to the RPC arguments, and handle any positional ones.
@@ -603,6 +593,21 @@ func genericResult(command interface{}, args []string) (string, interface{}, str
 	}
 
 	Log(message + "...")
+
+	// Set up the reply object based on types in the Command struct.  But async replies always come back as
+	// type AsyncReply.
+	var reply interface{}
+	var replyv reflect.Value
+	if async {
+		reply = &atlantis.AsyncReply{}
+		replyv = reflect.ValueOf(reply)
+	} else {
+		replyv, err = copyType(rv, "Reply")
+		if err != nil {
+			return "", nil, "", nil, OutputError(err)
+		}
+		reply = replyv.Interface()
+	}
 
 	// Actually make the request, either with or without auth.
 	if noauth {
