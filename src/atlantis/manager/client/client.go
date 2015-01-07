@@ -420,34 +420,56 @@ func genericCopyArgs(command reflect.Value, arg reflect.Value) {
 }
 
 // Pretty-print any random data we get back from the server
-func genericLogData(name string, v reflect.Value, indent string) {
+func genericLogData(name string, v reflect.Value, indent string, skip int) {
 	prefix := "->" + indent
 	if name != "" {
 		prefix = "-> " + indent + name + ":"
 	}
+
+	// For pointers and interfaces, just grab the underlying value and try again
+	if v.Kind() == reflect.Ptr || v.Kind() == reflect.Interface {
+		genericLogData(name, v.Elem(), indent, skip)
+		return
+	}
+
+	// Only print if skip is 0.  Recursive calls should indent or decrement skip, depending on if anything was
+	// printed.
+	var skipped bool
+	if skip == 0 {
+		skipped = false
+		indent = indent + "  "
+	} else {
+		skipped = true
+		skip = skip - 1
+	}
+
 	switch v.Kind() {
-	case reflect.Ptr:
-		genericLogData(name, v.Elem(), indent)
 	case reflect.Struct:
-		Log("%s\n", prefix)
+		if !skipped {
+			Log("%s\n", prefix)
+		}
 		for f := 0; f < v.NumField(); f++ {
 			name := v.Type().Field(f).Name
-			genericLogData(name, v.Field(f), indent+"  ")
+			genericLogData(name, v.Field(f), indent, skip)
 		}
 	case reflect.Array:
 		fallthrough
 	case reflect.Slice:
-		Log("%s\n", prefix)
+		if !skipped {
+			Log("%s\n", prefix)
+		}
 		for i := 0; i < v.Len(); i++ {
-			genericLogData("", v.Index(i), indent+"  ")
+			genericLogData("", v.Index(i), indent, skip)
 		}
 	case reflect.Map:
-		Log("%s\n", prefix)
+		if !skipped {
+			Log("%s\n", prefix)
+		}
 		for _, k := range v.MapKeys() {
 			if name, ok := k.Interface().(string); ok {
-				genericLogData(name, v.MapIndex(k), indent+"  ")
+				genericLogData(name, v.MapIndex(k), indent, skip)
 			} else {
-				genericLogData("Unknown field", v.MapIndex(k), indent+"  ")
+				genericLogData("Unknown field", v.MapIndex(k), indent, skip)
 			}
 		}
 	default:
@@ -666,7 +688,7 @@ func genericExecuter(command interface{}, args []string) error {
 		Log("-> status: %s", status)
 	}
 	if data != nil {
-		genericLogData(name, reflect.ValueOf(data), "")
+		genericLogData(name, reflect.ValueOf(data), "", 0)
 	}
 
 	return Output(map[string]interface{}{"status": status, name: data}, reply, nil)
