@@ -636,6 +636,9 @@ func GetSecrets() (string, map[string]string, error) {
 	if _, err := toml.Decode(string(tokenData), &token); err != nil {
 		return "", map[string]string{}, err
 	}
+	if token.Secrets == nil {
+		token.Secrets = map[string]string{}
+	}
 	return token.User, token.Secrets, nil
 }
 
