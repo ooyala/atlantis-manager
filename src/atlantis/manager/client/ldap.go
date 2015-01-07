@@ -557,7 +557,6 @@ func AutoLogin(overrideUser, overridePassword string) (ManagerLoginReply, error)
 	user, secrets, err := GetSecrets()
 	rpcClient.User = user
 	rpcClient.Secrets = secrets
-	secret := secrets[rpcClient.Opts[0].RPCHostAndPort()]
 	if err != nil {
 		return reply, err
 	}
@@ -570,17 +569,24 @@ func AutoLogin(overrideUser, overridePassword string) (ManagerLoginReply, error)
 	if user == "" {
 		PromptUsername(&user)
 	}
-	if secret == "" && overridePassword == "" {
-		PromptPassword(&password)
+	for r := range cfg {
+		if secrets[rpcClient.Opts[r].RPCHostAndPort()] == "" && password == "" {
+			PromptPassword(&password)
+		}
 	}
+
 	// Attempt to Auto-Login assuming we have user/secret
-	arg := ManagerLoginArg{user, password, secret}
-	if err := rpcClient.Call("Login", arg, &reply); err != nil {
-		return reply, err
-	}
-	if reply.LoggedIn {
-		if err := SaveSecret(arg.User, reply.Secret); err != nil {
+	for r := range cfg {
+		hostName := rpcClient.Opts[r].RPCHostAndPort()
+		secret := secrets[hostName]
+		arg := ManagerLoginArg{user, password, secret}
+		if err := rpcClient.CallMulti("Login", arg, r, &reply); err != nil {
 			return reply, err
+		}
+		if reply.LoggedIn {
+			if err := SaveSecret(arg.User, reply.Secret, hostName); err != nil {
+				return reply, err
+			}
 		}
 	}
 	return reply, nil
@@ -633,9 +639,9 @@ func GetSecrets() (string, map[string]string, error) {
 	return token.User, token.Secrets, nil
 }
 
-func SaveSecret(user string, secret string) error {
+func SaveSecret(user string, secret string, host string) error {
 	_, secrets, _ := GetSecrets()
-	secrets[rpcClient.Opts[0].RPCHostAndPort()] = secret
+	secrets[host] = secret
 
 	rpcClient.User = user
 	rpcClient.Secrets = secrets
