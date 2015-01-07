@@ -557,7 +557,7 @@ func AutoLogin(overrideUser, overridePassword string) (ManagerLoginReply, error)
 	user, secrets, err := GetSecrets()
 	rpcClient.User = user
 	rpcClient.Secrets = secrets
-	secret := secrets[rpcClient.Opts.RPCHostAndPort()]
+	secret := secrets[rpcClient.Opts[0].RPCHostAndPort()]
 	if err != nil {
 		return reply, err
 	}
@@ -608,7 +608,7 @@ func PromptPassword(pass *string) error {
 
 func GetSecret() (string, string, error) {
 	user, secrets, _ := GetSecrets()
-	return user, secrets[rpcClient.Opts.RPCHostAndPort()], nil
+	return user, secrets[rpcClient.Opts[0].RPCHostAndPort()], nil
 }
 
 type TokenFileFormat struct {
@@ -617,7 +617,7 @@ type TokenFileFormat struct {
 }
 
 func GetSecrets() (string, map[string]string, error) {
-	path := strings.Replace(cfg.KeyPath, "~", os.Getenv("HOME"), 1)
+	path := strings.Replace(cfg[0].(*ClientConfig).KeyPath, "~", os.Getenv("HOME"), 1)
 	var filePath string = path + "/" + tokenFile
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
 		return "", map[string]string{}, nil
@@ -635,12 +635,12 @@ func GetSecrets() (string, map[string]string, error) {
 
 func SaveSecret(user string, secret string) error {
 	_, secrets, _ := GetSecrets()
-	secrets[rpcClient.Opts.RPCHostAndPort()] = secret
+	secrets[rpcClient.Opts[0].RPCHostAndPort()] = secret
 
 	rpcClient.User = user
 	rpcClient.Secrets = secrets
 
-	path := strings.Replace(cfg.KeyPath, "~", os.Getenv("HOME"), 1)
+	path := strings.Replace(cfg[0].(*ClientConfig).KeyPath, "~", os.Getenv("HOME"), 1)
 	if err := os.MkdirAll(path, 0700); err != nil {
 		return err
 	}
