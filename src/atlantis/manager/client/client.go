@@ -451,7 +451,7 @@ func genericLogData(name string, v reflect.Value, indent string) {
 			}
 		}
 	default:
-		if v.IsValid() {
+		if v.CanInterface() {
 			Log("%s %v", prefix, v.Interface())
 		} else {
 			Log("%s <Invalid>", prefix)
