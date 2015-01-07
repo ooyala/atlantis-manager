@@ -549,7 +549,7 @@ func copyType(rv reflect.Value, name string) (reflect.Value, error) {
 	return reflect.New(field.Type()), nil
 }
 
-func genericResult(command interface{}, args []string) (string, interface{}, string, interface{}, error) {
+func genericResult(command interface{}, args []string) (map[string]string, interface{}, string, map[string]interface{}, error) {
 	rv := reflect.ValueOf(command).Elem()
 	// Extract all the configuration flags from the Command struct
 	message, rpc, field, name, fileName, fileField, fileData, noauth, async, wait := executeFlags(rv)
@@ -559,14 +559,14 @@ func genericResult(command interface{}, args []string) (string, interface{}, str
 		InitNoLogin()
 	} else {
 		if err := Init(); err != nil {
-			return "", nil, "", nil, OutputError(err)
+			return nil, nil, "", nil, OutputError(err)
 		}
 	}
 
-	// Set up the arg and reply objects based on types in the Command struct.
+	// Set up the arg object based on types in the Command struct.
 	argv, err := copyType(rv, "Arg")
 	if err != nil {
-		return "", nil, "", nil, OutputError(err)
+		return nil, nil, "", nil, OutputError(err)
 	}
 
 	// Async replies should use the ID field, not the final response field
@@ -583,78 +583,97 @@ func genericResult(command interface{}, args []string) (string, interface{}, str
 	if fileData != nil {
 		file, err := os.Open(fileName)
 		if err != nil {
-			return "", nil, "", nil, OutputError(err)
+			return nil, nil, "", nil, OutputError(err)
 		}
 		jsonDec := json.NewDecoder(file)
 		if err := jsonDec.Decode(fileData); err != nil {
-			return "", nil, "", nil, OutputError(err)
+			return nil, nil, "", nil, OutputError(err)
 		}
 		argv.Elem().FieldByName(fileField).Set(reflect.ValueOf(fileData))
 	}
 
 	Log(message + "...")
 
-	// Set up the reply object based on types in the Command struct.  But async replies always come back as
-	// type AsyncReply.
-	var reply interface{}
-	var replyv reflect.Value
-	if async {
-		reply = &atlantis.AsyncReply{}
-		replyv = reflect.ValueOf(reply)
-	} else {
-		replyv, err = copyType(rv, "Reply")
-		if err != nil {
-			return "", nil, "", nil, OutputError(err)
-		}
-		reply = replyv.Interface()
-	}
+	// Set up some storage for the results...
+	statuses := map[string]string{}
+	replies := map[string]interface{}{}
+	datas := map[string]interface{}{}
 
-	// Actually make the request, either with or without auth.
-	if noauth {
-		arg := argv.Interface()
-		if err := rpcClient.Call(rpc, arg, reply); err != nil {
-			return "", nil, "", nil, OutputError(err)
-		}
-	} else {
-		arg := argv.Interface().(client.AuthedArg)
-		if err := rpcClient.CallAuthed(rpc, arg, reply); err != nil {
-			return "", nil, "", nil, OutputError(err)
-		}
-	}
-
-	// If we're waiting on an async command, update the reply when it comes back.
-	if wait {
-		if idv := replyv.Elem().FieldByName("ID"); idv.IsValid() {
-			Log("-> ID: %v", replyv.Elem().FieldByName("ID"))
-			replyv = reflect.New(rv.FieldByName("Reply").Type())
+	// Now we're prepped; let's make the requests and store the results to return
+	for region := range cfg {
+		// Set up the reply object based on types in the Command struct.  But async replies always come back as
+		// type AsyncReply.
+		var reply interface{}
+		var replyv reflect.Value
+		if async {
+			reply = &atlantis.AsyncReply{}
+			replyv = reflect.ValueOf(reply)
+		} else {
+			replyv, err = copyType(rv, "Reply")
+			if err != nil {
+				return nil, nil, "", nil, OutputError(err)
+			}
 			reply = replyv.Interface()
-			if err := genericWait(command, rpc, idv.String(), reply); err != nil {
-				return "", nil, "", nil, OutputError(err)
+		}
+
+		// Actually make the request, either with or without auth.
+		if noauth {
+			arg := argv.Interface()
+			if err := rpcClient.CallMulti(rpc, arg, region, reply); err != nil {
+				return nil, nil, "", nil, OutputError(err)
 			}
 		} else {
-			Log("Error: No async ID found in response")
+			arg := argv.Interface().(client.AuthedArg)
+			if err := rpcClient.CallAuthedMulti(rpc, arg, region, reply); err != nil {
+				return nil, nil, "", nil, OutputError(err)
+			}
 		}
-	}
 
-	// Extract that status and desired field from the RPC result.
-	status := "Unknown"
-	if v := replyv.Elem().FieldByName("Status"); v.IsValid() {
-		status = v.Interface().(string)
-	}
-	var data interface{}
-	data = "Unknown"
-	if field != "" {
-		if v := replyv.Elem().FieldByName(field); v.IsValid() {
-			data = v.Interface()
+		// If we're waiting on an async command, update the reply when it comes back.
+		if wait {
+			if idv := replyv.Elem().FieldByName("ID"); idv.IsValid() {
+				Log("-> ID: %v", replyv.Elem().FieldByName("ID"))
+				replyv = reflect.New(rv.FieldByName("Reply").Type())
+				reply = replyv.Interface()
+				if err := genericWait(command, rpc, idv.String(), reply); err != nil {
+					return nil, nil, "", nil, OutputError(err)
+				}
+			} else {
+				Log("Error: No async ID found in response")
+			}
 		}
+
+		// Extract that status and desired field from the RPC result.
+		status := "Unknown"
+		if v := replyv.Elem().FieldByName("Status"); v.IsValid() {
+			status = v.Interface().(string)
+		}
+		var data interface{}
+		data = "Unknown"
+		if field != "" {
+			if v := replyv.Elem().FieldByName(field); v.IsValid() {
+				data = map[string]interface{}{name: v.Interface()}
+			}
+		}
+
+		// Async results don't give back status immediately.
+		if async && !wait {
+			status = ""
+		}
+
+		// Get the name of the region to return
+		regionName := "Unknown region"
+		if len(clientOpts.Regions) > region {
+			regionName = clientOpts.Regions[region]
+		}
+
+		// And now we're done; save everything to return.
+		statuses[regionName] = status
+		replies[regionName] = reply
+		datas[regionName] = data
 	}
 
-	// Async results don't give back status immediately.
-	if async && !wait {
-		status = ""
-	}
-
-	return status, reply, name, data, nil
+	return statuses, replies, name, datas, nil
 }
 
 func genericWait(command interface{}, rpc, id string, reply interface{}) error {
@@ -689,11 +708,24 @@ func genericExecuter(command interface{}, args []string) error {
 		return err
 	}
 
-	if status != "" {
-		Log("-> status: %s", status)
+	if len(status) == 1 {
+		for _, s := range status {
+			if s != "" {
+				Log("-> status: %s", s)
+			}
+		}
+	} else {
+		genericLogData("status", reflect.ValueOf(status), "", 0)
 	}
 	if data != nil {
-		genericLogData(name, reflect.ValueOf(data), "", 0)
+		// Skip printing the region if there's only one.
+		skip := 0
+		if len(data) == 1 {
+			skip = 1
+		}
+		for r, d := range data {
+			genericLogData(r, reflect.ValueOf(d), "", skip)
+		}
 	}
 
 	return Output(map[string]interface{}{"status": status, name: data}, reply, nil)
