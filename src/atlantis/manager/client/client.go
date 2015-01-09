@@ -12,16 +12,21 @@
 package client
 
 import (
+	atlantis "atlantis/common"
 	. "atlantis/manager/constant"
 	"atlantis/manager/rpc/client"
 	rpcTypes "atlantis/manager/rpc/types"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/BurntSushi/toml"
 	"github.com/jigish/go-flags"
 	"log"
 	"os"
 	"reflect"
+	"regexp"
+	"strings"
+	"time"
 )
 
 // Directories to be searched for client configuration files.
@@ -206,23 +211,40 @@ func (c *ClientConfig) RPCHostAndPort() string {
 
 type ClientOpts struct {
 	// Only use capital letters here. Also, "H" is off limits. kthxbye.
-	Host       string `short:"M" long:"manager-host" description:"the manager host"`
-	Port       uint16 `short:"P" long:"manager-port" description:"the manager port"`
-	Config     string `short:"F" long:"config-file" default:"" description:"the config file to use"`
-	Region     string `short:"R" long:"manager-region" default:"us-east-1" description:"the region to use"`
-	KeyPath    string `short:"K" long:"key-path" description:"path to store the LDAP secret key"`
-	Json       bool   `long:"json" description:"print the output as JSON. useful for scripting."`
-	PrettyJson bool   `long:"pretty-json" description:"print the output as pretty JSON. useful for scripting."`
-	Quiet      bool   `long:"quiet" description:"no logs, only print relevant output. useful for scripting."`
+	Host       string   `short:"M" long:"manager-host" description:"the manager host"`
+	Port       uint16   `short:"P" long:"manager-port" description:"the manager port"`
+	Config     string   `short:"F" long:"config-file" default:"" description:"the config file to use"`
+	Regions    []string `short:"R" long:"manager-region" default:"us-east-1" description:"the regions to use"`
+	KeyPath    string   `short:"K" long:"key-path" description:"path to store the LDAP secret key"`
+	Json       bool     `long:"json" description:"print the output as JSON. useful for scripting."`
+	PrettyJson bool     `long:"pretty-json" description:"print the output as pretty JSON. useful for scripting."`
+	Quiet      bool     `long:"quiet" description:"no logs, only print relevant output. useful for scripting."`
 }
 
 var clientOpts = &ClientOpts{}
-var cfg = &ClientConfig{"localhost", DefaultManagerRPCPort, DefaultManagerKeyPath}
+var cfg = []atlantis.RPCServerOpts{}
 var rpcClient = &client.ManagerRPCClient{*client.NewManagerRPCClientWithConfig(cfg), "", map[string]string{}}
 var dummyAuthArg = rpcTypes.ManagerAuthArg{"", "", ""}
 
+type commandWrapper struct {
+	Command interface{}
+}
+
+func (c *commandWrapper) Execute(args []string) error {
+	// If the command has an Execute method, honor it.  Otherwise, fall back to the generic Execute.
+	if command, ok := c.Command.(flags.Command); ok {
+		return command.Execute(args)
+	} else {
+		return genericExecuter(c.Command, args)
+	}
+}
+
 type ManagerClient struct {
 	*flags.Parser
+}
+
+func (m *ManagerClient) AddCommand(name, short, long string, data interface{}) {
+	m.Parser.AddCommand(name, short, long, &commandWrapper{data})
 }
 
 func New() *ManagerClient {
@@ -241,6 +263,7 @@ func New() *ManagerClient {
 	o.AddCommand("get-self", "get this manager", "", &GetSelfCommand{})
 	o.AddCommand("add-role", "add role to manager", "", &AddRoleCommand{})
 	o.AddCommand("remove-role", "remove role from manager", "", &RemoveRoleCommand{})
+	o.AddCommand("has-role", "check role on manager", "", &HasRoleCommand{})
 
 	// Supervisor Management
 	o.AddCommand("register-supervisor", "register an supervisor", "", &RegisterSupervisorCommand{})
@@ -367,6 +390,347 @@ func InitNoLogin() {
 	overlayConfig()
 }
 
+// Go through any positional arguments and add them to empty flag arguments
+func genericExtractArgs(command reflect.Value, args []string) []string {
+	for f := 0; f < command.NumField(); f++ {
+		if len(args) == 0 {
+			return args
+		}
+		if tp := command.Type().Field(f).Name; tp == "Properties" || tp == "Arg" || tp == "Reply" {
+			continue
+		}
+		if str, ok := command.Field(f).Interface().(string); ok {
+			if str == "" {
+				command.Field(f).Set(reflect.ValueOf(args[0]))
+				args = args[1:]
+			}
+		}
+	}
+	return args
+}
+
+// Copy arguments from the CLI Command struct to the RPCarg struct
+func genericCopyArgs(command reflect.Value, arg reflect.Value) {
+	for f := 0; f < arg.NumField(); f++ {
+		name := arg.Type().Field(f).Name
+		if v := command.FieldByName(name); v.IsValid() {
+			arg.Field(f).Set(v)
+		}
+	}
+}
+
+// Pretty-print any random data we get back from the server
+func genericLogData(name string, v reflect.Value, indent string, skip int) {
+	prefix := "->" + indent
+	if name != "" {
+		prefix = "-> " + indent + name + ":"
+	}
+
+	// For pointers and interfaces, just grab the underlying value and try again
+	if v.Kind() == reflect.Ptr || v.Kind() == reflect.Interface {
+		genericLogData(name, v.Elem(), indent, skip)
+		return
+	}
+
+	// Only print if skip is 0.  Recursive calls should indent or decrement skip, depending on if anything was
+	// printed.
+	var skipped bool
+	if skip == 0 {
+		skipped = false
+		indent = indent + "  "
+	} else {
+		skipped = true
+		skip = skip - 1
+	}
+
+	switch v.Kind() {
+	case reflect.Struct:
+		if !skipped {
+			Log("%s\n", prefix)
+		}
+		for f := 0; f < v.NumField(); f++ {
+			name := v.Type().Field(f).Name
+			genericLogData(name, v.Field(f), indent, skip)
+		}
+	case reflect.Array:
+		fallthrough
+	case reflect.Slice:
+		if !skipped {
+			Log("%s\n", prefix)
+		}
+		for i := 0; i < v.Len(); i++ {
+			genericLogData("", v.Index(i), indent, skip)
+		}
+	case reflect.Map:
+		if !skipped {
+			Log("%s\n", prefix)
+		}
+		for _, k := range v.MapKeys() {
+			if name, ok := k.Interface().(string); ok {
+				genericLogData(name, v.MapIndex(k), indent, skip)
+			} else {
+				genericLogData("Unknown field", v.MapIndex(k), indent, skip)
+			}
+		}
+	default:
+		if v.CanInterface() {
+			Log("%s %v", prefix, v.Interface())
+		} else {
+			Log("%s <Invalid>", prefix)
+		}
+	}
+}
+
+func executeFlags(rv reflect.Value) (message, rpc, field, name, fileName, fileField string, fileData interface{},
+	noauth, async, wait bool) {
+	// Use flags from the Properties field, if it exists.
+	if properties, ok := rv.Type().FieldByName("Properties"); ok {
+		message = properties.Tag.Get("message")
+		rpc = properties.Tag.Get("rpc")
+		field = properties.Tag.Get("field")
+		name = properties.Tag.Get("name")
+		fileField = properties.Tag.Get("filefield")
+		noauth = properties.Tag.Get("noauth") != ""
+	}
+
+	// The base name of the command is extracted from the Command type; e.g., client.ListAppsCommand is ListApps
+	baseNameRegexp := regexp.MustCompile(".*\\.([A-Za-z]*)Command$")
+	baseName := baseNameRegexp.ReplaceAll([]byte(rv.Type().String()), []byte("$1"))
+
+	// The default RPC name is the base name.
+	if rpc == "" {
+		rpc = string(baseName)
+	}
+
+	// The default message is the base name with spaces; e.g. "List Apps"
+	if message == "" {
+		messageRegexp := regexp.MustCompile("(.)([A-Z])")
+		message = string(messageRegexp.ReplaceAll(baseName, []byte("$1 $2")))
+	}
+
+	// The default field to print is the last component of the base name; e.g., Apps
+	if field == "" {
+		fieldRegexp := regexp.MustCompile("[A-Z][a-z]*$")
+		field = string(fieldRegexp.Find(baseName))
+	}
+
+	// The default name for the field (for output) is the lowercase field name
+	if name == "" {
+		name = strings.ToLower(field)
+	}
+
+	// Async commands are weird; we get back an ID to wait on, and there's always an boolean --wait flag.
+	if waitField := rv.FieldByName("Wait"); waitField.Kind() == reflect.Bool {
+		async = true
+		wait = waitField.Bool()
+	}
+
+	// If we need to read file data, get that set up
+	if fileDataField := rv.FieldByName("FileData"); fileDataField.IsValid() {
+		if fileNamev := rv.FieldByName("FromFile"); fileNamev.IsValid() {
+			fileDatav := reflect.New(fileDataField.Type())
+			fileData = fileDatav.Interface()
+			fileName = fileNamev.String()
+			if fileField == "" {
+				// The default name is the unqualified type: *types.DependerEnvData => DependerEnvData
+				components := strings.Split(fileDatav.Type().String(), ".")
+				fileField = components[len(components)-1]
+			}
+		}
+	}
+	return
+}
+
+func copyType(rv reflect.Value, name string) (reflect.Value, error) {
+	field := rv.FieldByName(name)
+	if !field.IsValid() {
+		return rv, errors.New("Internal error: " + rv.Type().String() + " missing field " + name)
+	}
+	return reflect.New(field.Type()), nil
+}
+
+func genericResult(command interface{}, args []string) (map[string]string, interface{}, string, map[string]interface{}, error) {
+	rv := reflect.ValueOf(command).Elem()
+	// Extract all the configuration flags from the Command struct
+	message, rpc, field, name, fileName, fileField, fileData, noauth, async, wait := executeFlags(rv)
+
+	// Some command require auth, some don't
+	if noauth {
+		InitNoLogin()
+	} else {
+		if err := Init(); err != nil {
+			return nil, nil, "", nil, OutputError(err)
+		}
+	}
+
+	// Set up the arg object based on types in the Command struct.
+	argv, err := copyType(rv, "Arg")
+	if err != nil {
+		return nil, nil, "", nil, OutputError(err)
+	}
+
+	// Async replies should use the ID field, not the final response field
+	if async && !wait {
+		field = "ID"
+		name = "ID"
+	}
+
+	// Copy args from the CLI arguments to the RPC arguments, and handle any positional ones.
+	genericExtractArgs(rv, args)
+	genericCopyArgs(rv, argv.Elem())
+
+	// Read in file data if necessary
+	if fileData != nil {
+		file, err := os.Open(fileName)
+		if err != nil {
+			return nil, nil, "", nil, OutputError(err)
+		}
+		jsonDec := json.NewDecoder(file)
+		if err := jsonDec.Decode(fileData); err != nil {
+			return nil, nil, "", nil, OutputError(err)
+		}
+		argv.Elem().FieldByName(fileField).Set(reflect.ValueOf(fileData))
+	}
+
+	Log(message + "...")
+
+	// Set up some storage for the results...
+	statuses := map[string]string{}
+	replies := map[string]interface{}{}
+	datas := map[string]interface{}{}
+
+	// Now we're prepped; let's make the requests and store the results to return
+	for region := range cfg {
+		// Set up the reply object based on types in the Command struct.  But async replies always come back as
+		// type AsyncReply.
+		var reply interface{}
+		var replyv reflect.Value
+		if async {
+			reply = &atlantis.AsyncReply{}
+			replyv = reflect.ValueOf(reply)
+		} else {
+			replyv, err = copyType(rv, "Reply")
+			if err != nil {
+				return nil, nil, "", nil, OutputError(err)
+			}
+			reply = replyv.Interface()
+		}
+
+		// Actually make the request, either with or without auth.
+		if noauth {
+			arg := argv.Interface()
+			if err := rpcClient.CallMulti(rpc, arg, region, reply); err != nil {
+				return nil, nil, "", nil, OutputError(err)
+			}
+		} else {
+			arg := argv.Interface().(client.AuthedArg)
+			if err := rpcClient.CallAuthedMulti(rpc, arg, region, reply); err != nil {
+				return nil, nil, "", nil, OutputError(err)
+			}
+		}
+
+		// If we're waiting on an async command, update the reply when it comes back.
+		if wait {
+			if idv := replyv.Elem().FieldByName("ID"); idv.IsValid() {
+				Log("-> ID: %v", replyv.Elem().FieldByName("ID"))
+				replyv = reflect.New(rv.FieldByName("Reply").Type())
+				reply = replyv.Interface()
+				if err := genericWait(command, rpc, idv.String(), reply); err != nil {
+					return nil, nil, "", nil, OutputError(err)
+				}
+			} else {
+				Log("Error: No async ID found in response")
+			}
+		}
+
+		// Extract that status and desired field from the RPC result.
+		status := "Unknown"
+		if v := replyv.Elem().FieldByName("Status"); v.IsValid() {
+			status = v.Interface().(string)
+		}
+		var data interface{}
+		data = "Unknown"
+		if field != "" {
+			if v := replyv.Elem().FieldByName(field); v.IsValid() {
+				data = map[string]interface{}{name: v.Interface()}
+			}
+		}
+
+		// Async results don't give back status immediately.
+		if async && !wait {
+			status = ""
+		}
+
+		// Get the name of the region to return
+		regionName := "Unknown region"
+		if len(clientOpts.Regions) > region {
+			regionName = clientOpts.Regions[region]
+		}
+
+		// And now we're done; save everything to return.
+		statuses[regionName] = status
+		replies[regionName] = reply
+		datas[regionName] = data
+	}
+
+	return statuses, replies, name, datas, nil
+}
+
+func genericWait(command interface{}, rpc, id string, reply interface{}) error {
+	Log("Waiting...")
+	var statusReply atlantis.TaskStatus
+	var currentStatus string
+	if err := rpcClient.Call("Status", id, &statusReply); err != nil {
+		return OutputError(err)
+	}
+	for !statusReply.Done {
+		if currentStatus != statusReply.Status {
+			currentStatus = statusReply.Status
+			Log(currentStatus)
+		}
+		time.Sleep(waitPollInterval)
+		if err := rpcClient.Call("Status", id, &statusReply); err != nil {
+			return OutputError(err)
+		}
+	}
+
+	// And it's done!  Fetch the result
+	if err := rpcClient.Call(rpc+"Result", id, reply); err != nil {
+		return OutputError(err)
+	}
+
+	return nil
+}
+
+func genericExecuter(command interface{}, args []string) error {
+	status, reply, name, data, err := genericResult(command, args)
+	if err != nil {
+		return err
+	}
+
+	if len(status) == 1 {
+		for _, s := range status {
+			if s != "" {
+				Log("-> status: %s", s)
+			}
+		}
+	} else {
+		genericLogData("status", reflect.ValueOf(status), "", 0)
+	}
+	if data != nil {
+		// Skip printing the region if there's only one.
+		skip := 0
+		if len(data) == 1 {
+			skip = 1
+		}
+		for r, d := range data {
+			genericLogData(r, reflect.ValueOf(d), "", skip)
+		}
+	}
+
+	return Output(map[string]interface{}{"status": status, name: data}, reply, nil)
+}
+
 func exists(path string) (bool, error) {
 	_, err := os.Stat(path)
 	if err == nil {
@@ -378,39 +742,60 @@ func exists(path string) (bool, error) {
 	return false, err
 }
 
+// TODO(edanaher): This config parsing is kind of horrendous, but hopefully does the right thing.
 func overlayConfig() {
-	configFileFound := false
 	if clientOpts.Config != "" {
 		_, err := toml.DecodeFile(clientOpts.Config, cfg)
 		if err != nil {
 			fmt.Print("Error parsing config file " + clientOpts.Config + ":\n" + err.Error() + "\n")
 			os.Exit(1)
 		}
-	} else if clientOpts.Region != "" {
-		for _, path := range configDirs {
-			filename := path + "client." + clientOpts.Region + ".toml"
-			if ok, _ := exists(filename); ok {
-				_, err := toml.DecodeFile(filename, cfg)
-				if err != nil {
-					fmt.Print("Error parsing config file " + filename + ":\n" + err.Error() + "\n")
-					os.Exit(1)
+	} else {
+		// NOTE(edanaher): The default doesn't get removed if more are passed in
+		if len(clientOpts.Regions) > 1 {
+			clientOpts.Regions = clientOpts.Regions[1:]
+		}
+		for _, region := range clientOpts.Regions {
+			configFileFound := false
+			for _, path := range configDirs {
+				filename := path + "client." + region + ".toml"
+				if ok, _ := exists(filename); ok {
+					var curCfg ClientConfig
+					_, err := toml.DecodeFile(filename, &curCfg)
+					if err != nil {
+						fmt.Print("Error parsing config file " + filename + ":\n" + err.Error() + "\n")
+						os.Exit(1)
+					}
+					// Defaults need to be loaded for each file independently
+					if curCfg.Port == 0 {
+						curCfg.Port = DefaultManagerRPCPort
+					}
+					if curCfg.KeyPath == "" {
+						curCfg.KeyPath = DefaultManagerKeyPath
+					}
+					cfg = append(cfg, &curCfg)
+					configFileFound = true
+					break
 				}
-				configFileFound = true
-				break
+			}
+			if !configFileFound {
+				fmt.Print("Error: could not find config file for " + region + "\n")
+				os.Exit(1)
 			}
 		}
-		if !configFileFound {
-			fmt.Print("Error: could not find config file for " + clientOpts.Region + "\n")
-			os.Exit(1)
-		}
 	}
+	// If other options are passed in, assume there's only one region and we should use that one
+	/* NOTE(edanaher): cfg has to be an array of interfaces, because arrays don't get auto-inferfaced properly.
+	 * But then we have to cast it here.  *sigh* */
 	if clientOpts.Host != "" {
-		cfg.Host = clientOpts.Host
+		cfg[0].(*ClientConfig).Host = clientOpts.Host
 	}
 	if clientOpts.Port != 0 {
-		cfg.Port = clientOpts.Port
+		cfg[0].(*ClientConfig).Port = clientOpts.Port
 	}
 	if clientOpts.KeyPath != "" {
-		cfg.KeyPath = clientOpts.KeyPath
+		cfg[0].(*ClientConfig).KeyPath = clientOpts.KeyPath
 	}
+	// TODO(edanaher): This is aliased.  The appends above may have unaliased it.  Why do we do this?
+	rpcClient.Opts = cfg
 }

@@ -16,19 +16,6 @@ import (
 )
 
 type UsageCommand struct {
-}
-
-func (c *UsageCommand) Execute(args []string) error {
-	err := Init()
-	if err != nil {
-		return OutputError(err)
-	}
-	Log("Usage...")
-	var reply ManagerUsageReply
-	err = rpcClient.CallAuthed("Usage", &ManagerUsageArg{dummyAuthArg}, &reply)
-	if err != nil {
-		return OutputError(err)
-	}
-	Log("-> %+v", reply.Usage)
-	return Output(map[string]interface{}{"usage": reply.Usage}, reply.Usage, nil)
+	Arg   ManagerUsageArg
+	Reply ManagerUsageReply
 }

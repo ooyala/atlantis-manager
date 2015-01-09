@@ -22,20 +22,24 @@ type ManagerRPCClient struct {
 	Secrets map[string]string
 }
 
-type authedArg interface {
+type AuthedArg interface {
 	SetCredentials(string, string)
 }
 
-func (r *ManagerRPCClient) CallAuthed(name string, arg authedArg, reply interface{}) error {
-	arg.SetCredentials(r.User, r.Secrets[r.Opts.RPCHostAndPort()])
+func (r *ManagerRPCClient) CallAuthed(name string, arg AuthedArg, reply interface{}) error {
+	return r.CallAuthedMulti(name, arg, 0, reply)
+}
 
-	return r.RPCClient.Call(name, arg, reply)
+func (r *ManagerRPCClient) CallAuthedMulti(name string, arg AuthedArg, region int, reply interface{}) error {
+	arg.SetCredentials(r.User, r.Secrets[r.Opts[region].RPCHostAndPort()])
+
+	return r.RPCClient.CallMulti(name, arg, region, reply)
 }
 
 func NewManagerRPCClient(hostAndPort string) *atlantis.RPCClient {
 	return atlantis.NewRPCClient(hostAndPort, "ManagerRPC", ManagerRPCVersion, true)
 }
 
-func NewManagerRPCClientWithConfig(cfg atlantis.RPCServerOpts) *atlantis.RPCClient {
-	return atlantis.NewRPCClientWithConfig(cfg, "ManagerRPC", ManagerRPCVersion, true)
+func NewManagerRPCClientWithConfig(cfg []atlantis.RPCServerOpts) *atlantis.RPCClient {
+	return atlantis.NewMultiRPCClientWithConfig(cfg, "ManagerRPC", ManagerRPCVersion, true)
 }
