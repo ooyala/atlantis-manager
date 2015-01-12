@@ -207,31 +207,6 @@ func (e *CopyContainerExecutor) Execute(t *Task) error {
 		return err
 	}
 	e.reply.Containers = []*Container{cont}
-	switch e.arg.PostCopy {
-	case PostCopyCleanup:
-		// we want to only cleanup ZK
-		// get old instance
-		inst, err := datamodel.GetInstance(e.arg.ContainerID)
-		if err != nil {
-			return err
-		}
-		cleanupZk(inst, t)
-	case PostCopyTeardown:
-		// TODO(edanaher): Fix this properly and re-enable.
-		break
-		// now time to remove the old instance
-		// get old instance
-		inst, err := datamodel.GetInstance(e.arg.ContainerID)
-		if err != nil {
-			return err
-		}
-		// get old container from supervisor
-		ihReply, err := supervisor.Get(inst.Host, inst.ID)
-		if err != nil {
-			return err
-		}
-		cleanup(true, []*Container{ihReply.Container}, t)
-	}
 	return nil
 }
 

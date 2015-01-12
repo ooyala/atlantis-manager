@@ -91,15 +91,10 @@ func DeployContainer(w http.ResponseWriter, r *http.Request) {
 func CopyContainer(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
-	postcopy, err := strconv.Atoi(r.FormValue("PostCopy"))
-	if err != nil {
-		postcopy = 0 // default to noop
-	}
 	ccArg := ManagerCopyContainerArg{
 		ManagerAuthArg: auth,
 		ContainerID:    vars["ID"],
 		ToHost:         r.FormValue("ToHost"),
-		PostCopy:       postcopy,
 	}
 	var reply AsyncReply
 	err = manager.CopyContainer(ccArg, &reply)
