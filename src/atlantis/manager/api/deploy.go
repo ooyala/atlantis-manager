@@ -97,7 +97,7 @@ func CopyContainer(w http.ResponseWriter, r *http.Request) {
 		ToHost:         r.FormValue("ToHost"),
 	}
 	var reply AsyncReply
-	err = manager.CopyContainer(ccArg, &reply)
+	err := manager.CopyContainer(ccArg, &reply)
 	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"ID": reply.ID}, err))
 }
 
