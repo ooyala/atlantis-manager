@@ -481,14 +481,7 @@ type ManagerCopyContainerArg struct {
 	ManagerAuthArg
 	ContainerID string
 	ToHost      string
-	PostCopy    int
 }
-
-const (
-	PostCopyNoop = iota
-	PostCopyCleanup
-	PostCopyTeardown
-)
 
 // CopyContainer uses ManagerDeployReply
 
