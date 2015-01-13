@@ -1,6 +1,7 @@
 package client
 
 import (
+	atlantis "atlantis/common"
 	. "atlantis/manager/rpc/types"
 	"fmt"
 	"github.com/jigish/go-flags"
@@ -12,6 +13,15 @@ import (
 	"testing"
 	"time"
 )
+
+func setHostConfig() {
+	cfg = []atlantis.RPCServerOpts{}
+	rpcClient.Opts = cfg
+	clientOpts.Regions = []string{"skunkworks"}
+	for _, r := range cfg {
+		log.Printf("Setting region: %v\n", r)
+	}
+}
 
 func assertNoErr(t *testing.T, err error, msg string) bool {
 	if err != nil {
@@ -83,6 +93,7 @@ func checkResult(t *testing.T, expected, actual interface{}) {
 }
 
 func checkCommand(t *testing.T, command interface{}, line string, expected interface{}) interface{} {
+	setHostConfig()
 	args := strings.Fields(line)
 	// If it has a built-in execute, just run it for now and don't worry about the result.
 	if command, ok := command.(flags.Command); ok {
@@ -97,13 +108,12 @@ func checkCommand(t *testing.T, command interface{}, line string, expected inter
 	_ = data
 	_ = reply
 	if assertNoErr(t, err, "Error executing command") && expected != nil {
-		checkResult(t, expected, reply)
+		checkResult(t, expected, reply["skunkworks"])
 	}
-	return reply
+	return reply["skunkworks"]
 }
 
 func TestRegisterApp(t *testing.T) {
-	cfg.Host = "manager1.us-east-1-skunkworks.atlantis.services.ooyala.com"
 	testName := "e2e-test-" + time.Now().Format("2006-01-02T15-04-05-0700")
 
 	log.Print("== Registering dummy app ==")
@@ -153,8 +163,6 @@ func checkUrl(t *testing.T, url, name, expected string) bool {
 }
 
 func TestFullDeploy(t *testing.T) {
-	cfg.Host = "manager1.us-east-1-skunkworks.atlantis.services.ooyala.com"
-
 	testName := "e2e-test-" + time.Now().Format("2006-01-02T15-04-05-0700")
 
 	checkCommand(t, &ListAppsCommand{}, "", &ManagerListAppsReply{[]string{"hello-go"}, "OK"})
@@ -173,7 +181,6 @@ func TestFullDeploy(t *testing.T) {
 		Env: testName, Dev: true, Wait: true}
 	// TODO(edanaher): Status should be OK...
 	deployi := checkCommand(t, deployCommand, "", &ManagerDeployReply{"", nil})
-	log.Printf("deploy type is %T\n", deployi)
 	if deploy, ok := deployi.(*ManagerDeployReply); ok {
 		container := deploy.Containers[0]
 
@@ -198,6 +205,8 @@ func TestFullDeploy(t *testing.T) {
 		teardownCommand.Wait = true
 		// TODO(edanaher): Status should be OK...
 		checkCommand(t, teardownCommand, "", &ManagerTeardownReply{nil, ""})
+	} else {
+		t.Errorf("Bad response from manager for deploy")
 	}
 
 	// Clean up the environment
