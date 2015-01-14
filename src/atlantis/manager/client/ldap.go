@@ -36,7 +36,10 @@ func (c *LoginCommand) Execute(args []string) error {
 	_, err = AutoLogin(c.User, c.Password)
 	for err != nil {
 		// Fall back to manual login if anything goes wrong
-		PromptUsername(&c.User)
+		err = PromptUsername(&c.User)
+		if err != nil {
+			return err
+		}
 		err = PromptPassword(&c.Password)
 		if err != nil {
 			return err
@@ -592,24 +595,16 @@ func AutoLogin(overrideUser, overridePassword string) (ManagerLoginReply, error)
 	return reply, nil
 }
 
-func PromptUsername(user *string) {
-	*user = ""
-	for *user == "" {
-		fmt.Printf("LDAP Username: ")
-		fmt.Scanln(user)
-	}
+func PromptUsername(user *string) error {
+	fmt.Printf("LDAP Username: ")
+	_, err := fmt.Scanln(user)
+	return err
 }
 
 func PromptPassword(pass *string) error {
-	*pass = ""
 	var err error
-	for *pass == "" {
-		*pass, err = gopass.GetPass("LDAP Password: ")
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+	*pass, err = gopass.GetPass("LDAP Password: ")
+	return err
 }
 
 func GetSecret() (string, string, error) {
