@@ -593,10 +593,15 @@ func AutoLogin(overrideUser, overridePassword string) (ManagerLoginReply, error)
 }
 
 func PromptUsername(user *string) {
+	triesLeft := 4
 	*user = ""
-	for *user == "" {
+	for *user == "" && triesLeft > 0 {
 		fmt.Printf("LDAP Username: ")
-		fmt.Scanln(user)
+		_, err := fmt.Scanln(user)
+		if err != nil {
+			fmt.Printf("Error: %v\n", err)
+		}
+		triesLeft -= 1
 	}
 }
 
