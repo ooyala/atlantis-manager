@@ -64,89 +64,39 @@ func IsJson() bool {
 	return clientOpts.Json || clientOpts.PrettyJson
 }
 
-func quietOutput(prefix string, val interface{}) {
-	quietValue := val
-	indVal := reflect.Indirect(reflect.ValueOf(val))
-	if kind := indVal.Kind(); kind == reflect.Struct {
-		quietValue = destructify(val)
+func quietOutput(prefix string, v reflect.Value) {
+	// For pointers and interfaces, just grab the underlying value and try again
+	if v.Kind() == reflect.Ptr || v.Kind() == reflect.Interface {
+		quietOutput(prefix, v.Elem())
+		return
 	}
-	switch t := quietValue.(type) {
-	case bool:
-		fmt.Printf("%s%t\n", prefix, t)
-	case int:
-		fmt.Printf("%s%d\n", prefix, t)
-	case uint:
-		fmt.Printf("%s%d\n", prefix, t)
-	case uint16:
-		fmt.Printf("%s%d\n", prefix, t)
-	case float64:
-		fmt.Printf("%s%f\n", prefix, t)
-	case string:
-		fmt.Printf("%s%s\n", prefix, t)
-	case []string:
-		for _, value := range t {
-			quietOutput(prefix, value)
+
+	switch v.Kind() {
+	case reflect.Struct:
+		for f := 0; f < v.NumField(); f++ {
+			name := v.Type().Field(f).Name
+			quietOutput(prefix+name+" ", v.Field(f))
 		}
-	case []uint16:
-		for _, value := range t {
-			quietOutput(prefix, value)
+	case reflect.Array:
+		fallthrough
+	case reflect.Slice:
+		for i := 0; i < v.Len(); i++ {
+			quietOutput(prefix, v.Index(i))
 		}
-	case []interface{}:
-		for _, value := range t {
-			quietOutput(prefix, destructify(value))
-		}
-	case map[string]string:
-		for key, value := range t {
-			quietOutput(prefix+key+" ", value)
-		}
-	case map[string][]string:
-		for key, value := range t {
-			quietOutput(prefix+key+" ", value)
-		}
-	case map[string]interface{}:
-		for key, value := range t {
-			quietOutput(prefix+key+" ", destructify(value))
+	case reflect.Map:
+		for _, k := range v.MapKeys() {
+			if name, ok := k.Interface().(string); ok {
+				quietOutput(prefix+name+" ", v.MapIndex(k))
+			} else {
+				quietOutput(prefix+"UnknownField", v.MapIndex(k))
+			}
 		}
 	default:
-		panic(fmt.Sprintf("invalid quiet type %T", t))
-	}
-}
-
-func destructify(val interface{}) interface{} {
-	indVal := reflect.Indirect(reflect.ValueOf(val))
-	if kind := indVal.Kind(); kind == reflect.Struct {
-		typ := indVal.Type()
-		mapVal := map[string]interface{}{}
-		for i := 0; i < typ.NumField(); i++ {
-			field := indVal.Field(i)
-			mapVal[typ.Field(i).Name] = destructify(field.Interface())
+		if v.CanInterface() {
+			fmt.Printf("%s%v\n", prefix, v.Interface())
+		} else {
+			fmt.Printf("%s <Invalid>", prefix)
 		}
-		return mapVal
-	} else if kind == reflect.Array || kind == reflect.Slice {
-		if k := indVal.Type().Elem().Kind(); k != reflect.Array && k != reflect.Slice && k != reflect.Map &&
-			k != reflect.Struct {
-			return indVal.Interface()
-		}
-		arr := make([]interface{}, indVal.Len())
-		for i := 0; i < indVal.Len(); i++ {
-			field := indVal.Index(i)
-			arr[i] = destructify(field.Interface())
-		}
-		return arr
-	} else if kind == reflect.Map {
-		if k := indVal.Type().Elem().Kind(); k != reflect.Array && k != reflect.Slice && k != reflect.Map &&
-			k != reflect.Struct {
-			return indVal.Interface()
-		}
-		keys := indVal.MapKeys()
-		mapVal := make(map[string]interface{}, len(keys))
-		for _, key := range keys {
-			field := indVal.MapIndex(key)
-			mapVal[fmt.Sprintf("%v", key.Interface())] = destructify(field.Interface())
-		}
-		return mapVal
-	} else {
-		return val
 	}
 }
 
@@ -168,7 +118,7 @@ func Output(obj map[string]interface{}, quiet interface{}, err error) error {
 			fmt.Printf("%s\n", bytes)
 		}
 	} else if clientOpts.Quiet && quiet != nil {
-		quietOutput("", quiet)
+		quietOutput("", reflect.ValueOf(quiet))
 	}
 	if err != nil { // denote failure with non-zero exit code
 		os.Exit(1)
@@ -549,7 +499,7 @@ func copyType(rv reflect.Value, name string) (reflect.Value, error) {
 	return reflect.New(field.Type()), nil
 }
 
-func genericResult(command interface{}, args []string) (map[string]string, map[string]interface{}, string, map[string]interface{}, error) {
+func genericResult(command interface{}, args []string) (map[string]string, string, map[string]map[string]interface{}, error) {
 	rv := reflect.ValueOf(command).Elem()
 	// Extract all the configuration flags from the Command struct
 	message, rpc, field, name, fileName, fileField, fileData, noauth, async, wait := executeFlags(rv)
@@ -559,14 +509,14 @@ func genericResult(command interface{}, args []string) (map[string]string, map[s
 		InitNoLogin()
 	} else {
 		if err := Init(); err != nil {
-			return nil, nil, "", nil, OutputError(err)
+			return nil, "", nil, OutputError(err)
 		}
 	}
 
 	// Set up the arg object based on types in the Command struct.
 	argv, err := copyType(rv, "Arg")
 	if err != nil {
-		return nil, nil, "", nil, OutputError(err)
+		return nil, "", nil, OutputError(err)
 	}
 
 	// Async replies should use the ID field, not the final response field
@@ -583,11 +533,11 @@ func genericResult(command interface{}, args []string) (map[string]string, map[s
 	if fileData != nil {
 		file, err := os.Open(fileName)
 		if err != nil {
-			return nil, nil, "", nil, OutputError(err)
+			return nil, "", nil, OutputError(err)
 		}
 		jsonDec := json.NewDecoder(file)
 		if err := jsonDec.Decode(fileData); err != nil {
-			return nil, nil, "", nil, OutputError(err)
+			return nil, "", nil, OutputError(err)
 		}
 		argv.Elem().FieldByName(fileField).Set(reflect.ValueOf(fileData))
 	}
@@ -597,7 +547,7 @@ func genericResult(command interface{}, args []string) (map[string]string, map[s
 	// Set up some storage for the results...
 	statuses := map[string]string{}
 	replies := map[string]interface{}{}
-	datas := map[string]interface{}{}
+	datas := map[string]map[string]interface{}{}
 
 	// Now we're prepped; let's make the requests and store the results to return
 	for region := range cfg {
@@ -611,7 +561,7 @@ func genericResult(command interface{}, args []string) (map[string]string, map[s
 		} else {
 			replyv, err = copyType(rv, "Reply")
 			if err != nil {
-				return nil, nil, "", nil, OutputError(err)
+				return nil, "", nil, OutputError(err)
 			}
 			reply = replyv.Interface()
 		}
@@ -620,12 +570,12 @@ func genericResult(command interface{}, args []string) (map[string]string, map[s
 		if noauth {
 			arg := argv.Interface()
 			if err := rpcClient.CallMulti(rpc, arg, region, reply); err != nil {
-				return nil, nil, "", nil, OutputError(err)
+				return nil, "", nil, OutputError(err)
 			}
 		} else {
 			arg := argv.Interface().(client.AuthedArg)
 			if err := rpcClient.CallAuthedMulti(rpc, arg, region, reply); err != nil {
-				return nil, nil, "", nil, OutputError(err)
+				return nil, "", nil, OutputError(err)
 			}
 		}
 
@@ -636,7 +586,7 @@ func genericResult(command interface{}, args []string) (map[string]string, map[s
 				replyv = reflect.New(rv.FieldByName("Reply").Type())
 				reply = replyv.Interface()
 				if err := genericWait(command, rpc, idv.String(), reply); err != nil {
-					return nil, nil, "", nil, OutputError(err)
+					return nil, "", nil, OutputError(err)
 				}
 			} else {
 				Log("Error: No async ID found in response")
@@ -648,8 +598,7 @@ func genericResult(command interface{}, args []string) (map[string]string, map[s
 		if v := replyv.Elem().FieldByName("Status"); v.IsValid() {
 			status = v.Interface().(string)
 		}
-		var data interface{}
-		data = "Unknown"
+		data := map[string]interface{}{name: "Unknown"}
 		if field != "" {
 			if v := replyv.Elem().FieldByName(field); v.IsValid() {
 				data = map[string]interface{}{name: v.Interface()}
@@ -673,7 +622,7 @@ func genericResult(command interface{}, args []string) (map[string]string, map[s
 		datas[regionName] = data
 	}
 
-	return statuses, replies, name, datas, nil
+	return statuses, name, datas, nil
 }
 
 func genericWait(command interface{}, rpc, id string, reply interface{}) error {
@@ -703,7 +652,7 @@ func genericWait(command interface{}, rpc, id string, reply interface{}) error {
 }
 
 func genericExecuter(command interface{}, args []string) error {
-	status, reply, name, data, err := genericResult(command, args)
+	status, name, data, err := genericResult(command, args)
 	if err != nil {
 		return err
 	}
@@ -728,7 +677,31 @@ func genericExecuter(command interface{}, args []string) error {
 		}
 	}
 
-	return Output(map[string]interface{}{"status": status, name: data}, reply, nil)
+	// JSON output should be grouped by region
+	jsonOutput := map[string]interface{}{}
+	for region, s := range status {
+		jsonOutput[region] = map[string]interface{}{"status": s, name: data[region][name]}
+	}
+
+	// Quiet data shouldn't include known field name
+	quietOutputArray := map[string]interface{}{}
+	for region, _ := range status {
+		quietOutputArray[region] = data[region][name]
+	}
+	var quietOutput interface{}
+	quietOutput = quietOutputArray
+
+	// If there's only one region, omit it.
+	if len(status) == 1 {
+		for region, _ := range status {
+			if regionData, ok := jsonOutput[region].(map[string]interface{}); ok {
+				jsonOutput = regionData
+			}
+			quietOutput = quietOutputArray[region]
+		}
+	}
+
+	return Output(jsonOutput, quietOutput, nil)
 }
 
 func exists(path string) (bool, error) {
