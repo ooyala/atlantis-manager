@@ -597,7 +597,7 @@ func genericResult(command interface{}, args []string) (map[string]string, map[s
 	// Set up some storage for the results...
 	statuses := map[string]string{}
 	replies := map[string]interface{}{}
-	datas := map[string]interface{}{}
+	datas := map[string]map[string]interface{}{}
 
 	// Now we're prepped; let's make the requests and store the results to return
 	for region := range cfg {
@@ -648,8 +648,7 @@ func genericResult(command interface{}, args []string) (map[string]string, map[s
 		if v := replyv.Elem().FieldByName("Status"); v.IsValid() {
 			status = v.Interface().(string)
 		}
-		var data interface{}
-		data = "Unknown"
+		data := map[string]interface{}{name: "Unknown"}
 		if field != "" {
 			if v := replyv.Elem().FieldByName(field); v.IsValid() {
 				data = map[string]interface{}{name: v.Interface()}
