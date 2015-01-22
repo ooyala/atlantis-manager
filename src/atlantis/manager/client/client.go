@@ -727,7 +727,21 @@ func genericExecuter(command interface{}, args []string) error {
 		}
 	}
 
-	return Output(map[string]interface{}{"status": status, name: data}, reply, nil)
+	// JSON output should be grouped by region
+	jsonOutput := map[string]interface{}{}
+	for region, s := range status {
+		jsonOutput[region] = map[string]interface{}{"status": s, name: data[region][name]}
+	}
+	// If there's only one region, omit it.
+	if len(status) == 1 {
+		for region, _ := range status {
+			if regionData, ok := jsonOutput[region].(map[string]interface{}); ok {
+				jsonOutput = regionData
+			}
+		}
+	}
+
+	return Output(jsonOutput, reply, nil)
 }
 
 func exists(path string) (bool, error) {
