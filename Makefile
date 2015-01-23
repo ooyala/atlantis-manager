@@ -95,4 +95,4 @@ example: copy-key
 	@go build -o example/client example/client.go
 
 fmt:
-	@find src -name \*.go -exec gofmt -l -w {} \;
+	@find src example -name \*.go -exec gofmt -l -w {} \;
