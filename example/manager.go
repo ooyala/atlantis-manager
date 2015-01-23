@@ -16,20 +16,37 @@ import (
 	"atlantis/manager/server"
 	"github.com/BurntSushi/toml"
 	"log"
+	"time"
 )
 
-type OoyalaServerConfig struct {
-	JenkinsURI string `toml:"jenkins_uri"`
+type ManagerServerConfig struct {
+	JenkinsURI        string `toml:"jenkins_uri"`
+	JenkinsJob        string `toml:"jenkins_job"`
+	SimpleBuilderHost string `toml:"simple_builder_host"`
 }
 
 func main() {
 	managerd := server.New()
-	config := &OoyalaServerConfig{}
+	config := &ManagerServerConfig{}
 	_, err := toml.DecodeFile(managerd.Opts.ConfigFile, config)
 	if err != nil {
 		log.Fatalln(err)
 	}
-	log.Printf("Initializing Jenkins Builder with URI: %s", config.JenkinsURI)
-	bldr := builder.NewJenkinsBuilder(config.JenkinsURI, "Jenkins Builder")
+	bldr := configureBuilder(config)
 	managerd.Run(bldr)
+}
+
+func configureBuilder(config *ManagerServerConfig) builder.Builder {
+	var bldr builder.Builder
+	if config.JenkinsURI != "" {
+		log.Printf("Initializing Jenkins Builder with URI: %s, Job: %s", config.JenkinsURI, config.JenkinsJob)
+		bldr = builder.NewJenkinsBuilder(config.JenkinsURI, config.JenkinsJob)
+	} else if config.SimpleBuilderHost != "" {
+		uri := "http://" + config.SimpleBuilderHost
+		log.Printf("Initializing Simple Builder with URI: %s, Job: %s", uri, config.JenkinsJob)
+		bldr = builder.NewSimpleBuilder(uri, 120*time.Second)
+	} else {
+		log.Printf("No builder configured")
+	}
+	return bldr
 }
