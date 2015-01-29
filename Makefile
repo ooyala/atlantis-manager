@@ -47,7 +47,7 @@ deb: clean build
 
 clean:
 	@rm -rf $(ATLANTIS_PATH)/src/atlantis/crypto/key.go $(PROJECT_ROOT)/src/atlantis/manager/crypto/cert.go
-	@rm -f example/client example/manager
+	@rm -f example/client example/manager $(BIN_DIR)/atlantis-manager
 	@rm -rf $(DEB_STAGING) atlantis-manager_*.deb
 
 copy-key: clean
