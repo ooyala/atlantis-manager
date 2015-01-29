@@ -678,13 +678,19 @@ func genericExecuter(command interface{}, args []string) error {
 	// JSON output should be grouped by region
 	jsonOutput := map[string]interface{}{}
 	for region, s := range status {
-		jsonOutput[region] = map[string]interface{}{"status": s, name: data[region][name]}
+		regionOutput := map[string]interface{}{"status": s}
+		if data[region][name] != nil {
+			regionOutput[name] = data[region][name]
+		}
+		jsonOutput[region] = regionOutput
 	}
 
 	// Quiet data shouldn't include known field name
 	quietOutputArray := map[string]interface{}{}
 	for region, _ := range status {
-		quietOutputArray[region] = data[region][name]
+		if data[region][name] != nil {
+			quietOutputArray[region] = data[region][name]
+		}
 	}
 	var quietOutput interface{}
 	quietOutput = quietOutputArray
