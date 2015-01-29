@@ -598,10 +598,10 @@ func genericResult(command interface{}, args []string) (map[string]string, strin
 		if v := replyv.Elem().FieldByName("Status"); v.IsValid() {
 			status = v.Interface().(string)
 		}
-		data := map[string]interface{}{name: "Unknown"}
+		data := map[string]interface{}{}
 		if field != "" {
 			if v := replyv.Elem().FieldByName(field); v.IsValid() {
-				data = map[string]interface{}{name: v.Interface()}
+				data[name] = v.Interface()
 			}
 		}
 
