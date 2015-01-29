@@ -20,9 +20,11 @@ ATLANTIS_PATH := $(LIB_PATH)/atlantis
 SUPERVISOR_PATH := $(LIB_PATH)/atlantis-supervisor
 ROUTER_PATH := $(LIB_PATH)/atlantis-router
 BUILDER_PATH := $(LIB_PATH)/atlantis-builder
+PROJECT_NAME := $(shell pwd | xargs basename)
 
 DEB_STAGING := $(PROJECT_ROOT)/staging
-PKG_BIN_DIR := $(DEB_STAGING)/opt/atlantis-manager/bin
+BIN_DIR := $(PROJECT_ROOT)/bin
+PKG_BIN_DIR := $(DEB_STAGING)/opt/$(PROJECT_NAME)/bin
 
 ifndef VERSION
 	VERSION := "0.1.0"
@@ -35,10 +37,9 @@ build: install-deps example
 
 deb: clean build
 	@cp -a $(PROJECT_ROOT)/deb $(DEB_STAGING)
-	@mkdir -p $(PKG_BIN_DIR)
-
+	@mkdir -p $(PKG_BIN_DIR) $(BIN_DIR)
 	@cp example/manager $(PKG_BIN_DIR)
-	@cp example/client $(PKG_BIN_DIR)
+	@cp example/client $(BIN_DIR)/atlantis-manager
 
 	@sed -ri "s/__VERSION__/$(VERSION)/" $(DEB_STAGING)/DEBIAN/control
 	@sed -ri "s/__PACKAGE__/atlantis-manager/" $(DEB_STAGING)/DEBIAN/control
@@ -59,7 +60,7 @@ install-deps:
 	@echo "Installing Dependencies..."
 	@sudo apt-get install -y bzr
 	@rm -rf $(VENDOR_PATH)
-	@mkdir -p $(VENDOR_PATH) || exit 2
+	@mkdir -p $(VENDOR_PATH)
 	@GOPATH=$(VENDOR_PATH) go get github.com/jigish/go-flags
 	@GOPATH=$(VENDOR_PATH) go get github.com/jigish/gozk-recipes
 	@GOPATH=$(VENDOR_PATH) go get github.com/BurntSushi/toml
@@ -70,8 +71,8 @@ install-deps:
 	@GOPATH=$(VENDOR_PATH) go get github.com/mavricknz/ldap
 	@GOPATH=$(VENDOR_PATH) go get github.com/mewpkg/gopass
 	@GOPATH=$(VENDOR_PATH) go get github.com/ooyala/go-jenkins-cli
-	@git clone https://github.com/jigish/route53.git $(VENDOR_PATH)/src/github.com/jigish/route53
-	@mkdir -p $(VENDOR_PATH)/src/github.com/crowdmob && git clone https://github.com/crowdmob/goamz.git $(VENDOR_PATH)/src/github.com/crowdmob/goamz
+	@git clone http://github.com/jigish/route53.git $(VENDOR_PATH)/src/github.com/jigish/route53
+	@mkdir -p $(VENDOR_PATH)/src/github.com/crowdmob && git clone http://github.com/crowdmob/goamz.git $(VENDOR_PATH)/src/github.com/crowdmob/goamz
 	@GOPATH=$(VENDOR_PATH) go get code.google.com/p/gographviz
 	@GOPATH=$(VENDOR_PATH) go get launchpad.net/gocheck
 	@echo "Done."
