@@ -1,4 +1,3 @@
-lib
 vendor
 src/atlantis/manager/crypto/cert.go
 example/client

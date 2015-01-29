@@ -1,3 +1,5 @@
-#!/bin/bash -e
-rm -f /usr/bin/manager /usr/bin/client
+#!/bin/bash
 
+if [ "$1" != "upgrade" ]; then
+  rm -rf /opt/atlantis/manager
+fi

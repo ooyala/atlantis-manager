@@ -1,0 +1,24 @@
+#!/bin/bash
+
+kill_manager() {
+  echo "killing manager..."
+  sv down atlantis-manager
+  rm /etc/service/atlantis-manager
+  i=0
+  while [ "$(pidof manager)" ] && [ $i -lt 5 ]; do
+    echo "waiting for manager to die..."
+    sleep 1
+    (( i++ ))
+  done
+  if [ "$(pidof manager)" ]; then
+    echo "manager is proving resilient. bringing out the big guns..."
+    kill -9 $(pidof manager)
+  fi
+  echo "manager killed."
+}
+
+if [ -L '/etc/service/atlantis-manager' ]; then
+  kill_manager
+fi
+
+mkdir -p /var/log/atlantis/manager

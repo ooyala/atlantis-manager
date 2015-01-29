@@ -3,7 +3,7 @@
 	url = https://github.com/ooyala/atlantis
 [submodule "lib/atlantis-builder"]
 	path = lib/atlantis-builder
-	url = https://github.com/adityagodbole/atlantis-builder
+	url = https://github.com/ooyala/atlantis-builder
 [submodule "lib/atlantis-router"]
 	path = lib/atlantis-router
 	url = https://github.com/ooyala/atlantis-router

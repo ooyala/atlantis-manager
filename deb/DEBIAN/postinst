@@ -1,0 +1,19 @@
+#!/bin/bash
+
+echo "reviving manager..."
+cd /etc/service
+ln -s /opt/atlantis-manager atlantis-manager
+i=0
+while [ -z "$(pidof manager)" ] && [ $i -lt 10 ]; do
+  echo "waiting for manager to revive..."
+  sleep 2
+  if [ -p /opt/atlantis-manager/supervise/ok ]; then
+    sv up atlantis-manager
+  fi
+  (( i++ ))
+done
+if [ $i -eq 10 ]; then
+  echo "could not revive manager."
+  exit 1
+fi
+echo "manager revived."
