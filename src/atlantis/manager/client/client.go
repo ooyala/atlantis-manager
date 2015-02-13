@@ -499,7 +499,7 @@ func copyType(rv reflect.Value, name string) (reflect.Value, error) {
 	return reflect.New(field.Type()), nil
 }
 
-func genericResult(command interface{}, args []string) (map[string]string, string, map[string]map[string]interface{}, error) {
+func genericResult(command interface{}, args []string) (map[string]string, map[string]interface{}, string, map[string]map[string]interface{}, error) {
 	rv := reflect.ValueOf(command).Elem()
 	// Extract all the configuration flags from the Command struct
 	message, rpc, field, name, fileName, fileField, fileData, noauth, async, wait := executeFlags(rv)
@@ -509,14 +509,14 @@ func genericResult(command interface{}, args []string) (map[string]string, strin
 		InitNoLogin()
 	} else {
 		if err := Init(); err != nil {
-			return nil, "", nil, OutputError(err)
+			return nil, nil, "", nil, OutputError(err)
 		}
 	}
 
 	// Set up the arg object based on types in the Command struct.
 	argv, err := copyType(rv, "Arg")
 	if err != nil {
-		return nil, "", nil, OutputError(err)
+		return nil, nil, "", nil, OutputError(err)
 	}
 
 	// Async replies should use the ID field, not the final response field
@@ -533,11 +533,11 @@ func genericResult(command interface{}, args []string) (map[string]string, strin
 	if fileData != nil {
 		file, err := os.Open(fileName)
 		if err != nil {
-			return nil, "", nil, OutputError(err)
+			return nil, nil, "", nil, OutputError(err)
 		}
 		jsonDec := json.NewDecoder(file)
 		if err := jsonDec.Decode(fileData); err != nil {
-			return nil, "", nil, OutputError(err)
+			return nil, nil, "", nil, OutputError(err)
 		}
 		argv.Elem().FieldByName(fileField).Set(reflect.ValueOf(fileData))
 	}
@@ -546,6 +546,7 @@ func genericResult(command interface{}, args []string) (map[string]string, strin
 
 	// Set up some storage for the results...
 	statuses := map[string]string{}
+	replies := map[string]interface{}{}
 	datas := map[string]map[string]interface{}{}
 
 	// Now we're prepped; let's make the requests and store the results to return
@@ -560,7 +561,7 @@ func genericResult(command interface{}, args []string) (map[string]string, strin
 		} else {
 			replyv, err = copyType(rv, "Reply")
 			if err != nil {
-				return nil, "", nil, OutputError(err)
+				return nil, nil, "", nil, OutputError(err)
 			}
 			reply = replyv.Interface()
 		}
@@ -569,12 +570,12 @@ func genericResult(command interface{}, args []string) (map[string]string, strin
 		if noauth {
 			arg := argv.Interface()
 			if err := rpcClient.CallMulti(rpc, arg, region, reply); err != nil {
-				return nil, "", nil, OutputError(err)
+				return nil, nil, "", nil, OutputError(err)
 			}
 		} else {
 			arg := argv.Interface().(client.AuthedArg)
 			if err := rpcClient.CallAuthedMulti(rpc, arg, region, reply); err != nil {
-				return nil, "", nil, OutputError(err)
+				return nil, nil, "", nil, OutputError(err)
 			}
 		}
 
@@ -585,7 +586,7 @@ func genericResult(command interface{}, args []string) (map[string]string, strin
 				replyv = reflect.New(rv.FieldByName("Reply").Type())
 				reply = replyv.Interface()
 				if err := genericWait(command, rpc, idv.String(), reply); err != nil {
-					return nil, "", nil, OutputError(err)
+					return nil, nil, "", nil, OutputError(err)
 				}
 			} else {
 				Log("Error: No async ID found in response")
@@ -617,10 +618,12 @@ func genericResult(command interface{}, args []string) (map[string]string, strin
 
 		// And now we're done; save everything to return.
 		statuses[regionName] = status
+		replies[regionName] = reply
 		datas[regionName] = data
 	}
 
-	return statuses, name, datas, nil
+	// NOTE(edanaher): Replies is returned to make the end-to-end test simpler.
+	return statuses, replies, name, datas, nil
 }
 
 func genericWait(command interface{}, rpc, id string, reply interface{}) error {
@@ -650,7 +653,7 @@ func genericWait(command interface{}, rpc, id string, reply interface{}) error {
 }
 
 func genericExecuter(command interface{}, args []string) error {
-	status, name, data, err := genericResult(command, args)
+	status, _, name, data, err := genericResult(command, args)
 	if err != nil {
 		return err
 	}
