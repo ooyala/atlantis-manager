@@ -499,7 +499,7 @@ func copyType(rv reflect.Value, name string) (reflect.Value, error) {
 	return reflect.New(field.Type()), nil
 }
 
-func genericResult(command interface{}, args []string) (map[string]string, map[string]interface{}, string, map[string]interface{}, error) {
+func genericResult(command interface{}, args []string) (map[string]string, map[string]interface{}, string, map[string]map[string]interface{}, error) {
 	rv := reflect.ValueOf(command).Elem()
 	// Extract all the configuration flags from the Command struct
 	message, rpc, field, name, fileName, fileField, fileData, noauth, async, wait := executeFlags(rv)
@@ -622,6 +622,7 @@ func genericResult(command interface{}, args []string) (map[string]string, map[s
 		datas[regionName] = data
 	}
 
+	// NOTE(edanaher): Replies is returned to make the end-to-end test simpler.
 	return statuses, replies, name, datas, nil
 }
 
