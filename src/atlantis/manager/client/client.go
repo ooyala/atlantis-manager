@@ -546,6 +546,7 @@ func genericResult(command interface{}, args []string) (map[string]string, strin
 
 	// Set up some storage for the results...
 	statuses := map[string]string{}
+	replies := map[string]interface{}{}
 	datas := map[string]map[string]interface{}{}
 
 	// Now we're prepped; let's make the requests and store the results to return
@@ -617,6 +618,7 @@ func genericResult(command interface{}, args []string) (map[string]string, strin
 
 		// And now we're done; save everything to return.
 		statuses[regionName] = status
+		replies[regionName] = reply
 		datas[regionName] = data
 	}
 
