@@ -107,6 +107,22 @@ type UpdateTrieCommand struct {
 	Reply    ManagerUpdateTrieReply
 }
 
+func (c *UpdateTrieCommand) Execute(args []string) error {
+	err := Init()
+	if err != nil {
+		return OutputError(err)
+	}
+	Log("Update Trie...")
+	arg := ManagerUpdateTrieArg{dummyAuthArg, config.Trie{Name: c.Name, Rules: c.Rules, Internal: c.Internal}}
+	var reply ManagerUpdateTrieReply
+	err = rpcClient.CallAuthed("UpdateTrie", &arg, &reply)
+	if err != nil {
+		return OutputError(err)
+	}
+	Log("-> status: %s", reply.Status)
+	return Output(map[string]interface{}{"status": reply.Status}, nil, nil)
+}
+
 type DeleteTrieCommand struct {
 	Name     string `short:"n" long:"name" description:"the name of the trie"`
 	Internal bool   `short:"i" long:"internal" description:"true if internal"`
