@@ -48,7 +48,7 @@ func SendMail(to []string, subject, body string) (err error) {
 	// create client
 	var conn net.Conn
 	var client *smtp.Client
-	if conn, err = net.Dial("tcp", "localhost:25"); err != nil {
+	if conn, err = net.Dial("tcp", addr+":25"); err != nil {
 		return logError(err, to, subject, body)
 	}
 	if client, err = smtp.NewClient(conn, ""); err != nil {
