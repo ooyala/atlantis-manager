@@ -76,10 +76,10 @@ func SendMail(to []string, subject, body string) (err error) {
 	msg += body
 	if w, err := client.Data(); err != nil {
 		return logError(err, to, subject, body)
-	} else {
-		fmt.Fprintf(w, msg)
-		w.Close()
-		log.Printf("[SMTP] SENT: %v '%s'", to, subject)
 	}
+
+	fmt.Fprintf(w, msg)
+	w.Close()
+	log.Printf("[SMTP] SENT: %v '%s'", to, subject)
 	return nil
 }
