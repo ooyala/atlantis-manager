@@ -158,8 +158,14 @@ func (m *ManagerServer) AddCommand(cmd, desc, longDesc string, data interface{})
 }
 
 func (m *ManagerServer) Run(bldr builder.Builder) {
+	smtpCC := []string{}
 	builder.DefaultBuilder = bldr
-	smtp.Init(m.Config.SMTPAddr, m.Config.SMTPFrom, strings.Split(m.Config.SMTPCC, ","))
+
+	if m.Config.SMTPCC != "" {
+		smtpCC = strings.Split(m.Config.SMTPCC, ",")
+	}
+
+	smtp.Init(m.Config.SMTPAddr, m.Config.SMTPFrom, smtpCC)
 	if err := crypto.Init(); err != nil {
 		panic(fmt.Sprintf("Error initializing crypto: %s", err.Error()))
 	}
