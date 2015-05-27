@@ -74,7 +74,9 @@ func SendMail(to []string, subject, body string) (err error) {
 	msg += fmt.Sprintf("Date: %s\n", time.Now().String())
 	msg += fmt.Sprintf("Subject: %s\n\n", subject)
 	msg += body
-	if w, err := client.Data(); err != nil {
+
+	w, err := client.Data()
+	if err != nil {
 		return logError(err, to, subject, body)
 	}
 
