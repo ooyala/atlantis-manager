@@ -48,7 +48,7 @@ func SendMail(to []string, subject, body string) (err error) {
 	// create client
 	var conn net.Conn
 	var client *smtp.Client
-	if conn, err = net.Dial("tcp", "localhost:25"); err != nil {
+	if conn, err = net.Dial("tcp", addr+":25"); err != nil {
 		return logError(err, to, subject, body)
 	}
 	if client, err = smtp.NewClient(conn, ""); err != nil {
@@ -74,12 +74,14 @@ func SendMail(to []string, subject, body string) (err error) {
 	msg += fmt.Sprintf("Date: %s\n", time.Now().String())
 	msg += fmt.Sprintf("Subject: %s\n\n", subject)
 	msg += body
-	if w, err := client.Data(); err != nil {
+
+	w, err := client.Data()
+	if err != nil {
 		return logError(err, to, subject, body)
-	} else {
-		fmt.Fprintf(w, msg)
-		w.Close()
-		log.Printf("[SMTP] SENT: %v '%s'", to, subject)
 	}
+
+	fmt.Fprintf(w, msg)
+	w.Close()
+	log.Printf("[SMTP] SENT: %v '%s'", to, subject)
 	return nil
 }
