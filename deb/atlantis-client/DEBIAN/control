@@ -1,0 +1,7 @@
+Package: atlantis-client
+Version: __VERSION__
+Section: base
+Priority: Optional
+Architecture: amd64
+Maintainer: appsplat-team@ooyala.com
+Description: Best. PaaS Client. Ever.

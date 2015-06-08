@@ -1,0 +1,21 @@
+#!/bin/bash
+
+echo "reviving manager..."
+touch /etc/atlantis/manager/maint # make sure we revive in maintenance mode
+cd /etc/service
+ln -s /opt/atlantis/manager atlantis-manager
+i=0
+while [ -z "$(pidof atlantis-managerd)" ] && [ $i -lt 10 ]; do
+  echo "waiting for manager to revive..."
+  sleep 1
+  if [ -p /opt/atlantis/manager/supervise/ok ]; then
+    sv up atlantis-manager
+  fi
+  (( i++ ))
+done
+if [ $i -eq 10 ]; then
+  echo "could not revive manager"
+  exit 1
+fi
+rm -f /etc/atlantis/manager/maint # now that we're good, unmaintenanceify
+echo "manager revived."
