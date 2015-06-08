@@ -3,10 +3,49 @@
 	url = https://github.com/ooyala/atlantis
 [submodule "lib/atlantis-builder"]
 	path = lib/atlantis-builder
-	url = https://github.com/adityagodbole/atlantis-builder
+	url = https://github.com/ooyala/atlantis-builder
 [submodule "lib/atlantis-router"]
 	path = lib/atlantis-router
 	url = https://github.com/ooyala/atlantis-router
 [submodule "lib/atlantis-supervisor"]
 	path = lib/atlantis-supervisor
 	url = https://github.com/ooyala/atlantis-supervisor
+[submodule "vendor/src/github.com/jigish/gozk-recipes"]
+	path = vendor/src/github.com/jigish/gozk-recipes
+	url = https://github.com/jigish/gozk-recipes
+[submodule "vendor/src/github.com/cespare/go-apachelog"]
+	path = vendor/src/github.com/cespare/go-apachelog
+	url = https://github.com/cespare/go-apachelog
+[submodule "vendor/src/github.com/gorilla/mux"]
+	path = vendor/src/github.com/gorilla/mux
+	url = https://github.com/gorilla/mux
+[submodule "vendor/src/github.com/gorilla/context"]
+	path = vendor/src/github.com/gorilla/context
+	url = https://github.com/gorilla/context
+[submodule "vendor/src/github.com/BurntSushi/toml"]
+	path = vendor/src/github.com/BurntSushi/toml
+	url = https://github.com/BurntSushi/toml
+[submodule "vendor/src/github.com/mavricknz/ldap"]
+	path = vendor/src/github.com/mavricknz/ldap
+	url = https://github.com/mavricknz/ldap.git
+[submodule "vendor/src/github.com/mavricknz/asn1-ber"]
+	path = vendor/src/github.com/mavricknz/asn1-ber
+	url = https://github.com/mavricknz/asn1-ber.git
+[submodule "vendor/src/github.com/mewpkg/gopass"]
+	path = vendor/src/github.com/mewpkg/gopass
+	url = https://github.com/mewpkg/gopass.git
+[submodule "vendor/src/github.com/jigish/go-flags"]
+	path = vendor/src/github.com/jigish/go-flags
+	url = https://github.com/jigish/go-flags
+[submodule "vendor/src/code.google.com/p/gographviz"]
+	path = vendor/src/code.google.com/p/gographviz
+	url = https://code.google.com/p/gographviz
+[submodule "vendor/src/github.com/ooyala/go-jenkins-cli"]
+	path = vendor/src/github.com/ooyala/go-jenkins-cli
+	url = ssh://git@github.com/ooyala/go-jenkins-cli
+[submodule "vendor/src/github.com/crowdmob/goamz"]
+	path = vendor/src/github.com/crowdmob/goamz
+	url = ssh://git@github.com/crowdmob/goamz
+[submodule "vendor/src/github.com/jigish/route53"]
+	path = vendor/src/github.com/jigish/route53
+	url = ssh://git@github.com/jigish/route53
