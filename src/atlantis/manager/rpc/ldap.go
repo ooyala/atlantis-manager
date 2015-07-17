@@ -22,7 +22,8 @@ import (
 	"strings"
 )
 
-const maxTeamAdmins int = 2 
+const maxTeamAdmins int = 2
+
 // ----------------------------------------------------------------------------------------------------------
 // Teams
 // ----------------------------------------------------------------------------------------------------------
@@ -264,12 +265,15 @@ func (e *AddTeamAdminExecutor) Authorize() error {
 	if err != nil || !res.IsAdmin {
 		return errors.New("Permission denied")
 	}
-        reql := ManagerListTeamAdminsArg{e.arg.ManagerAuthArg, e.arg.Team}
-        var resl  ManagerListTeamAdminsReply
-        err = NewTask("AddTeamAdmin-ListTeamAdmins", &ListTeamAdminsExecutor{reql, &resl}).Run()
-        if err != nil || len(resl.TeamAdmins) >= maxTeamAdmins {
-                return fmt.Errorf("Maximum of %d admins are allowed per team", maxTeamAdmins)
-        }
+	reql := ManagerListTeamAdminsArg{e.arg.ManagerAuthArg, e.arg.Team}
+	var resl ManagerListTeamAdminsReply
+	err = NewTask("AddTeamAdmin-ListTeamAdmins", &ListTeamAdminsExecutor{reql, &resl}).Run()
+	if err != nil {
+		return err
+	}
+	if len(resl.TeamAdmins) >= maxTeamAdmins {
+		return fmt.Errorf("Maximum of %d admins are allowed per team", maxTeamAdmins)
+	}
 	return nil
 }
 
