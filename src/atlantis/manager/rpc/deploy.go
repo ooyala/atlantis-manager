@@ -329,7 +329,7 @@ func (e *TeardownExecutor) Execute(t *Task) error {
 		tornContainers = append(tornContainers, ihReply.ContainerIDs...)
 		for _, tornContainerID := range ihReply.ContainerIDs {
 
-			t.LogStatus("%s has been removed from host %s; removing zookeeper record about the contianer", 
+			t.LogStatus("%s has been removed from host %s; removing zookeeper record about the container", 
 				tornContainerID, host)    
 			err := datamodel.DeleteFromPool([]string{tornContainerID})
 			if err != nil {
@@ -342,12 +342,12 @@ func (e *TeardownExecutor) Execute(t *Task) error {
 			}
 			last, _ := instance.Delete()
 			if last {
-				t.LogStatus("%s is the last one of its kind  [app: %s SHA: %s Env: %s]",
+				t.LogStatus("%s is the last one of its kind [app: %s SHA: %s Env: %s]",
 					tornContainerID, instance.App, instance.Sha, instance.Env)
    
 				DeleteAppShaFromEnv(instance.App, instance.Sha, instance.Env)
 			}
-			t.LogStatus("successfully teardown %s", tornContainerID)
+			t.LogStatus("Successfully teardown %s", tornContainerID)
 		}
 	}
 	e.reply.ContainerIDs = tornContainers
