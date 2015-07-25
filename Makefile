@@ -47,11 +47,8 @@ deb: clean build
 	@mkdir -p $(DEB_INSTALL_DIR)/bin
 	@cp -a example/manager $(DEB_INSTALL_DIR)/bin/atlantis-managerd
 	@perl -p -i -e "s/__VERSION__/$(DEB_VERSION)/g" $(PKG)/$(PROJECT_NAME)/DEBIAN/control
-        #@mkdir -p $(CLIENT_DEB_CONFIG_DIR)
-        #@cp -a config/client.* $(CLIENT_DEB_CONFIG_DIR)/
 	@mkdir -p $(CLIENT_DEB_BIN_DIR)
 	@cp -a example/$(CLIENT_BIN_NAME) $(CLIENT_DEB_BIN_DIR)/atlantis-manager
-	#@cp -a $(ATLANTIS_PATH)/bin/atlantis $(CLIENT_DEB_BIN_DIR)/
 	@perl -p -i -e "s/__VERSION__/$(DEB_VERSION)/g" $(PKG)/atlantis-client/DEBIAN/control
 	@cd $(PKG) && dpkg --build $(PROJECT_NAME) ../pkg
 	@cd $(PKG) && dpkg --build atlantis-client ../pkg
