@@ -19,5 +19,8 @@ import (
 var DefaultBuilder Builder
 
 type Builder interface {
+	// (task, repo, root, sha)
 	Build(*Task, string, string, string) (io.ReadCloser, error)
+	// (task, repo, root, sha, user, password)
+	AuthenticatedBuild(*Task, string, string, string, string, string)
 }

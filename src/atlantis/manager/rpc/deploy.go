@@ -72,7 +72,8 @@ func (e *DeployExecutor) Execute(t *Task) error {
 		return errors.New("App " + e.arg.App + " is not registered: " + err.Error())
 	}
 	// fetch and parse manifest for app name
-	manifestReader, err := builder.DefaultBuilder.Build(t, app.Repo, app.Root, e.arg.Sha)
+	manifestReader, err := builder.DefaultBuilder.AuthenticatedBuild(t, app.Repo, app.Root, e.arg.Sha, e.arg.ManagerAuthArg.User,
+		e.arg.ManagerAuthArg.Password)
 	if err != nil {
 		return errors.New("Build Error: " + err.Error())
 	}
@@ -329,8 +330,8 @@ func (e *TeardownExecutor) Execute(t *Task) error {
 		tornContainers = append(tornContainers, ihReply.ContainerIDs...)
 		for _, tornContainerID := range ihReply.ContainerIDs {
 
-			t.LogStatus("%s has been removed from host %s; removing zookeeper record about the container", 
-				tornContainerID, host)    
+			t.LogStatus("%s has been removed from host %s; removing zookeeper record about the container",
+				tornContainerID, host)
 			err := datamodel.DeleteFromPool([]string{tornContainerID})
 			if err != nil {
 				t.Log("Error removing %s from pool: %v", tornContainerID, err)
@@ -344,7 +345,7 @@ func (e *TeardownExecutor) Execute(t *Task) error {
 			if last {
 				t.LogStatus("%s is the last one of its kind [app: %s SHA: %s Env: %s]",
 					tornContainerID, instance.App, instance.Sha, instance.Env)
-   
+
 				DeleteAppShaFromEnv(instance.App, instance.Sha, instance.Env)
 			}
 			t.LogStatus("Successfully teardown %s", tornContainerID)

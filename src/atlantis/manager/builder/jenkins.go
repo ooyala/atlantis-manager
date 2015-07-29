@@ -19,18 +19,26 @@ import (
 )
 
 type JenkinsBuilder struct {
-	URL string
-	Job string
+	URL         string
+	Job         string
+	DefaultUser string
+	DefautlPass string
 }
 
 func NewJenkinsBuilder(url, job string) *JenkinsBuilder {
 	return &JenkinsBuilder{URL: url, Job: job}
 }
 
-func (b *JenkinsBuilder) Build(t *Task, repo, root, sha string) (io.ReadCloser, error) {
+func (b *JenkinsBuilder) AuthenticatedBuild(t *Task, repo, root, sha, username, password string) (io.ReadCloser, error) {
 	jenkins.JENKINS_SERVER = b.URL
 	t.LogStatus("Triggering Jenkins Build")
-	info, err := jenkins.DoBuild(b.Job, "app_repo="+repo+"&app_root="+root+"&app_commit="+sha, true)
+
+	if username == "" {
+		return nil, errors.New("Build Error: Empty username passed, please correct or use non-authenticated build")
+	}
+
+	info, err := jenkins.DoBuild(b.Job, "app_repo="+repo+"&app_root="+root+"&app_commit="+sha+"&user="+username+":"+password,
+		true)
 	if err != nil {
 		return nil, errors.New("Jenkins Error: " + err.Error())
 	}
@@ -38,4 +46,11 @@ func (b *JenkinsBuilder) Build(t *Task, repo, root, sha string) (io.ReadCloser, 
 		return nil, errors.New("Jenkins Build " + info.Url + " " + info.Result)
 	}
 	return jenkins.GetArtifactReader(b.Job, info.ID, ManifestFile)
+}
+
+func (b *JenkinsBuilder) Build(t *Task, repo, root, sha, user, password string) (io.ReadCloser, error) {
+
+	//TODO(kwilson): either set defaultuser/pass from server.toml and pass in atlantis-managerd.go
+	//		 or I can create a separate interface for jenkins builder.
+	return b.AuthenticatedBuild(t, repo, root, sha, b.DefaultUser, b.DefaultPass)
 }

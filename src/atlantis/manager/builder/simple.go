@@ -92,3 +92,10 @@ func (b *SimpleBuilder) Build(t *Task, repo, root, sha string) (io.ReadCloser, e
 	}
 	return resp.Body, nil
 }
+
+func (b *SimpleBuilder) AuthenticatedBuild(t *Task, repo, root, sha, user, password string) (io.ReadCloser, error) {
+
+	//TODO(kwilson): either rework the interface so JenkinsBuilder uses it's own, or
+	//	decide what to do with the user/password here
+	return b.Build(t, repo, root, sha)
+}
