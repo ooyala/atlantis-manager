@@ -16,10 +16,12 @@ import (
 	"atlantis/manager/server"
 	"github.com/BurntSushi/toml"
 	"log"
+	"time"
 )
 
 type OoyalaServerConfig struct {
 	JenkinsURI string `toml:"jenkins_uri"`
+	SimpleBuilderHost string `toml:"simple_builder_host"`
 }
 
 func main() {
@@ -29,7 +31,18 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	log.Printf("Initializing Jenkins Builder with URI: %s", config.JenkinsURI)
-	bldr := builder.NewJenkinsBuilder(config.JenkinsURI, "Jenkins Builder")
+	
+	var bldr builder.Builder
+	if config.JenkinsURI != "" {
+		log.Printf("Initializing Jenkins Builder with URI: %s", config.JenkinsURI)
+		bldr = builder.NewJenkinsBuilder(config.JenkinsURI, "Jenkins Builder")
+	} else if config.SimpleBuilderHost != "" {
+		uri := "http://" + config.SimpleBuilderHost
+		log.Printf("Initializing Simple Builder with URI: %s", uri)
+		bldr = builder.NewSimpleBuilder(uri, 120*time.Second)
+	} else {
+		log.Printf("No builder configured")
+	}
+	
 	managerd.Run(bldr)
 }

@@ -1,0 +1,27 @@
+#!/bin/bash
+
+kill_manager() {
+  echo "triggering maintenance mode"
+  touch /etc/maint
+  sleep 5 # wait for maintenance mode to trigger
+
+  echo "gracefully killing manager (will wait up to 10 minutes)..."
+  sv down atlantis-manager
+  rm /etc/service/atlantis-manager
+  i=0
+  while [ "$(pidof atlantis-managerd)" ] && [ $i -lt 120 ]; do # wait up to 10 minutes
+    echo "waiting for manager to die..."
+    sleep 5
+    (( i++ ))
+  done
+  if [ "$(pidof atlantis-managerd)" ]; then
+    echo "manager is proving resilient. bringing out the big guns..."
+    kill -9 $(pidof atlantis-managerd)
+  fi
+  echo "manager killed."
+}
+
+if [ -L '/etc/service/atlantis-manager' ]; then
+  kill_manager
+fi
+mkdir -p /var/log/atlantis/manager

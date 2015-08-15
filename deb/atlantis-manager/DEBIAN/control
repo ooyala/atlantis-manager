@@ -1,0 +1,8 @@
+Package: atlantis-manager
+Version: __VERSION__
+Section: base
+Priority: Optional
+Architecture: amd64
+Depends: libzookeeper-mt-dev, runit
+Maintainer: appsplat-team@ooyala.com
+Description: Best. Manager. Ever.
