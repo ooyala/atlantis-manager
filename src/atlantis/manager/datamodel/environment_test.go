@@ -13,7 +13,7 @@ package datamodel
 
 import (
 	"atlantis/manager/helper"
-	. "launchpad.net/gocheck"
+	. "github.com/adjust/gocheck"
 )
 
 func (s *DatamodelSuite) TestEnvironment(c *C) {

@@ -14,7 +14,7 @@ package helper
 import (
 	. "atlantis/manager/constant"
 	routerzk "atlantis/router/zk"
-	. "launchpad.net/gocheck"
+	. "github.com/adjust/gocheck"
 	"sort"
 	"testing"
 )

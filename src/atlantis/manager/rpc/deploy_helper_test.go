@@ -22,7 +22,7 @@ import (
 	scrypto "atlantis/supervisor/crypto"
 	"fmt"
 	zookeeper "github.com/jigish/gozk-recipes"
-	. "launchpad.net/gocheck"
+	. "github.com/adjust/gocheck"
 )
 
 type DeployHelperSuite struct{}

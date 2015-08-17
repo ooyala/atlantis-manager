@@ -12,7 +12,7 @@
 package dns
 
 import (
-	. "launchpad.net/gocheck"
+	. "github.com/adjust/gocheck"
 	"testing"
 )
 

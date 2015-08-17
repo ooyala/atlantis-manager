@@ -15,7 +15,7 @@ import (
 	. "atlantis/manager/constant"
 	"atlantis/manager/datamodel"
 	ggv "code.google.com/p/gographviz"
-	gozk "launchpad.net/gozk"
+	gozk "github.com/scalingdata/gozk"
 )
 
 var (

@@ -15,7 +15,7 @@ import (
 	"atlantis/crypto"
 	"atlantis/manager/helper"
 	"atlantis/manager/rpc/types"
-	. "launchpad.net/gocheck"
+	. "github.com/adjust/gocheck"
 )
 
 func (s *DatamodelSuite) TestApp(c *C) {

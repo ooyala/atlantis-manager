@@ -1,9 +1,7 @@
-Package: __PACKAGE__
+Package: atlantis-client
 Version: __VERSION__
 Section: base
 Priority: Optional
 Architecture: amd64
-Depends: runit
 Maintainer: appsplat-team@ooyala.com
-Description: Atlantis Manager
- This is atlantis-manager.
+Description: Best. PaaS Client. Ever.

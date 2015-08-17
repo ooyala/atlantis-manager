@@ -12,7 +12,7 @@
 package rpc
 
 import (
-	. "launchpad.net/gocheck"
+	. "github.com/adjust/gocheck"
 	"testing"
 )
 
