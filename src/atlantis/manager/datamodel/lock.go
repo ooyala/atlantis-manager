@@ -14,7 +14,7 @@ package datamodel
 import (
 	"atlantis/manager/helper"
 	"fmt"
-	zookeeper "github.com/jigish/gozk-recipes"
+	zookeeper "github.com/ghao-ooyala/gozk-recipes"
 	"strings"
 )
 

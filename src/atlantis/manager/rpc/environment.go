@@ -14,6 +14,7 @@ package rpc
 import (
 	. "atlantis/common"
 	"atlantis/manager/datamodel"
+	. "atlantis/manager/constant"
 	. "atlantis/manager/rpc/types"
 	"errors"
 	"fmt"

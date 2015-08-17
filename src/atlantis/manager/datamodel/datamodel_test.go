@@ -12,7 +12,7 @@
 package datamodel
 
 import (
-	zookeeper "github.com/jigish/gozk-recipes"
+	zookeeper "github.com/ghao-ooyala/gozk-recipes"
 	. "github.com/adjust/gocheck"
 	"testing"
 )

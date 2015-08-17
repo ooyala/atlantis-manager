@@ -62,9 +62,9 @@ clean:
 	@rm -f example/client example/manager
 	@rm -rf $(DEB_STAGING) atlantis-manager_*.deb
 	@rm -rf ${PKG}
-	@rm -rf $(VENDOR_PATH)
+	@rm -rf $(VENDOR_PATH) $(LIB_PATH)
 
-copy-key: clean
+copy-key:
 	@mkdir -p $(ATLANTIS_PATH)/src/atlantis/crypto
 	@cp $(ATLANTIS_SECRET_DIR)/atlantis_key.go $(ATLANTIS_PATH)/src/atlantis/crypto/key.go
 	@mkdir -p $(PROJECT_ROOT)/src/atlantis/manager/crypto
@@ -73,7 +73,7 @@ copy-key: clean
 $(VENDOR_PATH):
 	@echo "Installing Dependencies..."
 	@mkdir -p $(VENDOR_PATH) || exit 2
-	@GOPATH=$(VENDOR_PATH) go get github.com/mattn/gom
+	@GOPATH=$(VENDOR_PATH) go get github.com/ghao-ooyala/gom
 	$(GOM) install
 	@echo "Done."
 

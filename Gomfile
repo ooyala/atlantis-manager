@@ -5,7 +5,6 @@ gom 'github.com/crowdmob/goamz/aws', :commit => '3a06871fe9fc0281ca90f3a7d97258d
 gom 'github.com/gorilla/context', :commit => '215affda49addc4c8ef7e2534915df2c8c35c6cd'
 gom 'github.com/gorilla/mux', :commit => '47e8f450ef38c857cdd922ec08862ca9d65a1c6d'
 gom 'github.com/jigish/go-flags', :commit => '5388f80a7e8a41e4c761fed27e5fcfe2af1196ac'
-gom 'github.com/jigish/gozk-recipes', :commit => 'a572fc4a98f24352170bb23b19f9401e9b25d56f'
 gom 'github.com/jigish/route53/src/route53', :commit => 'd96d673108f10157024cb41f40749cc7a12da0f8'
 gom 'github.com/mavricknz/asn1-ber', :commit => 'ce3c3d1d8e4190a390fc72f551222783cbd6e55a'
 gom 'github.com/mavricknz/ldap', :commit => '6638977d26a6bc5ac0d2a9a5dcbefe02c456ea38'
@@ -13,3 +12,11 @@ gom 'github.com/mewpkg/gopass', :commit => '3b39664481b57ad99d34c86bd64090c28eac
 gom 'github.com/ooyala/go-jenkins-cli', :commit => 'b0d917efc4bf5e63f10e51a516ba0f54741f39dd'
 gom 'github.com/scalingdata/gozk', :commit => 'a7d78aed637bdb8d5372f0dc878c1ce05b9ffa0f'
 gom 'github.com/adjust/gocheck', :commit => 'fbc315b36e0e7dc95023e96b43af5d8de58bc6fb'
+gom 'github.com/ghao-ooyala/gozk-recipes', :commit => '990a2f5851b0f28386965787abb53e8b12bf3030'
+
+
+gom 'atlantis', :command => 'git clone https://github.com/ooyala/atlantis.git', :skip_build => 'true', :vendor_path => 'lib'
+gom 'atlantis-builder', :command => 'git clone https://github.com/ooyala/atlantis-builder.git', :skip_build => 'true', :vendor_path => 'lib'
+gom 'atlantis-router', :command => 'git clone https://github.com/ooyala/atlantis-router.git', :skip_build => 'true', :vendor_path => 'lib'
+#TODO remove the SHA after supervisor is merged
+gom 'atlantis-supervisor', :command => 'git clone https://github.com/ooyala/atlantis-supervisor.git', :skip_build => 'true', :vendor_path => 'lib', :commit => 'eec910097b59d6cc9b0c43319743b37864143134'
