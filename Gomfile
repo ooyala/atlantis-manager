@@ -18,5 +18,4 @@ gom 'github.com/ghao-ooyala/gozk-recipes', :commit => '990a2f5851b0f28386965787a
 gom 'atlantis', :command => 'git clone https://github.com/ooyala/atlantis.git', :skip_build => 'true', :vendor_path => 'lib'
 gom 'atlantis-builder', :command => 'git clone https://github.com/ooyala/atlantis-builder.git', :skip_build => 'true', :vendor_path => 'lib'
 gom 'atlantis-router', :command => 'git clone https://github.com/ooyala/atlantis-router.git', :skip_build => 'true', :vendor_path => 'lib'
-#TODO remove the SHA after supervisor is merged
-gom 'atlantis-supervisor', :command => 'git clone https://github.com/ooyala/atlantis-supervisor.git', :skip_build => 'true', :vendor_path => 'lib', :commit => 'eec910097b59d6cc9b0c43319743b37864143134'
+gom 'atlantis-supervisor', :command => 'git clone https://github.com/ooyala/atlantis-supervisor.git', :skip_build => 'true', :vendor_path => 'lib'
