@@ -13,6 +13,7 @@ package rpc
 
 import (
 	. "atlantis/common"
+	. "atlantis/manager/constant"
 	"atlantis/manager/datamodel"
 	. "atlantis/manager/rpc/types"
 	"errors"
@@ -122,9 +123,9 @@ func (e *UpdateEnvExecutor) Execute(t *Task) error {
 	if e.arg.Name == "" {
 		return errors.New("Please specify a name")
 	}
-        if !EnvRegexp.MatchString(e.arg.Name) {
-                return errors.New("Env name must be ^[A-Za-z0-9-]+$")
-        }
+	if !EnvRegexp.MatchString(e.arg.Name) {
+		return errors.New("Env name must be ^[A-Za-z0-9-]+$")
+	}
 	if IsEnvInUse(e.arg.Name) {
 		return errors.New(fmt.Sprintf("%s is in use and cannot be updated", e.arg.Name))
 	}
