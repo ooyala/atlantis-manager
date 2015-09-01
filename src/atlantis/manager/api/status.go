@@ -18,8 +18,9 @@ import (
 )
 
 func Usage(w http.ResponseWriter, r *http.Request) {
+	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
+	arg := ManagerUsageArg{ManagerAuthArg: auth}
 	var reply ManagerUsageReply
-	arg := ManagerUsageArg{}
 	err := manager.Usage(arg, &reply)
 	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Usage": reply.Usage}, err))
 }
