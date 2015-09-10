@@ -266,7 +266,7 @@ func New() *ManagerClient {
 	o.AddCommand("get-container", "get a container", "", &GetContainerCommand{})
 
 	// Router Config Management
-	o.AddCommand("create-pool", "create a router pool", "", &UpdatePoolCommand{}) // alias to update
+	o.AddCommand("create-pool", "create a router pool", "", &CreatePoolCommand{})
 	o.AddCommand("update-pool", "update a router pool", "", &UpdatePoolCommand{})
 	o.AddCommand("delete-pool", "delete a router pool", "", &DeletePoolCommand{})
 	o.AddCommand("get-pool", "get a router pool", "", &GetPoolCommand{})

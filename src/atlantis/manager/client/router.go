@@ -16,7 +16,7 @@ import (
 	"atlantis/router/config"
 )
 
-type UpdatePoolCommand struct {
+type CreatePoolCommand struct {
 	Name             string   `short:"n" long:"name" description:"the name of the pool"`
 	HealthCheckEvery string   `short:"e" long:"check-every" default:"5s" description:"how often to check healthz"`
 	HealthzTimeout   string   `short:"z" long:"healthz-timeout" default:"5s" description:"timeout for healthz checks"`
@@ -26,16 +26,83 @@ type UpdatePoolCommand struct {
 	Internal         bool     `short:"i" long:"internal" description:"true if internal"`
 }
 
+func (c *CreatePoolCommand) Execute(args []string) error {
+	err := Init()
+	if err != nil {
+		return OutputError(err)
+	}
+	Log("Create Pool...")
+	hosts := make(map[string]config.Host, len(c.Hosts))
+	for _, host := range c.Hosts {
+		hosts[host] = config.Host{Address: host}
+	}
+	arg := ManagerUpdatePoolArg{dummyAuthArg, config.Pool{Name: c.Name, Hosts: hosts, Internal: c.Internal,
+		Config: config.PoolConfig{HealthzEvery: c.HealthCheckEvery, HealthzTimeout: c.HealthzTimeout,
+			RequestTimeout: c.RequestTimeout, Status: c.Status}}}
+	var reply ManagerUpdatePoolReply
+	err = rpcClient.CallAuthed("UpdatePool", &arg, &reply)
+	if err != nil {
+		return OutputError(err)
+	}
+	Log("-> status: %s", reply.Status)
+	return Output(map[string]interface{}{"status": reply.Status}, nil, nil)
+}
+
+type UpdatePoolCommand struct {
+	Name             string   `short:"n" long:"name" description:"the name of the pool"`
+	HealthCheckEvery string   `short:"e" long:"check-every"  description:"how often to check healthz"`
+	HealthzTimeout   string   `short:"z" long:"healthz-timeout" description:"timeout for healthz checks"`
+	RequestTimeout   string   `short:"r" long:"request-timeout"  description:"timeout for requests"`
+	Status           string   `short:"s" long:"status"  description:"the pool's status"`
+	Ahosts           []string `short:"A" long:"add-host" description:"hosts to add to the pool"`
+	Dhosts           []string `short:"D" long:"delete-host" description:"hosts to delete from the pool"`
+	Internal         bool     `short:"i" long:"internal" description:"true if internal"`
+}
+
 func (c *UpdatePoolCommand) Execute(args []string) error {
 	err := Init()
 	if err != nil {
 		return OutputError(err)
 	}
 	Log("Update Pool...")
-	hosts := make(map[string]config.Host, len(c.Hosts))
-	for _, host := range c.Hosts {
-		hosts[host] = config.Host{Address: host}
+
+	hosts := make(map[string]config.Host)
+	getPoolArg := ManagerGetPoolArg{dummyAuthArg, c.Name, c.Internal}
+	var getPoolReply ManagerGetPoolReply
+	err = rpcClient.CallAuthed("GetPool", &getPoolArg, &getPoolReply)
+	if err != nil {
+		return OutputError(err)
 	}
+
+	if getPoolReply.Status != "OK" {
+		return Output(map[string]interface{}{"status": getPoolReply.Status}, nil, nil)
+	}
+	if c.HealthCheckEvery == "" {
+		c.HealthCheckEvery = getPoolReply.Pool.Config.HealthzEvery
+	}
+	if c.HealthzTimeout == "" {
+		c.HealthzTimeout = getPoolReply.Pool.Config.HealthzTimeout
+	}
+	if c.RequestTimeout == "" {
+		c.RequestTimeout = getPoolReply.Pool.Config.RequestTimeout
+	}
+	if c.Status == "" {
+		c.Status = getPoolReply.Pool.Config.Status
+	}
+	for _, element := range getPoolReply.Pool.Hosts {
+		hosts[element.Address] = config.Host{Address: element.Address}
+	}
+	for _, element := range c.Ahosts {
+		if _, ok := hosts[element]; !ok {
+			hosts[element] = config.Host{Address: element}
+		}
+	}
+	for _, element := range c.Dhosts {
+		if _, ok := hosts[element]; ok {
+			delete(hosts, element)
+		}
+	}
+
 	arg := ManagerUpdatePoolArg{dummyAuthArg, config.Pool{Name: c.Name, Hosts: hosts, Internal: c.Internal,
 		Config: config.PoolConfig{HealthzEvery: c.HealthCheckEvery, HealthzTimeout: c.HealthzTimeout,
 			RequestTimeout: c.RequestTimeout, Status: c.Status}}}
