@@ -13,8 +13,8 @@ package rpc
 
 import (
 	aldap "atlantis/manager/ldap"
-	"github.com/mavricknz/ldap"
 	. "github.com/adjust/gocheck"
+	"github.com/mavricknz/ldap"
 )
 
 type LDAPSuite struct{}

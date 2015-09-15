@@ -266,7 +266,7 @@ func New() *ManagerClient {
 	o.AddCommand("get-container", "get a container", "", &GetContainerCommand{})
 
 	// Router Config Management
-	o.AddCommand("create-pool", "create a router pool", "", &UpdatePoolCommand{}) // alias to update
+	o.AddCommand("create-pool", "create a router pool", "", &CreatePoolCommand{})
 	o.AddCommand("update-pool", "update a router pool", "", &UpdatePoolCommand{})
 	o.AddCommand("delete-pool", "delete a router pool", "", &DeletePoolCommand{})
 	o.AddCommand("get-pool", "get a router pool", "", &GetPoolCommand{})
@@ -725,11 +725,13 @@ func exists(path string) (bool, error) {
 // TODO(edanaher): This config parsing is kind of horrendous, but hopefully does the right thing.
 func overlayConfig() {
 	if clientOpts.Config != "" {
-		_, err := toml.DecodeFile(clientOpts.Config, cfg)
+		var curCfg ClientConfig
+		_, err := toml.DecodeFile(clientOpts.Config, &curCfg)
 		if err != nil {
 			fmt.Print("Error parsing config file " + clientOpts.Config + ":\n" + err.Error() + "\n")
 			os.Exit(1)
 		}
+		cfg = append(cfg, &curCfg)
 	} else {
 		// NOTE(edanaher): The default doesn't get removed if more are passed in
 		if len(clientOpts.Regions) > 1 {
