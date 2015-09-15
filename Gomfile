@@ -1,4 +1,4 @@
-gom 'code.google.com/p/gographviz', :command => 'git clone https://code.google.com/p/gographviz', :commit => '454bc64fdfa20468f637d99162e1edc60c1a6677'
+gom 'github.com/awalterschulze/gographviz', :commit => 'aa795c018b7bb2ef5ba889614b0cd72e6ee5dec7'
 gom 'github.com/adjust/gocheck', :commit => 'fbc315b36e0e7dc95023e96b43af5d8de58bc6fb'
 gom 'github.com/BurntSushi/toml', :commit => '056c9bc7be7190eaa7715723883caffa5f8fa3e4'
 gom 'github.com/cespare/go-apachelog', :commit => 'bb93a01b28310bc4b360fd2897af6c4b3ddb88bf'

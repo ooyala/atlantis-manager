@@ -14,7 +14,7 @@ package graph
 import (
 	. "atlantis/manager/constant"
 	"atlantis/manager/datamodel"
-	ggv "code.google.com/p/gographviz"
+	ggv "github.com/awalterschulze/gographviz"
 	gozk "github.com/scalingdata/gozk"
 )
 
