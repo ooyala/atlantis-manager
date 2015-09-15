@@ -13,7 +13,7 @@ package graph
 
 import (
 	"atlantis/router/zk"
-	ggv "code.google.com/p/gographviz"
+	ggv "github.com/awalterschulze/gographviz"
 	"encoding/json"
 	"fmt"
 	"strconv"

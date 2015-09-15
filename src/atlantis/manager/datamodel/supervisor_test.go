@@ -12,7 +12,7 @@
 package datamodel
 
 import (
-	. "launchpad.net/gocheck"
+	. "github.com/adjust/gocheck"
 	"sort"
 )
 

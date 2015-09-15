@@ -15,7 +15,7 @@ import (
 	. "atlantis/manager/constant"
 	"atlantis/manager/helper"
 	routerzk "atlantis/router/zk"
-	zookeeper "github.com/jigish/gozk-recipes"
+	zookeeper "github.com/ghao-ooyala/gozk-recipes"
 )
 
 var Zk *zookeeper.ZkConn

@@ -16,7 +16,7 @@ import (
 	"atlantis/manager/helper"
 	"atlantis/router/config"
 	routerzk "atlantis/router/zk"
-	. "launchpad.net/gocheck"
+	. "github.com/adjust/gocheck"
 	"sort"
 )
 
