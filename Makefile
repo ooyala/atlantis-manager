@@ -45,7 +45,7 @@ export GOM_VENDOR_NAME
 
 build: example
 
-deb: clean build
+deb:  build
 	@cp -a $(DEB) $(PKG)
 	@mkdir -p $(DEB_INSTALL_DIR)
 	@mkdir -p $(DEB_INSTALL_DIR)/bin

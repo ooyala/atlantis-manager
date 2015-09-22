@@ -71,21 +71,44 @@ func (e *DeployExecutor) Execute(t *Task) error {
 	if err != nil {
 		return errors.New("App " + e.arg.App + " is not registered: " + err.Error())
 	}
-	// fetch and parse manifest for app name
-	manifestReader, err := builder.DefaultBuilder.Build(t, app.Repo, app.Root, e.arg.Sha)
-	if err != nil {
-		return errors.New("Build Error: " + err.Error())
+	
+	var manifest *Manifest
+	if e.arg.SkipBuild == false {
+		// fetch and parse manifest for app name
+		manifestReader, err := builder.DefaultBuilder.Build(t, app.Repo, app.Root, e.arg.Sha)
+		if err != nil {
+			return errors.New("Build Error: " + err.Error())
+		}
+		defer manifestReader.Close()
+		t.LogStatus("Reading Manifest")
+		data, err := bman.Read(manifestReader)
+		if err != nil {
+			return err
+		}
+		manifest, err = CreateManifest(data)
+		if err != nil {
+			return err
+		}
+	} else {
+		
+		cids, err := datamodel.ListInstances(e.arg.App, e.arg.Sha, e.arg.Env)
+		if err != nil || len(cids) == 0 {
+			
+			return errors.New("Unable to find deployed container with given App+SHA+Env")
+		} 
+		t.LogStatus("Using manifest from container %s for deploy", cids[0])
+		inst, err := datamodel.GetInstance(cids[0])
+		if err != nil {
+			return err
+		}
+
+		// get manifest
+		manifest = inst.Manifest
+		manifest.Instances = 1
+		
 	}
-	defer manifestReader.Close()
-	t.LogStatus("Reading Manifest")
-	data, err := bman.Read(manifestReader)
-	if err != nil {
-		return err
-	}
-	manifest, err := CreateManifest(data)
-	if err != nil {
-		return err
-	}
+	
+	
 	if e.arg.App != manifest.Name {
 		// NOTE(edanaher): If we kick off two jobs simultaneously, they will assume they have the same job id, so
 		// one of them will get the manifest from the other one's Jenkins job.  Unfortunately, Jenkins doesn't
@@ -111,8 +134,11 @@ func (e *DeployExecutor) Execute(t *Task) error {
 		manifest.Instances = uint(1) // default to 1 instance
 	}
 	if e.arg.Dev {
+		fmt.Printf("============it is dev")
 		e.reply.Containers, err = devDeploy(&e.arg.ManagerAuthArg, manifest, e.arg.Sha, e.arg.Env, t)
 	} else {
+		fmt.Printf("============it is NOT dev")
+		
 		e.reply.Containers, err = deploy(&e.arg.ManagerAuthArg, manifest, e.arg.Sha, e.arg.Env, t)
 	}
 	return err
