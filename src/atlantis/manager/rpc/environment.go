@@ -13,6 +13,7 @@ package rpc
 
 import (
 	. "atlantis/common"
+	. "atlantis/manager/constant"
 	"atlantis/manager/datamodel"
 	. "atlantis/manager/rpc/types"
 	"errors"

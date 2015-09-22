@@ -78,7 +78,33 @@ func CreatePaths() {
 	CreateEnvPath()
 }
 
+func GetAutoscaleRule( path string )  (string,error) {
+    data, _, err := Zk.Get(path)
+    if err != nil {
+         return "",err
+    }
+    return data,nil
+}
+
+
+func SetAutoscaleRule( path, data string )  (error) {
+	_, err := Zk.TouchAndSet(path,data)
+       if err != nil {
+         return err
+       }
+       return nil
+}
+
+func DeleteAutoscaleRule( path string )  (error) {
+     err := Zk.Delete(path, -1)
+    if err != nil {
+         return err
+    }
+    return nil
+}
+
 func Init(zkUri string) {
 	Zk = zookeeper.GetPanicingZk(zkUri)
 	CreatePaths()
 }
+
