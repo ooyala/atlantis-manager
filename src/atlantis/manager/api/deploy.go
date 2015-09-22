@@ -58,6 +58,12 @@ func Deploy(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "{\"error\": \"%s\"}", err.Error())
 		return
 	}
+	skipBld, err := strconv.ParseBool(r.FormValue("SkipBuild"))
+	if err != nil {
+		//use false as default value 
+		skipBld = false
+	}
+	
 	dArg := ManagerDeployArg{
 		ManagerAuthArg: auth,
 		App:            vars["App"],
@@ -67,6 +73,7 @@ func Deploy(w http.ResponseWriter, r *http.Request) {
 		CPUShares:      uint(cpushares),
 		MemoryLimit:    uint(memlimit),
 		Dev:            bool(dev),
+		SkipBuild:      bool(skipBld),
 	}
 	var reply AsyncReply
 	err = manager.Deploy(dArg, &reply)
