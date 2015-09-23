@@ -779,3 +779,118 @@ func overlayConfig() {
 	// TODO(edanaher): This is aliased.  The appends above may have unaliased it.  Why do we do this?
 	rpcClient.Opts = cfg
 }
+
+func SpinupContainer(host, user, pass, containerid string) {
+
+        var tmpc ClientConfig
+        tmpc.Host = host
+        tmpc.Port = 1338
+        //tmpc.KeyPath = "/home/devendra/.atlantis/"
+        cfg = append(cfg, &tmpc)
+        rpcClient.Opts = cfg
+
+        lg, _ := AutoLogin(user,pass)
+        var auth rpcTypes.ManagerAuthArg
+        var cc rpcTypes.ManagerDeployContainerArg
+        auth.User = user
+        auth.Secret = lg.Secret
+        cc.ManagerAuthArg = auth
+        cc.ContainerID = containerid
+        cc.Instances = 1
+
+
+        var reply interface{}
+        var replyv reflect.Value
+        reply = &atlantis.AsyncReply{}
+        replyv = reflect.ValueOf(reply)
+
+        if err := rpcClient.CallAuthedMulti("DeployContainer", &cc, 0, reply); err != nil {
+                log.Println(">error %v", err)
+        }
+
+        if idv := replyv.Elem().FieldByName("ID"); idv.IsValid() {
+		log.Println(" %v ", idv)
+                var tmp rpcTypes.ManagerDeployReply
+		replyv  = reflect.New(reflect.TypeOf(tmp))
+		reply = replyv.Interface()
+
+                var statusReply atlantis.TaskStatus
+		var currentStatus string
+		if err := rpcClient.Call("Status", idv.String(), &statusReply); err != nil {
+			log.Println(">> ",err)
+		} 
+		for !statusReply.Done {
+			if currentStatus != statusReply.Status {
+				currentStatus = statusReply.Status
+				log.Println(">>  ",currentStatus)
+			}
+			if err := rpcClient.Call("Status", idv.String(), &statusReply); err != nil {
+				log.Println(">>  ",currentStatus)
+			}
+		}
+		log.Println(">>  ",currentStatus)
+        }
+	var status string
+        log.Println("Status = ",status)
+}
+
+func TeardownContainer(host, user, pass, containerid string) {
+
+        var tmpc ClientConfig
+        tmpc.Host = host
+        tmpc.Port = 1338
+        //tmpc.KeyPath = "/home/devendra/.atlantis/"
+        cfg = append(cfg, &tmpc)
+        rpcClient.Opts = cfg
+
+        lg, _ := AutoLogin(user,pass)
+        var auth rpcTypes.ManagerAuthArg
+        var cc rpcTypes.ManagerTeardownArg
+        auth.User = user
+        auth.Secret = lg.Secret
+        cc.ManagerAuthArg = auth
+	cc.App = ""
+	cc.Sha  = ""
+	cc.Env  = ""
+	cc.All  = false
+        cc.ContainerID = containerid
+        
+
+
+        var reply interface{}
+        var replyv reflect.Value
+        reply = &atlantis.AsyncReply{}
+        replyv = reflect.ValueOf(reply)
+
+        if err := rpcClient.CallAuthedMulti("Teardown", &cc, 0, reply); err != nil {
+                log.Println(">error %v", err)
+        }
+
+        if idv := replyv.Elem().FieldByName("ID"); idv.IsValid() {
+                log.Println(" %v ", idv)
+                var tmp rpcTypes.ManagerTeardownReply
+                replyv  = reflect.New(reflect.TypeOf(tmp))
+                reply = replyv.Interface()
+
+                var statusReply atlantis.TaskStatus
+                var currentStatus string
+                if err := rpcClient.Call("Status", idv.String(), &statusReply); err != nil {
+                        log.Println(">> ",err)
+                }
+                for !statusReply.Done {
+                        if currentStatus != statusReply.Status {
+                                currentStatus = statusReply.Status
+                                log.Println(">>  ",currentStatus)
+                        }
+                        if err := rpcClient.Call("Status", idv.String(), &statusReply); err != nil {
+                                log.Println(">>  ",currentStatus)
+                        }
+                }
+                log.Println(">>  ",currentStatus)
+        }
+        var status string
+        log.Println("Status = ",status)
+}
+
+
+

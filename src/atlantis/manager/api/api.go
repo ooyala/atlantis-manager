@@ -188,6 +188,10 @@ func Init(listenAddr string) error {
 	gmux.HandleFunc("/ipgroups/{Name}", DeleteIPGroup).Methods("DELETE")
 	gmux.HandleFunc("/ipgroups", ListIPGroups).Methods("GET")
 
+        // Autoscaler Management
+        gmux.HandleFunc("/autoscaler/apps/{App}/shas/{Sha}/envs/{Env}", GetAutoScalerRule).Methods("GET")
+        gmux.HandleFunc("/autoscaler/apps/{App}/shas/{Sha}/envs/{Env}", SetAutoScalerRule).Methods("POST")
+      
 	// Static Assets
 	staticPath := "/" + staticDir + "/"
 	fileServer := http.StripPrefix(staticPath, http.FileServer(http.Dir("./"+staticDir)))

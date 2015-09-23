@@ -1079,3 +1079,28 @@ func (a *ManagerAuthArg) SetCredentials(user, secret string) {
 func (o *ManagerAuthArg) Credentials() (user, password, secret string) {
 	return o.User, o.Password, o.Secret
 }
+
+// ------------ GetAutoScalerRule ------------
+type ManagerGetAutoScalerRuleArg struct {
+        ManagerAuthArg
+        App     string
+        Sha     string
+        Env     string
+}
+
+type ManagerGetAutoScalerRuleReply struct {
+        Rule   string
+        Status string
+}
+
+type ManagerSetAutoScalerRuleArg struct {
+        ManagerAuthArg
+        App     string
+        Sha     string
+        Env     string
+        Data       string
+}
+
+type ManagerSetAutoScalerRuleReply struct {
+        Status string
+}
