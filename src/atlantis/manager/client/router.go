@@ -14,6 +14,8 @@ package client
 import (
 	. "atlantis/manager/rpc/types"
 	"atlantis/router/config"
+	"errors"
+	"strings"
 )
 
 type CreatePoolCommand struct {
@@ -37,11 +39,17 @@ func (c *CreatePoolCommand) Execute(args []string) error {
 	for _, host := range c.Hosts {
 		hosts[host] = config.Host{Address: host}
 	}
-	var headers  [len(c.Headers)]config.HttpHeader
-	for i, header := range c.Headers {	
-		values := split(header, ":")
-		headers[i] = config.Header{values[0],values[1]}
+
+	var headers []config.HttpHeader
+	for _, h := range c.Headers {
+		tokens := strings.Split(h, ":")
+		if len(tokens) != 2 || tokens[0] == "" || tokens[1] == "" {
+			return OutputError(errors.New("Invalid Header " + h))
+		}
+		hdr := config.HttpHeader{Key: tokens[0], Value: strings.TrimLeft(tokens[1], " ")}
+		headers = append(headers, hdr)
 	}
+
 	arg := ManagerUpdatePoolArg{dummyAuthArg, config.Pool{Name: c.Name, Hosts: hosts, Internal: c.Internal,
 		Config: config.PoolConfig{HealthzEvery: c.HealthCheckEvery, HealthzTimeout: c.HealthzTimeout,
 			RequestTimeout: c.RequestTimeout, Status: c.Status}, Headers: headers}}
