@@ -16,5 +16,5 @@ gom 'github.com/scalingdata/gozk', :commit => 'a7d78aed637bdb8d5372f0dc878c1ce05
 
 gom 'atlantis', :command => 'git clone https://github.com/ooyala/atlantis.git', :skip_build => 'true', :vendor_path => 'lib'
 gom 'atlantis-builder', :command => 'git clone https://github.com/ooyala/atlantis-builder.git', :skip_build => 'true', :vendor_path => 'lib'
-gom 'atlantis-router', :command => 'git clone https://github.com/ooyala/atlantis-router.git', :skip_build => 'true', :vendor_path => 'lib'
+gom 'atlantis-router', :command => 'git clone https://github.com/ooyala/atlantis-router.git', :skip_build => 'true', :vendor_path => 'lib', :commit => 'e1fefe5789440c26fe8dcc305a8e22808f9a7fdf'
 gom 'atlantis-supervisor', :command => 'git clone https://github.com/ooyala/atlantis-supervisor.git', :skip_build => 'true', :vendor_path => 'lib'
