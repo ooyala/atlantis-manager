@@ -134,11 +134,8 @@ func (e *DeployExecutor) Execute(t *Task) error {
 		manifest.Instances = uint(1) // default to 1 instance
 	}
 	if e.arg.Dev {
-		fmt.Printf("============it is dev")
 		e.reply.Containers, err = devDeploy(&e.arg.ManagerAuthArg, manifest, e.arg.Sha, e.arg.Env, t)
 	} else {
-		fmt.Printf("============it is NOT dev")
-		
 		e.reply.Containers, err = deploy(&e.arg.ManagerAuthArg, manifest, e.arg.Sha, e.arg.Env, t)
 	}
 	return err
