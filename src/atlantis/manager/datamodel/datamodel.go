@@ -79,7 +79,7 @@ func CreatePaths() {
 }
 
 func GetAutoscaleRule( path string )  (string,error) {
-    data, _, err := Zk.Get(path)
+    data, _, err := Zk.Get(helper.GetAutoscalerBasePath() + path)
     if err != nil {
          return "",err
     }
@@ -88,7 +88,7 @@ func GetAutoscaleRule( path string )  (string,error) {
 
 
 func SetAutoscaleRule( path, data string )  (error) {
-	_, err := Zk.TouchAndSet(path,data)
+	_, err := Zk.TouchAndSet(helper.GetAutoscalerBasePath() + path,data)
        if err != nil {
          return err
        }
@@ -96,7 +96,7 @@ func SetAutoscaleRule( path, data string )  (error) {
 }
 
 func DeleteAutoscaleRule( path string )  (error) {
-     err := Zk.Delete(path, -1)
+     err := Zk.Delete(helper.GetAutoscalerBasePath() + path, -1)
     if err != nil {
          return err
     }

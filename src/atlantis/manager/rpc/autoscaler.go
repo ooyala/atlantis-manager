@@ -39,13 +39,18 @@ func (e *GetAutoScalerRuleExecutor) Description() string {
 
 func (e *GetAutoScalerRuleExecutor) Execute(t *Task) (err error) {
         fmt.Println("/atlantis/autoscale-rules/"+ e.arg.App + "-" + e.arg.Sha + "-" + e.arg.Env)
-	data, err := datamodel.GetAutoscaleRule("/atlantis/autoscale-rules/"+ e.arg.App + "-" + e.arg.Sha + "-" + e.arg.Env)
+	data, err := datamodel.GetAutoscaleRule(e.arg.App + "-" + e.arg.Sha + "-" + e.arg.Env)
 	if err != nil {
-	      e.reply.Rule = ""
-	      e.reply.Status = "NOT OK"
+	        e.reply.Rule = ""
+	        e.reply.Status = "NOT OK"
  	} else {
-	      e.reply.Rule = data
-	      e.reply.Status = "OK"
+                var rule AutoscaleRule
+                if err := json.Unmarshal([]byte(data), &rule); err != nil {
+                        e.reply.Status = "NOT OK"
+                        return err
+                }
+	        e.reply.Rule = data
+	        e.reply.Status = "OK"
 	}
 	fmt.Println(err)
 	return err
@@ -78,12 +83,12 @@ func (e *SetAutoScalerRuleExecutor) Description() string {
 }
 
 func (e *SetAutoScalerRuleExecutor) Execute(t *Task) (err error) {
-        fmt.Println("/atlantis/autoscale-rules/"+ e.arg.App + "-" + e.arg.Sha + "-" + e.arg.Env+ "    " + e.arg.Data)
+        fmt.Println( e.arg.App + "-" + e.arg.Sha + "-" + e.arg.Env+ "    " + e.arg.Data)
 
 
         if strings.Trim(e.arg.Data," ") == "" {
                 // delete rules baby
-                err = datamodel.DeleteAutoscaleRule("/atlantis/autoscale-rules/"+ e.arg.App + "-" + e.arg.Sha + "-" + e.arg.Env)
+                err = datamodel.DeleteAutoscaleRule(e.arg.App + "-" + e.arg.Sha + "-" + e.arg.Env)
                 if err != nil {
                         e.reply.Status = "NOT OK"
                 } else {
@@ -98,7 +103,7 @@ func (e *SetAutoScalerRuleExecutor) Execute(t *Task) (err error) {
                 return err
         }
 
-        err = datamodel.SetAutoscaleRule("/atlantis/autoscale-rules/"+ e.arg.App + "-" + e.arg.Sha + "-" + e.arg.Env, e.arg.Data)
+        err = datamodel.SetAutoscaleRule(e.arg.App + "-" + e.arg.Sha + "-" + e.arg.Env, e.arg.Data)
         if err != nil {
               e.reply.Status = "NOT OK"
         } else {
@@ -121,7 +126,6 @@ func (m *ManagerRPC) SetAutoScalerRule(arg ManagerSetAutoScalerRuleArg, reply *M
 type AutoscaleRule struct{
 	IntervalInSec      string   
 	MetricSourceType   string 
-
 	MinInstances       string   
 	MaxInstances	   string
 	DatadogMetric      DatadogMetricType
@@ -145,5 +149,4 @@ type DatadogMetricType struct {
 	MetricName         string
 	IntervalInSec      string
 	Tags               []string
-	//StatsMethod         string
 }

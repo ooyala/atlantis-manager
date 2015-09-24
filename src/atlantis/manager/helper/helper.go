@@ -102,6 +102,11 @@ func GetBaseRouterPortsPath(internal bool, args ...string) string {
 	return JoinWithBase(base, args...)
 }
 
+func GetAutoscalerBasePath() string {
+	base := fmt.Sprintf("/atlantis/autoscale-rules/%s/", Region)
+	return base
+}
+
 func GetAppEnvTrieName(app, env string) string {
 	return types.AppEnv{App: app, Env: env}.String()
 }
