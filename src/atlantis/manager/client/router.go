@@ -79,6 +79,23 @@ type UpdateRuleCommand struct {
 	Reply    ManagerUpdateRuleReply
 }
 
+func (c *UpdateRuleCommand) Execute(args []string) error {
+        err := Init()
+        if err != nil {
+                return OutputError(err)
+        }
+        Log("Update Rule...")
+        arg := ManagerUpdateRuleArg{dummyAuthArg, config.Rule{Name: c.Name, Type: c.Type, Value: c.Value, 
+					Next: c.Next, Pool: c.Pool, Internal: c.Internal}}
+        var reply ManagerUpdateRuleReply
+        err = rpcClient.CallAuthed("UpdateRule", &arg, &reply)
+        if err != nil {
+                return OutputError(err)
+        }
+        Log("-> status: %s", reply.Status)
+        return Output(map[string]interface{}{"status": reply.Status}, nil, nil)
+}
+
 type DeleteRuleCommand struct {
 	Name     string `short:"n" long:"name" description:"the name of the rule"`
 	Internal bool   `short:"i" long:"internal" description:"true if internal"`
