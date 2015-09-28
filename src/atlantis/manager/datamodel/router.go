@@ -474,6 +474,10 @@ func DeleteFromPool(containers []string) error {
 				if err != nil {
 					log.Println("Error trying to clean up pool:", err)
 				}
+				err = DeleteAutoscaleRule(poolDef.app + "=" + poolDef.sha + "-" + poolDef.env)
+				if err != nil {
+					log.Println("Error trying to clean up autoscale rules:", err)
+				}
 			}
 		}
 	}
