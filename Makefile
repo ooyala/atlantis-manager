@@ -45,7 +45,7 @@ export GOM_VENDOR_NAME
 
 build: example
 
-deb: clean build
+deb: clean clean-dependencies build
 	@cp -a $(DEB) $(PKG)
 	@mkdir -p $(DEB_INSTALL_DIR)
 	@mkdir -p $(DEB_INSTALL_DIR)/bin
@@ -57,12 +57,14 @@ deb: clean build
 	@cd $(PKG) && dpkg --build $(PROJECT_NAME) ../pkg
 	@cd $(PKG) && dpkg --build atlantis-client ../pkg
 
+clean-dependencies:
+	@rm -rf $(VENDOR_PATH) $(LIB_PATH)
+
 clean:
 	@rm -rf $(ATLANTIS_PATH)/src/atlantis/crypto/key.go $(PROJECT_ROOT)/src/atlantis/manager/crypto/cert.go
 	@rm -f example/client example/manager
 	@rm -rf $(DEB_STAGING) atlantis-manager_*.deb
 	@rm -rf ${PKG}
-	@rm -rf $(VENDOR_PATH) $(LIB_PATH)
 
 copy-key:
 	@mkdir -p $(ATLANTIS_PATH)/src/atlantis/crypto
