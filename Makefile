@@ -84,12 +84,19 @@ ifdef TEST_PACKAGE
 	@echo "Testing $$TEST_PACKAGE..."
 	@go test $$TEST_PACKAGE $$VERBOSE $$RACE
 else
+ifneq ($(path),)
+	@echo "Testing $(path)..."
+	@go test $(path) || exit 1;
+	@echo
+	@echo "ok."
+else
 	@for p in `find ./src -type f -name "*.go" |sed 's-\./src/\(.*\)/.*-\1-' |sort -u`; do \
 		echo "Testing $$p..."; \
 		go test $$p || exit 1; \
 	done
 	@echo
 	@echo "ok."
+endif
 endif
 
 .PHONY: example
