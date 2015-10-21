@@ -1,0 +1,9 @@
+client:
+  # region: skunkworks
+  region: dev
+  # host: internal-router.us-east-1-skunkworks.atlantis.services.ooyala.com
+  host: internal-router.aquarium
+  app: hello-go
+  # sha: 2b51bb16fa4efa0b1b591ed68217ac962398a60d
+  sha: ec8e09710831947f596079fdd9036f123a78de3c
+  contact_group: edanaher-test

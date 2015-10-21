@@ -3,21 +3,31 @@ package client
 import (
 	atlantis "atlantis/common"
 	. "atlantis/manager/rpc/types"
+	"atlantis/manager/util"
 	"fmt"
 	"github.com/jigish/go-flags"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
 	"time"
 )
 
+var CONFIG map[string]string
+
+func init() {
+	dir, _ := os.Getwd()
+	CONFIG = util.GetTestConfig(filepath.Base(dir))
+}
+
 func setHostConfig() {
 	cfg = []atlantis.RPCServerOpts{}
 	rpcClient.Opts = cfg
-	clientOpts.Regions = []string{"skunkworks"}
+	clientOpts.Regions = []string{CONFIG["region"]}
 	for _, r := range cfg {
 		log.Printf("Setting region: %v\n", r)
 	}
@@ -108,9 +118,9 @@ func checkCommand(t *testing.T, command interface{}, line string, expected inter
 	_ = data
 	_ = reply
 	if assertNoErr(t, err, "Error executing command") && expected != nil {
-		checkResult(t, expected, reply["skunkworks"])
+		checkResult(t, expected, reply[CONFIG["region"]])
 	}
-	return reply["skunkworks"]
+	return reply[CONFIG["region"]]
 }
 
 func TestRegisterApp(t *testing.T) {
@@ -165,19 +175,19 @@ func checkUrl(t *testing.T, url, name, expected string) bool {
 func TestFullDeploy(t *testing.T) {
 	testName := "e2e-test-" + time.Now().Format("2006-01-02T15-04-05")
 
-	checkCommand(t, &ListAppsCommand{}, "", &ManagerListAppsReply{[]string{"hello-go"}, "OK"})
+	checkCommand(t, &ListAppsCommand{}, "", &ManagerListAppsReply{[]string{CONFIG["app"]}, "OK"})
 
 	log.Print("== Creating environment ==")
 	checkCommand(t, &UpdateEnvCommand{}, testName, &ManagerEnvReply{"OK"})
 	checkCommand(t, &ListEnvsCommand{}, "", &ManagerListEnvsReply{[]string{testName}, "OK"})
 
 	log.Print("== Setting cmk dependency ==")
-	envFile := writeDepFile(t, testName, `{ "contact_group": "edanaher-test" }`)
-	cmkDepCommand := &AddDependerEnvDataForDependerAppCommand{App: "cmk", Depender: "hello-go", FromFile: envFile}
+	envFile := writeDepFile(t, testName, `{ "contact_group": CONFIG["contact_group"] }`)
+	cmkDepCommand := &AddDependerEnvDataForDependerAppCommand{App: "cmk", Depender: CONFIG["app"], FromFile: envFile}
 	checkCommand(t, cmkDepCommand, "", &ManagerAddDependerEnvDataForDependerAppReply{"OK", nil})
 
 	log.Print("== Deploying hello-go ==")
-	deployCommand := &DeployCommand{App: "hello-go", Sha: "2b51bb16fa4efa0b1b591ed68217ac962398a60d",
+	deployCommand := &DeployCommand{App: CONFIG["app"], Sha: CONFIG["sha"],
 		Env: testName, Dev: true, Wait: true}
 	// TODO(edanaher): Status should be OK...
 	deployi := checkCommand(t, deployCommand, "", &ManagerDeployReply{"", nil})
@@ -189,13 +199,12 @@ func TestFullDeploy(t *testing.T) {
 		checkUrl(t, url, "deployed container", "Hello from Go")
 
 		log.Print("== Looking up port information ==")
-		getPortCommand := &GetAppEnvPortCommand{App: "hello-go", Env: testName, Internal: true}
+		getPortCommand := &GetAppEnvPortCommand{App: CONFIG["app"], Env: testName, Internal: true}
 		portReplyi := checkCommand(t, getPortCommand, "", nil)
 		if portReply, ok := portReplyi.(*ManagerGetAppEnvPortReply); ok {
 			log.Print("== Checking router port ==")
 			routerPort := portReply.Port.Port
-			host := "internal-router.us-east-1-skunkworks.atlantis.services.ooyala.com"
-			url := fmt.Sprintf("http://%s:%d/", host, routerPort)
+			url := fmt.Sprintf("http://%s:%d/", CONFIG["host"], routerPort)
 			checkUrl(t, url, "router port", "Hello from Go")
 		}
 
