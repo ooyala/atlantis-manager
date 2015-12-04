@@ -127,7 +127,7 @@ func (e *UpdateEnvExecutor) Execute(t *Task) error {
 		return errors.New("Env name must be ^[A-Za-z0-9-]+$")
 	}
 	if IsEnvInUse(e.arg.Name) {
-		return errors.New(fmt.Sprintf("%s is in use and cannot be updated", e.arg.Name))
+		return errors.New(fmt.Sprintf("%s already exits", e.arg.Name))
 	}
 	env := datamodel.Env(e.arg.Name)
 	if err := env.Save(); err != nil {
@@ -139,6 +139,10 @@ func (e *UpdateEnvExecutor) Execute(t *Task) error {
 
 func (e *UpdateEnvExecutor) Authorize() error {
 	return SimpleAuthorize(&e.arg.ManagerAuthArg)
+}
+
+func (m *ManagerRPC) UpdateEnv(arg ManagerEnvArg, reply *ManagerEnvReply) error {
+	return NewTask("UpdateEnv", &UpdateEnvExecutor{arg, reply}).Run()
 }
 
 type DeleteEnvExecutor struct {
@@ -178,10 +182,6 @@ func (e *DeleteEnvExecutor) Execute(t *Task) (err error) {
 
 func (e *DeleteEnvExecutor) Authorize() error {
 	return SimpleAuthorize(&e.arg.ManagerAuthArg)
-}
-
-func (m *ManagerRPC) UpdateEnv(arg ManagerEnvArg, reply *ManagerEnvReply) error {
-	return NewTask("UpdateEnv", &UpdateEnvExecutor{arg, reply}).Run()
 }
 
 func (m *ManagerRPC) DeleteEnv(arg ManagerEnvArg, reply *ManagerEnvReply) error {
