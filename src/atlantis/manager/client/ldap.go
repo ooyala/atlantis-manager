@@ -123,147 +123,36 @@ func (c *DeleteTeamCommand) Execute(args []string) error {
 }
 
 type ListTeamsCommand struct {
-}
-
-func (c *ListTeamsCommand) Execute(args []string) error {
-	if err := Init(); err != nil {
-		return OutputError(err)
-	}
-	if !ldapOperationsEnabled {
-		Log("LDAP Operations are not enabled.")
-		return OutputEmpty()
-	}
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	auth := ManagerAuthArg{user, "", secret}
-	arg := ManagerListTeamsArg{auth}
-	var reply ManagerListTeamsReply
-	if err := rpcClient.Call("ListTeams", arg, &reply); err != nil {
-		return OutputError(err)
-	}
-	Log("-> teams:")
-	for _, team := range reply.Teams {
-		Log("->   %s", team)
-	}
-	return Output(map[string]interface{}{"teams": reply.Teams}, reply.Teams, nil)
+  Arg ManagerListTeamsArg
+  Reply ManagerListTeamsReply
 }
 
 type ListTeamEmailsCommand struct {
 	Team string `short:"t" long:"team" description:"the name of the team"`
-}
-
-func (c *ListTeamEmailsCommand) Execute(args []string) error {
-	if err := Init(); err != nil {
-		return OutputError(err)
-	}
-	if !ldapOperationsEnabled {
-		Log("LDAP Operations are not enabled.")
-		return OutputEmpty()
-	}
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	auth := ManagerAuthArg{user, "", secret}
-	arg := ManagerListTeamEmailsArg{auth, c.Team}
-	var reply ManagerListTeamEmailsReply
-	if err := rpcClient.Call("ListTeamEmails", arg, &reply); err != nil {
-		return OutputError(err)
-	}
-	Log("-> Emails:")
-	for _, val := range reply.TeamEmails {
-		Log("->   %s", val)
-	}
-	return Output(map[string]interface{}{"emails": reply.TeamEmails}, reply.TeamEmails, nil)
+  Arg ManagerListTeamEmailsArg
+  Reply ManagerListTeamEmailsReply
+  Properties string `field:"TeamEmails" name:"emails"`
 }
 
 type ListTeamAdminsCommand struct {
 	Team string `short:"t" long:"team" description:"the name of the team"`
-}
-
-func (c *ListTeamAdminsCommand) Execute(args []string) error {
-	if err := Init(); err != nil {
-		return OutputError(err)
-	}
-	if !ldapOperationsEnabled {
-		Log("LDAP Operations are not enabled.")
-		return OutputEmpty()
-	}
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	auth := ManagerAuthArg{user, "", secret}
-	arg := ManagerListTeamAdminsArg{auth, c.Team}
-	var reply ManagerListTeamAdminsReply
-	if err := rpcClient.Call("ListTeamAdmins", arg, &reply); err != nil {
-		return OutputError(err)
-	}
-	Log("-> Admins:")
-	for _, val := range reply.TeamAdmins {
-		Log("->   %s", val)
-	}
-	return Output(map[string]interface{}{"admins": reply.TeamAdmins}, reply.TeamAdmins, nil)
+  Arg ManagerListTeamAdminsArg
+  Reply ManagerListTeamAdminsReply
+  Properties string `field:"TeamAdmins" name:"admins"`
 }
 
 type ListTeamMembersCommand struct {
 	Team string `short:"t" long:"team" description:"the name of the team"`
-}
-
-func (c *ListTeamMembersCommand) Execute(args []string) error {
-	if err := Init(); err != nil {
-		return OutputError(err)
-	}
-	if !ldapOperationsEnabled {
-		Log("LDAP Operations are not enabled.")
-		return OutputEmpty()
-	}
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	auth := ManagerAuthArg{user, "", secret}
-	arg := ManagerListTeamMembersArg{auth, c.Team}
-	var reply ManagerListTeamMembersReply
-	if err := rpcClient.Call("ListTeamMembers", arg, &reply); err != nil {
-		return OutputError(err)
-	}
-	Log("-> Members:")
-	for _, val := range reply.TeamMembers {
-		Log("->   %s", val)
-	}
-	return Output(map[string]interface{}{"members": reply.TeamMembers}, reply.TeamMembers, nil)
+  Arg  ManagerListTeamMembersArg
+  Reply ManagerListTeamMembersReply
+  Properties string `field:"TeamMembers" name:"members"`
 }
 
 type ListTeamAppsCommand struct {
 	Team string `short:"t" long:"team" description:"the name of the team"`
-}
-
-func (c *ListTeamAppsCommand) Execute(args []string) error {
-	if err := Init(); err != nil {
-		return OutputError(err)
-	}
-	if !ldapOperationsEnabled {
-		Log("LDAP Operations are not enabled.")
-		return OutputEmpty()
-	}
-	user, secret, err := GetSecret()
-	if err != nil {
-		return err
-	}
-	auth := ManagerAuthArg{user, "", secret}
-	arg := ManagerListTeamAppsArg{auth, c.Team}
-	var reply ManagerListTeamAppsReply
-	if err := rpcClient.Call("ListTeamApps", arg, &reply); err != nil {
-		return OutputError(err)
-	}
-	Log("-> Apps:")
-	for _, val := range reply.TeamApps {
-		Log("->   %s", val)
-	}
-	return Output(map[string]interface{}{"apps": reply.TeamApps}, reply.TeamApps, nil)
+  Arg ManagerListTeamAppsArg
+  Reply ManagerListTeamAppsReply
+  Properties string `field:"TeamApps" name:"apps"`
 }
 
 type AddTeamMemberCommand struct {
