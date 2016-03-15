@@ -17,6 +17,7 @@ import (
 	"atlantis/manager/rpc/types"
 	routerzk "atlantis/router/zk"
 	"fmt"
+	"log"
 	"path"
 	"regexp"
 	"strings"
@@ -192,7 +193,15 @@ func RegionAndZone(zone string) string {
 }
 
 func ZoneMinusRegion(zone string) string {
-	return strings.Replace(zone, Region, "", 1)
+	zmr := strings.Replace(zone, Region, "", 1)
+	if zmr == "" {
+		results := strings.Split(zone, "-")
+		if len(results) == 2 {
+			zmr = results[1]
+		}
+	}
+	log.Printf("ZoneMinusRegion: zone=%s Region=%s zmr='%s'", zone, Region, zmr)
+	return zmr
 }
 
 var envSuffixRegexp = regexp.MustCompile("^(prod|production)([_-]|$)")
