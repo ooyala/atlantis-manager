@@ -63,6 +63,7 @@ func Deploy(w http.ResponseWriter, r *http.Request) {
 		//use false as default value 
 		skipBld = false
 	}
+	manifest := r.FormValue("Manifest")
 	
 	dArg := ManagerDeployArg{
 		ManagerAuthArg: auth,
@@ -74,6 +75,7 @@ func Deploy(w http.ResponseWriter, r *http.Request) {
 		MemoryLimit:    uint(memlimit),
 		Dev:            bool(dev),
 		SkipBuild:      bool(skipBld),
+		Manifest:       manifest,
 	}
 	var reply AsyncReply
 	err = manager.Deploy(dArg, &reply)

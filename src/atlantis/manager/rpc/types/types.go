@@ -459,6 +459,7 @@ type ManagerDeployArg struct {
 	MemoryLimit uint // MBytes
 	Dev         bool // if true, only install 1 instance in 1 zone
 	SkipBuild   bool
+	Manifest    string
 }
 
 type ManagerDeployReply struct {

@@ -21,6 +21,7 @@ import (
 	. "atlantis/supervisor/rpc/types"
 	"errors"
 	"fmt"
+	"encoding/json"
 )
 
 type DeployExecutor struct {
@@ -90,22 +91,69 @@ func (e *DeployExecutor) Execute(t *Task) error {
 			return err
 		}
 	} else {
-		
-		cids, err := datamodel.ListInstances(e.arg.App, e.arg.Sha, e.arg.Env)
-		if err != nil || len(cids) == 0 {
-			
-			return errors.New("Unable to find deployed container with given App+SHA+Env")
-		} 
-		t.LogStatus("Using manifest from container %s for deploy", cids[0])
-		inst, err := datamodel.GetInstance(cids[0])
-		if err != nil {
-			return err
-		}
 
-		// get manifest
-		manifest = inst.Manifest
-		manifest.Instances = 1
-		
+		t.LogStatus("Deploy without trigger Jenkins job")
+		if len(e.arg.Manifest) > 0 {
+			//read manifest from request if present
+			t.LogStatus("Using manifest from request parameter to deploy")
+			t.LogStatus("Manifest parameter value: %s", e.arg.Manifest)
+
+			var f map[string]interface{}
+			if err := json.Unmarshal([]byte(e.arg.Manifest), &f); err != nil {
+				return err
+			}
+			var manifestData bman.Data
+			manifestData.Name = f["name"].(string)
+			manifestData.Description = f["description"].(string)
+
+			if val, ok := f["internal"]; ok {
+				manifestData.Internal = val.(bool)
+			}
+			if val, ok := f["cpu_shares"]; ok	{
+				manifestData.CPUShares = uint(val.(float64))
+			}
+			if val, ok := f["memory_limit"]; ok {
+				manifestData.MemoryLimit = uint(val.(float64))
+			}
+			manifestData.AppType = f["app_type"].(string)
+			if val, ok := f["java_type"]; ok {
+				manifestData.JavaType = val.(string)
+			} 
+			if val, ok := f["run_commands"]; ok {
+				
+				manifestData.RunCommands = interfaceArrayToStringArray(val.([]interface{}))
+
+			}
+			if val,	ok := f["setup_commands"]; ok {
+				manifestData.SetupCommands = interfaceArrayToStringArray(val.([]interface{}))
+                        }
+
+			manifestData.Dependencies = interfaceArrayToStringArray(f["dependencies"].([]interface{}))
+
+			manifest, err = CreateManifest(&manifestData)
+                	if err != nil {
+                        	return err
+                	}
+
+		} else {
+			//try to get manifest from a deployed container with same app+sha+env
+			
+			cids, err := datamodel.ListInstances(e.arg.App, e.arg.Sha, e.arg.Env)
+			if err != nil || len(cids) == 0 {
+
+				return errors.New("Unable to find manifest info in order to skip build")
+
+			}
+
+			t.LogStatus("Using manifest from container %s for deploy", cids[0])
+			inst, err := datamodel.GetInstance(cids[0])
+			if err != nil {
+				return err
+			}
+			// get manifest
+			manifest = inst.Manifest
+			manifest.Instances = 0
+		} 
 	}
 	
 	
@@ -134,14 +182,26 @@ func (e *DeployExecutor) Execute(t *Task) error {
 		manifest.Instances = uint(1) // default to 1 instance
 	}
 	if e.arg.Dev {
-		fmt.Printf("============it is dev")
+		t.LogStatus("Deploy only one instance, ie Dev=true")
 		e.reply.Containers, err = devDeploy(&e.arg.ManagerAuthArg, manifest, e.arg.Sha, e.arg.Env, t)
 	} else {
-		fmt.Printf("============it is NOT dev")
+		t.LogStatus("Deploy instances on multi AZ, ie. Dev=false")
 		
 		e.reply.Containers, err = deploy(&e.arg.ManagerAuthArg, manifest, e.arg.Sha, e.arg.Env, t)
 	}
 	return err
+}
+
+
+//helper function convert interface array into string array
+func interfaceArrayToStringArray(data []interface{}) []string {
+
+	var result []string
+	for _, element := range data {
+		result = append(result, element.(string))
+	}
+	return result
+
 }
 
 func (m *ManagerRPC) Deploy(arg ManagerDeployArg, reply *AsyncReply) error {
