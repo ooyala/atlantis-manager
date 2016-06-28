@@ -23,6 +23,8 @@ type DeployCommand struct {
 	CPUShares   uint   `short:"c" long:"cpu-shares" default:"0" description:"the number of CPU shares per instance"`
 	MemoryLimit uint   `short:"m" long:"memory-limit" default:"0" description:"the MBytes of memory per instance"`
 	Dev         bool   `long:"dev" description:"only deploy 1 instance in 1 AZ"`
+	SkipBuild   bool   `long:"skip-build" description:"assume similar container (app/sha/env) already deployed; skip build image step"`
+	Manifest    string `long:"manifest" description:"pass manifest in json format; use together with skip-build"`
 	Wait        bool   `long:"wait" description:"wait until the deploy is done before exiting"`
 	Properties  string `field:"Containers"`
 	Arg         ManagerDeployArg
