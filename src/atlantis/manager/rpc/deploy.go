@@ -109,7 +109,7 @@ func (e *DeployExecutor) Execute(t *Task) error {
 			if val, ok := f["internal"]; ok {
 				manifestData.Internal = val.(bool)
 			}
-			if val, ok := f["cpu_shares"]; ok	{
+			if val, ok := f["cpu_shares"]; ok {
 				manifestData.CPUShares = uint(val.(float64))
 			}
 			if val, ok := f["memory_limit"]; ok {
@@ -119,11 +119,14 @@ func (e *DeployExecutor) Execute(t *Task) error {
 			if val, ok := f["java_type"]; ok {
 				manifestData.JavaType = val.(string)
 			} 
-			if val, ok := f["run_commands"]; ok {
-				
-				manifestData.RunCommands = interfaceArrayToStringArray(val.([]interface{}))
 
+			if val, ok := f["run_commands"]; ok {
+				manifestData.RunCommands = interfaceArrayToStringArray(val.([]interface{}))
 			}
+			if val, ok := f["run_command"]; ok {
+                                manifestData.RunCommand = val.(string)
+                        }
+
 			if val,	ok := f["setup_commands"]; ok {
 				manifestData.SetupCommands = interfaceArrayToStringArray(val.([]interface{}))
                         }
