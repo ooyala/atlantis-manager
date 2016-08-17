@@ -329,7 +329,6 @@ func ModifyTeamAdmin(action int, arg ManagerModifyTeamAdminArg, reply *ManagerMo
 	var Attrs []string = []string{aldap.TeamAdminAttr}
 	var vals []string = []string{aldap.UserCommonName + "=" + arg.User + "," + aldap.UserOu}
 	modReq := goLdap.NewModifyRequest(modDNs[0])
-	//mod := ldap.NewMod(uint8(action), Attrs[0], vals)
 	modReq.Add(Attrs[0], vals)
 	if err := conn.Modify(modReq); err != nil {
 		return err
@@ -418,7 +417,6 @@ func ModifyTeamMember(action int, arg ManagerTeamMemberArg, reply *ManagerTeamMe
 	var Attrs []string = []string{aldap.UsernameAttr}
 	var vals []string = []string{aldap.UserCommonName + "=" + arg.User + "," + aldap.UserOu}
 	modReq := goLdap.NewModifyRequest(modDNs[0])
-	//mod := ldap.NewMod(uint8(action), Attrs[0], vals)
 	modReq.Add(Attrs[0], vals)
 	if err := conn.Modify(modReq); err != nil {
 		return err
