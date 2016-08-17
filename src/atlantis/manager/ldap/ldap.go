@@ -14,8 +14,8 @@ package ldap
 import (
 	"atlantis/crypto"
 	"crypto/tls"
-	"errors"
-	"github.com/mavricknz/ldap"
+	"fmt"
+	goLdap "github.com/go-ldap/ldap"
 	"log"
 	"regexp"
 	"strconv"
@@ -54,7 +54,7 @@ type Request struct {
 }
 
 type Session struct {
-	LDAPConn *ldap.LDAPConnection
+	LDAPConn *goLdap.Conn
 	Timer    *time.Timer
 }
 
@@ -75,7 +75,7 @@ func Init(lserver string, lport uint16, baseDomain string) {
 	go SessionExpiryRoutine()
 }
 
-func CreateSession(req *Request, lc *ldap.LDAPConnection) {
+func CreateSession(req *Request, lc *goLdap.Conn) {
 	if SessionMap[req.User] == nil {
 		SessionMap[req.User] = map[string]*Session{req.Secret: &Session{LDAPConn: lc,
 			Timer: time.AfterFunc(30*time.Minute, func() {
@@ -100,7 +100,7 @@ func LookupSession(req *Request) {
 	}
 }
 
-func LookupConnection(user, secret string) *ldap.LDAPConnection {
+func LookupConnection(user, secret string) *goLdap.Conn {
 	if SessionMap[user] != nil && SessionMap[user][secret] != nil {
 		return SessionMap[user][secret].LDAPConn
 	}
@@ -122,48 +122,39 @@ func Login(user, pass, secret string) (string, error) {
 	if skipLogin {
 		return "dummysecret", nil // just let everything pass
 	}
+
 	// Checking if we are already logged in
-	var LDAPConn *ldap.LDAPConnection
+	var Conn *goLdap.Conn
 	req := &Request{user, secret, false, make(chan bool)}
 	LookupSession(req)
 	if !req.LoggedIn {
-		LDAPConn = ldap.NewLDAPSSLConnection(LdapServer, LdapPort, TlsConfig)
-		err := LDAPConn.Connect()
+		var err error
+		log.Printf("Dialing TLS connection on port %d", LdapPort)
+		Conn, err = goLdap.Dial("tcp", fmt.Sprintf("%s:%d", LdapServer, LdapPort))
 		if err != nil {
 			return "", err
 		}
-		err = LoginBind(user, pass, LDAPConn)
+		log.Printf("Starting TLS connection")
+		err = Conn.StartTLS(TlsConfig)
 		if err != nil {
 			return "", err
 		}
+		username := fmt.Sprintf("uid=%s,ou=humans,ou=users,dc=ooyala,dc=com", user)
+		log.Printf("Binding TLS connection")
+		err = Conn.Bind(username, pass)
+		if err != nil {
+			return "", err
+		}
+
 		now := strconv.FormatInt(time.Now().Unix(), 10)
 		sec := string(crypto.Encrypt([]byte(pass + now)))
 		re := regexp.MustCompile("[^a-zA-Z0-9]")
 		sec = re.ReplaceAllString(sec, "")
 		req.Secret = sec
-	}
-	CreateSession(req, LDAPConn)
-	return req.Secret, nil
-}
 
-func LoginBind(user, pass string, lc *ldap.LDAPConnection) error {
-	filterStr := "(&(objectClass=" + UserClass + ")(" + UserClassAttr + "=" + user + "))"
-	searchReq := ldap.NewSimpleSearchRequest(BaseDomain, 2, filterStr, []string{UserClassAttr})
-	sr, err := lc.Search(searchReq)
-	if err != nil {
-		return err
+		log.Printf("TLS connection successful")
 	}
-	var dnInfo string
-	if len(sr.Entries) == 1 {
-		dnInfo = sr.Entries[0].DN
-	} else {
-		log.Println("No entries found")
-		return errors.New("Invalid Credentials")
-	}
-	err = lc.Bind(dnInfo, pass)
-	if err != nil {
-		log.Println("ERROR : Login not Successful")
-		return errors.New("Session Expired/Invalid Credentials")
-	}
-	return nil
+
+	CreateSession(req, Conn)
+	return req.Secret, nil
 }
