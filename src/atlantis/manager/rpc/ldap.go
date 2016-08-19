@@ -1104,7 +1104,6 @@ func NewSearchReq(filter string, attributes []string, auth *ManagerAuthArg) (*go
 	if err != nil {
 		return nil, err
 	}
-	//searchReq := ldap.NewSimpleSearchRequest(aldap.BaseDomain, 2, filter, attributes)
 	searchReq := goLdap.NewSearchRequest(aldap.BaseDomain, 2, goLdap.NeverDerefAliases, 0, 0, false, filter, attributes, nil)
 	sr, err := conn.Search(searchReq)
 	return sr, err
