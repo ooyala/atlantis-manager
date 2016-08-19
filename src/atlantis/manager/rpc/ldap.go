@@ -218,7 +218,7 @@ func ModifyTeamEmail(action int, arg ManagerEmailArg, reply *ManagerEmailReply) 
 	var Attrs []string = []string{"email"}
 	var vals []string = []string{arg.Email}
 	modReq := goLdap.NewModifyRequest(modDNs[0])
-	modReq.Add(Attrs[0], vals)
+	setRequestAttribute(modReq, action, &Attrs[0], &vals)
 	if err := conn.Modify(modReq); err != nil {
 		return err
 	}
@@ -329,7 +329,7 @@ func ModifyTeamAdmin(action int, arg ManagerModifyTeamAdminArg, reply *ManagerMo
 	var Attrs []string = []string{aldap.TeamAdminAttr}
 	var vals []string = []string{aldap.UserCommonName + "=" + arg.User + "," + aldap.UserOu}
 	modReq := goLdap.NewModifyRequest(modDNs[0])
-	modReq.Add(Attrs[0], vals)
+	setRequestAttribute(modReq, action, &Attrs[0], &vals)
 	if err := conn.Modify(modReq); err != nil {
 		return err
 	}
@@ -417,7 +417,7 @@ func ModifyTeamMember(action int, arg ManagerTeamMemberArg, reply *ManagerTeamMe
 	var Attrs []string = []string{aldap.UsernameAttr}
 	var vals []string = []string{aldap.UserCommonName + "=" + arg.User + "," + aldap.UserOu}
 	modReq := goLdap.NewModifyRequest(modDNs[0])
-	modReq.Add(Attrs[0], vals)
+	setRequestAttribute(modReq, action, &Attrs[0], &vals)
 	if err := conn.Modify(modReq); err != nil {
 		return err
 	}
@@ -1070,6 +1070,17 @@ func EmailExists(email string, team string, auth *ManagerAuthArg) bool {
 
 func ExtractUsername(fullname string) string {
 	return strings.Replace(strings.Replace(fullname, ","+aldap.UserOu, "", 1), aldap.UserCommonName+"=", "", 1)
+}
+
+// Update the Modify Request according to action
+func setRequestAttribute(request *goLdap.ModifyRequest, action int, attr *string, vals *[]string) {
+	if action == goLdap.AddAttribute {
+		request.Add(*attr, *vals)
+	} else if action == goLdap.DeleteAttribute {
+		request.Delete(*attr, *vals)
+	} else {
+		request.Replace(*attr, *vals)
+	}
 }
 
 // ----------------------------------------------------------------------------------------------------------
