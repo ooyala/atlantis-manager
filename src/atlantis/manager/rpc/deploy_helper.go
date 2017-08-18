@@ -105,7 +105,7 @@ func ResolveDepValuesForZone(app string, zkEnv *datamodel.ZkEnv, zone string, na
 			if appDep.DataMap == nil {
 				appDep.DataMap = map[string]interface{}{}
 			}
-			appDep.DataMap["address"] = helper.GetZoneRouterCName(true, zone, suffix) + ":" + port
+			appDep.DataMap["address"] = helper.GetZoneRouterConsulCName(true, zone) + ":" + port
 
 			// auto-populate SecurityGroup
 			portUint, err := strconv.ParseUint(port, 10, 16)
