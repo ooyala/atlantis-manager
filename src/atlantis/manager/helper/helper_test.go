@@ -141,8 +141,8 @@ func (s *HelperSuite) TestGetZoneRouterCName(c *C) {
 }
 
 func (s *HelperSuite) TestGetZoneRouterConsulCName(c *C) {
-        c.Assert(GetZoneRouterCName(true, Region+"a"), Equals, "internal-router.a.service.consul")
-        c.Assert(GetZoneRouterCName(false, Region+"a"), Equals, "router.a.service.consul")
+        c.Assert(GetZoneRouterCName(true, Region+"a"), Equals, "atlantis-internal-deva.service.consul")
+        c.Assert(GetZoneRouterCName(false, Region+"a"), Equals, "atlantis-router-deva.service.consul")
 }
 func (s *HelperSuite) TestGetRouterCName(c *C) {
 	c.Assert(GetRouterCName(true, 1, Region+"1", Region+".atlantis.com"), Equals, "internal-router1.1."+Region+".atlantis.com")
