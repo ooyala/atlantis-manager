@@ -62,12 +62,11 @@ func MergeDependerEnvData(dst *DependerEnvData, src *DependerEnvData) *DependerE
 func ResolveDepValuesForZone(app string, zkEnv *datamodel.ZkEnv, zone string, names []string, encrypt bool, t *Task) (DepsType, error) {
 	var (
 		err    error
-		suffix string
 	)
 	deps := DepsType{}
 	// if we're using DNS and the app is registered, try to get the app cname (if deployed)
 	if dns.Provider != nil {
-		suffix, err = dns.Provider.Suffix(Region)
+		_, err = dns.Provider.Suffix(Region)
 		if err != nil {
 			return deps, err
 		}
