@@ -161,6 +161,14 @@ func GetZoneRouterCName(internal bool, zone, suffix string) string {
 	return fmt.Sprintf("%srouter.%s.%s", internalStr, ZoneMinusRegion(zone), suffix)
 }
 
+func GetZoneRouterConsulCName(internal bool, zone string) string {
+        prefixStr := "atlantis-"
+        if internal {
+	   prefixStr = prefixStr + "internal-"
+        }
+	return fmt.Sprintf("%srouter-%s.service.consul", prefixStr, zone)
+}
+
 func GetRouterCName(internal bool, num int, zone, suffix string) string {
 	internalStr := ""
 	if internal {
