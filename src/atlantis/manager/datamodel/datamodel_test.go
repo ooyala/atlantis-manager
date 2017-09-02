@@ -12,8 +12,8 @@
 package datamodel
 
 import (
-	zookeeper "github.com/ghao-ooyala/gozk-recipes"
 	. "github.com/adjust/gocheck"
+	zookeeper "github.com/ghao-ooyala/gozk-recipes"
 	"testing"
 )
 

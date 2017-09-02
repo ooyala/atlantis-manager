@@ -21,8 +21,8 @@ import (
 	. "atlantis/manager/rpc/types"
 	scrypto "atlantis/supervisor/crypto"
 	"fmt"
-	zookeeper "github.com/ghao-ooyala/gozk-recipes"
 	. "github.com/adjust/gocheck"
+	zookeeper "github.com/ghao-ooyala/gozk-recipes"
 )
 
 type DeployHelperSuite struct{}
