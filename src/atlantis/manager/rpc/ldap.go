@@ -17,7 +17,7 @@ import (
 	. "atlantis/manager/rpc/types"
 	"errors"
 	"fmt"
-	"github.com/mavricknz/ldap"
+	goLdap "github.com/go-ldap/ldap"
 	"sort"
 	"strings"
 )
@@ -56,27 +56,27 @@ func (e *CreateTeamExecutor) Execute(t *Task) error {
 	}
 
 	var addDNs []string = []string{aldap.TeamCommonName + "=" + e.arg.Team + "," + aldap.TeamOu}
-	var Attrs []ldap.EntryAttribute = []ldap.EntryAttribute{
-		ldap.EntryAttribute{
+	var Attrs []goLdap.EntryAttribute = []goLdap.EntryAttribute{
+		goLdap.EntryAttribute{
 			Name:   "objectclass",
 			Values: []string{aldap.TeamClass, "groupOfNames", "top"},
 		},
-		ldap.EntryAttribute{
+		goLdap.EntryAttribute{
 			Name:   aldap.TeamAdminAttr,
 			Values: []string{aldap.UserCommonName + "=" + e.arg.User + "," + aldap.UserOu},
 		},
-		ldap.EntryAttribute{
+		goLdap.EntryAttribute{
 			Name:   aldap.TeamCommonName,
 			Values: []string{e.arg.Team},
 		},
-		ldap.EntryAttribute{
+		goLdap.EntryAttribute{
 			Name:   aldap.UsernameAttr,
 			Values: []string{aldap.UserCommonName + "=" + e.arg.User + "," + aldap.UserOu},
 		},
 	}
-	addReq := ldap.NewAddRequest(addDNs[0])
+	addReq := goLdap.NewAddRequest(addDNs[0])
 	for _, attr := range Attrs {
-		addReq.AddAttribute(&attr)
+		addReq.Attribute(attr.Name, attr.Values)
 	}
 	if err := conn.Add(addReq); err != nil {
 		return err
@@ -118,8 +118,9 @@ func (e *DeleteTeamExecutor) Execute(t *Task) error {
 		return errors.New("Team Does Not Exist")
 	}
 
-	delReq := ldap.NewDeleteRequest(aldap.TeamCommonName + "=" + e.arg.Team + "," + aldap.TeamOu)
-	if err := conn.Delete(delReq); err != nil {
+	dn := aldap.TeamCommonName + "=" + e.arg.Team + "," + aldap.TeamOu
+	delReq := goLdap.NewDelRequest(dn, make([]goLdap.Control, 0))
+	if err := conn.Del(delReq); err != nil {
 		return err
 	}
 
@@ -159,7 +160,7 @@ func (e *AddTeamEmailExecutor) Description() string {
 }
 
 func (e *AddTeamEmailExecutor) Execute(t *Task) error {
-	return ModifyTeamEmail(ldap.ModAdd, e.arg, e.reply)
+	return ModifyTeamEmail(goLdap.AddAttribute, e.arg, e.reply)
 }
 
 func (e *AddTeamEmailExecutor) Authorize() error {
@@ -187,7 +188,7 @@ func (e *RemoveTeamEmailExecutor) Description() string {
 }
 
 func (e *RemoveTeamEmailExecutor) Execute(t *Task) error {
-	return ModifyTeamEmail(ldap.ModDelete, e.arg, e.reply)
+	return ModifyTeamEmail(goLdap.DeleteAttribute, e.arg, e.reply)
 }
 
 func (e *RemoveTeamEmailExecutor) Authorize() error {
@@ -207,18 +208,17 @@ func ModifyTeamEmail(action int, arg ManagerEmailArg, reply *ManagerEmailReply) 
 		return errors.New("Team Does Not Exist")
 	}
 
-	if action == ldap.ModDelete && !EmailExists(arg.Email, arg.Team, &arg.ManagerAuthArg) {
+	if action == goLdap.DeleteAttribute && !EmailExists(arg.Email, arg.Team, &arg.ManagerAuthArg) {
 		return errors.New("Email does not exist.")
-	} else if action == ldap.ModAdd && EmailExists(arg.Email, arg.Team, &arg.ManagerAuthArg) {
+	} else if action == goLdap.AddAttribute && EmailExists(arg.Email, arg.Team, &arg.ManagerAuthArg) {
 		return errors.New("Email already exists.")
 	}
 
 	var modDNs []string = []string{aldap.TeamCommonName + "=" + arg.Team + "," + aldap.TeamOu}
 	var Attrs []string = []string{"email"}
 	var vals []string = []string{arg.Email}
-	modReq := ldap.NewModifyRequest(modDNs[0])
-	mod := ldap.NewMod(uint8(action), Attrs[0], vals)
-	modReq.AddMod(mod)
+	modReq := goLdap.NewModifyRequest(modDNs[0])
+	setRequestAttribute(modReq, action, &Attrs[0], &vals)
 	if err := conn.Modify(modReq); err != nil {
 		return err
 	}
@@ -252,7 +252,7 @@ func (e *AddTeamAdminExecutor) Description() string {
 }
 
 func (e *AddTeamAdminExecutor) Execute(t *Task) error {
-	return ModifyTeamAdmin(ldap.ModAdd, e.arg, e.reply)
+	return ModifyTeamAdmin(goLdap.AddAttribute, e.arg, e.reply)
 }
 
 func (e *AddTeamAdminExecutor) Authorize() error {
@@ -295,7 +295,7 @@ func (e *RemoveTeamAdminExecutor) Description() string {
 }
 
 func (e *RemoveTeamAdminExecutor) Execute(t *Task) error {
-	return ModifyTeamAdmin(ldap.ModDelete, e.arg, e.reply)
+	return ModifyTeamAdmin(goLdap.DeleteAttribute, e.arg, e.reply)
 }
 
 func (e *RemoveTeamAdminExecutor) Authorize() error {
@@ -328,9 +328,8 @@ func ModifyTeamAdmin(action int, arg ManagerModifyTeamAdminArg, reply *ManagerMo
 	var modDNs []string = []string{aldap.TeamCommonName + "=" + arg.Team + "," + aldap.TeamOu}
 	var Attrs []string = []string{aldap.TeamAdminAttr}
 	var vals []string = []string{aldap.UserCommonName + "=" + arg.User + "," + aldap.UserOu}
-	modReq := ldap.NewModifyRequest(modDNs[0])
-	mod := ldap.NewMod(uint8(action), Attrs[0], vals)
-	modReq.AddMod(mod)
+	modReq := goLdap.NewModifyRequest(modDNs[0])
+	setRequestAttribute(modReq, action, &Attrs[0], &vals)
 	if err := conn.Modify(modReq); err != nil {
 		return err
 	}
@@ -364,7 +363,7 @@ func (e *AddTeamMemberExecutor) Description() string {
 }
 
 func (e *AddTeamMemberExecutor) Execute(t *Task) error {
-	return ModifyTeamMember(ldap.ModAdd, e.arg, e.reply)
+	return ModifyTeamMember(goLdap.AddAttribute, e.arg, e.reply)
 }
 
 func (e *AddTeamMemberExecutor) Authorize() error {
@@ -392,7 +391,7 @@ func (e *RemoveTeamMemberExecutor) Description() string {
 }
 
 func (e *RemoveTeamMemberExecutor) Execute(t *Task) error {
-	return ModifyTeamMember(ldap.ModDelete, e.arg, e.reply)
+	return ModifyTeamMember(goLdap.DeleteAttribute, e.arg, e.reply)
 }
 
 func (e *RemoveTeamMemberExecutor) Authorize() error {
@@ -407,7 +406,7 @@ func ModifyTeamMember(action int, arg ManagerTeamMemberArg, reply *ManagerTeamMe
 	if err != nil {
 		return err
 	}
-	if action != ldap.ModDelete && !UserExists(arg.User, &arg.ManagerAuthArg) {
+	if action != goLdap.DeleteAttribute && !UserExists(arg.User, &arg.ManagerAuthArg) {
 		return errors.New("User does not exist")
 	}
 
@@ -417,9 +416,8 @@ func ModifyTeamMember(action int, arg ManagerTeamMemberArg, reply *ManagerTeamMe
 	var modDNs []string = []string{aldap.TeamCommonName + "=" + arg.Team + "," + aldap.TeamOu}
 	var Attrs []string = []string{aldap.UsernameAttr}
 	var vals []string = []string{aldap.UserCommonName + "=" + arg.User + "," + aldap.UserOu}
-	modReq := ldap.NewModifyRequest(modDNs[0])
-	mod := ldap.NewMod(uint8(action), Attrs[0], vals)
-	modReq.AddMod(mod)
+	modReq := goLdap.NewModifyRequest(modDNs[0])
+	setRequestAttribute(modReq, action, &Attrs[0], &vals)
 	if err := conn.Modify(modReq); err != nil {
 		return err
 	}
@@ -636,19 +634,20 @@ func (e *AllowAppExecutor) Execute(t *Task) error {
 	}
 
 	var addDNs []string = []string{aldap.AllowedAppAttr + "=" + e.arg.App + "," + aldap.TeamCommonName + "=" + e.arg.Team + "," + aldap.TeamOu}
-	var Attrs []ldap.EntryAttribute = []ldap.EntryAttribute{
-		ldap.EntryAttribute{
+	var Attrs []goLdap.EntryAttribute = []goLdap.EntryAttribute{
+		goLdap.EntryAttribute{
 			Name:   "objectclass",
 			Values: []string{aldap.AppClass, "top"},
 		},
-		ldap.EntryAttribute{
+		goLdap.EntryAttribute{
 			Name:   aldap.AllowedAppAttr,
 			Values: []string{e.arg.App},
 		},
 	}
-	addReq := ldap.NewAddRequest(addDNs[0])
+
+	addReq := goLdap.NewAddRequest(addDNs[0])
 	for _, attr := range Attrs {
-		addReq.AddAttribute(&attr)
+		addReq.Attribute(attr.Name, attr.Values)
 	}
 	if err := conn.Add(addReq); err != nil {
 		return err
@@ -689,8 +688,9 @@ func (e *DisallowAppExecutor) Execute(t *Task) error {
 	if err != nil {
 		return err
 	}
-	delReq := ldap.NewDeleteRequest(aldap.AllowedAppAttr + "=" + e.arg.App + "," + aldap.TeamCommonName + "=" + e.arg.Team + "," + aldap.TeamOu)
-	if err := conn.Delete(delReq); err != nil {
+	dn := aldap.AllowedAppAttr + "=" + e.arg.App + "," + aldap.TeamCommonName + "=" + e.arg.Team + "," + aldap.TeamOu
+	delReq := goLdap.NewDelRequest(dn, make([]goLdap.Control, 0))
+	if err := conn.Del(delReq); err != nil {
 		return err
 	}
 
@@ -893,7 +893,7 @@ func (e *IsTeamAdminExecutor) Execute(t *Task) error {
 	return nil
 }
 
-func ProcessTeamAdmin(userdn string, sr *ldap.SearchResult) bool {
+func ProcessTeamAdmin(userdn string, sr *goLdap.SearchResult) bool {
 	srTeamAdmin := sr.Entries[0].GetAttributeValues(aldap.TeamAdminAttr)
 	teamAdminCount := len(srTeamAdmin)
 	for i := 0; i < teamAdminCount; i++ {
@@ -983,7 +983,7 @@ func TeamExists(name string, auth *ManagerAuthArg) bool {
 }
 
 func ListTeams(auth *ManagerAuthArg) ([]string, error) {
-	filterStr := "(&(objectClass=" + aldap.TeamClass + ")"
+	filterStr := "(&(objectClass=" + aldap.TeamClass + "))"
 	sr, err := NewSearchReq(filterStr, []string{aldap.TeamCommonName}, auth)
 	ret := []string{}
 	if err != nil || sr == nil {
@@ -1072,11 +1072,22 @@ func ExtractUsername(fullname string) string {
 	return strings.Replace(strings.Replace(fullname, ","+aldap.UserOu, "", 1), aldap.UserCommonName+"=", "", 1)
 }
 
+// Update the Modify Request according to action
+func setRequestAttribute(request *goLdap.ModifyRequest, action int, attr *string, vals *[]string) {
+	if action == goLdap.AddAttribute {
+		request.Add(*attr, *vals)
+	} else if action == goLdap.DeleteAttribute {
+		request.Delete(*attr, *vals)
+	} else {
+		request.Replace(*attr, *vals)
+	}
+}
+
 // ----------------------------------------------------------------------------------------------------------
 // Init
 // ----------------------------------------------------------------------------------------------------------
 
-func InitConnection(auth *ManagerAuthArg) (*ldap.LDAPConnection, error) {
+func InitConnection(auth *ManagerAuthArg) (*goLdap.Conn, error) {
 	if conn := aldap.LookupConnection(auth.User, auth.Secret); conn != nil {
 		return conn, nil
 	}
@@ -1087,13 +1098,13 @@ func InitConnection(auth *ManagerAuthArg) (*ldap.LDAPConnection, error) {
 // Search Requests
 // ----------------------------------------------------------------------------------------------------------
 
-func NewSearchReq(filter string, attributes []string, auth *ManagerAuthArg) (*ldap.SearchResult, error) {
+func NewSearchReq(filter string, attributes []string, auth *ManagerAuthArg) (*goLdap.SearchResult, error) {
 	// 2 => Searching the Whole Subtree
 	conn, err := InitConnection(auth)
 	if err != nil {
 		return nil, err
 	}
-	searchReq := ldap.NewSimpleSearchRequest(aldap.BaseDomain, 2, filter, attributes)
+	searchReq := goLdap.NewSearchRequest(aldap.BaseDomain, 2, goLdap.NeverDerefAliases, 0, 0, false, filter, attributes, nil)
 	sr, err := conn.Search(searchReq)
 	return sr, err
 }
