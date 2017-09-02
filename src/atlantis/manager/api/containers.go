@@ -35,6 +35,11 @@ func ContainerHealthzGet(w http.ResponseWriter, r *http.Request) {
 	host := "http://" + r.FormValue("Host")
 	port := r.FormValue("Port")
 	resp, err := http.Get(host + ":" + port + "/healthz")
+
+	if resp != nil {
+		defer resp.Body.Close()
+	}
+
 	serverStatus := ""
 	if err == nil {
 		serverStatus = resp.Header.Get("Server-Status")
