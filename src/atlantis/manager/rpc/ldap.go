@@ -18,7 +18,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/mavricknz/ldap"
-	"log"
+	//"log"
 	"regexp"
 	"sort"
 	"strings"
@@ -848,6 +848,15 @@ func (m *ManagerRPC) IsSuperUser(arg ManagerSuperUserArg, reply *ManagerSuperUse
 // ----------------------------------------------------------------------------------------------------------
 // Helpers
 // ----------------------------------------------------------------------------------------------------------
+func contains(arr []string, str string) bool {
+   for _, a := range arr {
+      if a == str {
+         return true
+      }
+   }
+   return false
+}
+
 
 func TeamExists(name string, auth *ManagerAuthArg) bool {
 	filterStr := "(&(objectClass=" + aldap.TeamClass + ")(" + aldap.TeamCommonName + "=" + name + "))"
@@ -859,35 +868,10 @@ func TeamExists(name string, auth *ManagerAuthArg) bool {
 }
 
 func ListTeams(auth *ManagerAuthArg) ([]string, error) {
-     /*
-		filterStr := "(&(objectClass=posixAccount)(uid=" + user + "))"
-		searchReq := ldap.NewSimpleSearchRequest(BaseDomain, 2, filterStr, []string{"memberOf"})
-        	sr, err := LDAPConn.Search(searchReq)
-
-
-        	ret := []string{}
-        	if err != nil || sr == nil {
-		   log.Println("======errr is %v====== and sr is %v", err, sr)
-	   	   //return ret, err
-        	}
-
-		for _, entry := range sr.Entries {
-                    vals := entry.GetAttributeValues("memberOf")
-		    r, _ := regexp.Compile("^cn=([^,]+)")
-		    if len(vals) > 0 {
-		       for _, teamDn := range vals {	       
-		          substrings := strings.Split(r.FindString(teamDn), "=")
-			  log.Println("=========", substrings[1])
-                          ret = append(ret, vals...)
-	  		  
-		       }
-		    }
-        	}
-
-*/
 
 	//should be something like (&(objectClass=posixAccount)(uid=xxxx))
         filterStr := "(&(objectClass=" + aldap.UserClass + ")(" + aldap.UserCommonName + "=" + auth.User + "))" 
+
 	sr, err := NewSearchReq(filterStr, []string{"memberOf"}, auth)
 	ret := []string{}
 	if err != nil || sr == nil {
@@ -900,18 +884,14 @@ func ListTeams(auth *ManagerAuthArg) ([]string, error) {
 		if len(vals) > 0 {
 			for _, teamDn := range vals {
 				substrings := strings.Split(r.FindString(teamDn), "=")
-				log.Println("=========", substrings[1])
-				ret = append(ret, substrings[1])
+				
+				if len(substrings) == 2 && !contains(aldap.TeamBlackList, substrings[1]) {
+					ret = append(ret, substrings[1])
+				}
 			}
 		}
 	}
 
-	/*for _, entry := range sr.Entries {
-		vals := entry.GetAttributeValues(aldap.TeamCommonName)
-		if len(vals) > 0 {
-			ret = append(ret, vals...)
-		}
-	}*/
 	return ret, nil
 }
 
@@ -1014,3 +994,4 @@ func NewSearchReq(filter string, attributes []string, auth *ManagerAuthArg) (*ld
 	sr, err := conn.Search(searchReq)
 	return sr, err
 }
+
