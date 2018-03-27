@@ -18,6 +18,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/mavricknz/ldap"
+	"log"
+	"regexp"
 	"sort"
 	"strings"
 )
@@ -46,42 +48,7 @@ func (e *CreateTeamExecutor) Description() string {
 }
 
 func (e *CreateTeamExecutor) Execute(t *Task) error {
-	conn, err := InitConnection(&e.arg.ManagerAuthArg)
-	if err != nil {
-		return err
-	}
-
-	if TeamExists(e.arg.Team, &e.arg.ManagerAuthArg) {
-		return errors.New("Team Already Exists")
-	}
-
-	var addDNs []string = []string{aldap.TeamCommonName + "=" + e.arg.Team + "," + aldap.TeamOu}
-	var Attrs []ldap.EntryAttribute = []ldap.EntryAttribute{
-		ldap.EntryAttribute{
-			Name:   "objectclass",
-			Values: []string{aldap.TeamClass, "groupOfNames", "top"},
-		},
-		ldap.EntryAttribute{
-			Name:   aldap.TeamAdminAttr,
-			Values: []string{aldap.UserCommonName + "=" + e.arg.User + "," + aldap.UserOu},
-		},
-		ldap.EntryAttribute{
-			Name:   aldap.TeamCommonName,
-			Values: []string{e.arg.Team},
-		},
-		ldap.EntryAttribute{
-			Name:   aldap.UsernameAttr,
-			Values: []string{aldap.UserCommonName + "=" + e.arg.User + "," + aldap.UserOu},
-		},
-	}
-	addReq := ldap.NewAddRequest(addDNs[0])
-	for _, attr := range Attrs {
-		addReq.AddAttribute(&attr)
-	}
-	if err := conn.Add(addReq); err != nil {
-		return err
-	}
-	return nil
+        return errors.New("Team creation is no longer supported")
 }
 
 func (e *CreateTeamExecutor) Authorize() error {
@@ -109,21 +76,7 @@ func (e *DeleteTeamExecutor) Description() string {
 }
 
 func (e *DeleteTeamExecutor) Execute(t *Task) error {
-	conn, err := InitConnection(&e.arg.ManagerAuthArg)
-	if err != nil {
-		return err
-	}
-
-	if !TeamExists(e.arg.Team, &e.arg.ManagerAuthArg) {
-		return errors.New("Team Does Not Exist")
-	}
-
-	delReq := ldap.NewDeleteRequest(aldap.TeamCommonName + "=" + e.arg.Team + "," + aldap.TeamOu)
-	if err := conn.Delete(delReq); err != nil {
-		return err
-	}
-
-	return nil
+	return errors.New("Team Delete is no longer supported")
 }
 
 func (e *DeleteTeamExecutor) Authorize() error {
@@ -198,32 +151,7 @@ func (e *RemoveTeamEmailExecutor) Authorize() error {
 }
 
 func ModifyTeamEmail(action int, arg ManagerEmailArg, reply *ManagerEmailReply) error {
-	conn, err := InitConnection(&arg.ManagerAuthArg)
-	if err != nil {
-		return err
-	}
-
-	if !TeamExists(arg.Team, &arg.ManagerAuthArg) {
-		return errors.New("Team Does Not Exist")
-	}
-
-	if action == ldap.ModDelete && !EmailExists(arg.Email, arg.Team, &arg.ManagerAuthArg) {
-		return errors.New("Email does not exist.")
-	} else if action == ldap.ModAdd && EmailExists(arg.Email, arg.Team, &arg.ManagerAuthArg) {
-		return errors.New("Email already exists.")
-	}
-
-	var modDNs []string = []string{aldap.TeamCommonName + "=" + arg.Team + "," + aldap.TeamOu}
-	var Attrs []string = []string{"email"}
-	var vals []string = []string{arg.Email}
-	modReq := ldap.NewModifyRequest(modDNs[0])
-	mod := ldap.NewMod(uint8(action), Attrs[0], vals)
-	modReq.AddMod(mod)
-	if err := conn.Modify(modReq); err != nil {
-		return err
-	}
-
-	return nil
+	return errors.New("Team email modification is no longer supported")
 }
 
 func (m *ManagerRPC) AddTeamEmail(arg ManagerEmailArg, reply *ManagerEmailReply) error {
@@ -252,7 +180,7 @@ func (e *AddTeamAdminExecutor) Description() string {
 }
 
 func (e *AddTeamAdminExecutor) Execute(t *Task) error {
-	return ModifyTeamAdmin(ldap.ModAdd, e.arg, e.reply)
+	return errors.New("Modify Team admin is no longer supported")
 }
 
 func (e *AddTeamAdminExecutor) Authorize() error {
@@ -295,7 +223,7 @@ func (e *RemoveTeamAdminExecutor) Description() string {
 }
 
 func (e *RemoveTeamAdminExecutor) Execute(t *Task) error {
-	return ModifyTeamAdmin(ldap.ModDelete, e.arg, e.reply)
+	return errors.New("Modify Team admin is no longer supported")
 }
 
 func (e *RemoveTeamAdminExecutor) Authorize() error {
@@ -312,30 +240,7 @@ func (e *RemoveTeamAdminExecutor) Authorize() error {
 }
 
 func ModifyTeamAdmin(action int, arg ManagerModifyTeamAdminArg, reply *ManagerModifyTeamAdminReply) error {
-	conn, err := InitConnection(&arg.ManagerAuthArg)
-	if err != nil {
-		return err
-	}
-
-	if !UserExists(arg.User, &arg.ManagerAuthArg) {
-		return errors.New("User does not exist")
-	}
-
-	if !TeamExists(arg.Team, &arg.ManagerAuthArg) {
-		return errors.New("Team Does Not Exist")
-	}
-
-	var modDNs []string = []string{aldap.TeamCommonName + "=" + arg.Team + "," + aldap.TeamOu}
-	var Attrs []string = []string{aldap.TeamAdminAttr}
-	var vals []string = []string{aldap.UserCommonName + "=" + arg.User + "," + aldap.UserOu}
-	modReq := ldap.NewModifyRequest(modDNs[0])
-	mod := ldap.NewMod(uint8(action), Attrs[0], vals)
-	modReq.AddMod(mod)
-	if err := conn.Modify(modReq); err != nil {
-		return err
-	}
-
-	return nil
+	return errors.New("Modify Team admin is no longer supported")
 }
 
 func (m *ManagerRPC) AddTeamAdmin(arg ManagerModifyTeamAdminArg, reply *ManagerModifyTeamAdminReply) error {
@@ -364,7 +269,7 @@ func (e *AddTeamMemberExecutor) Description() string {
 }
 
 func (e *AddTeamMemberExecutor) Execute(t *Task) error {
-	return ModifyTeamMember(ldap.ModAdd, e.arg, e.reply)
+	return errors.New("Modify Team memeber is no longer supported")
 }
 
 func (e *AddTeamMemberExecutor) Authorize() error {
@@ -392,7 +297,7 @@ func (e *RemoveTeamMemberExecutor) Description() string {
 }
 
 func (e *RemoveTeamMemberExecutor) Execute(t *Task) error {
-	return ModifyTeamMember(ldap.ModDelete, e.arg, e.reply)
+	return errors.New("Modify Team memeber is no longer supporte")
 }
 
 func (e *RemoveTeamMemberExecutor) Authorize() error {
@@ -523,11 +428,7 @@ func (e *ListTeamAdminsExecutor) Description() string {
 }
 
 func (e *ListTeamAdminsExecutor) Execute(t *Task) (err error) {
-	e.reply.TeamAdmins, err = ListTeamAdmins(e.arg.Team, &e.arg.ManagerAuthArg)
-	if err == nil {
-		sort.Strings(e.reply.TeamAdmins)
-	}
-	return err
+	return errors.New("Team Admin is no longer supported")
 }
 
 func (e *ListTeamAdminsExecutor) Authorize() error {
@@ -859,38 +760,10 @@ func (e *IsTeamAdminExecutor) Description() string {
 }
 
 func (e *IsTeamAdminExecutor) Execute(t *Task) error {
-	if aldap.SkipAuthorization {
-		e.reply.IsAdmin = true
-		return nil
-	}
-
-	var suReply ManagerSuperUserReply
-	if err := NewTask("IsTeamAdmin-IsSuperUser", &IsSuperUserExecutor{ManagerSuperUserArg{e.arg.ManagerAuthArg},
-		&suReply}).Run(); err == nil {
-		e.reply.IsAdmin = suReply.IsSuperUser
-		if e.reply.IsAdmin {
-			return nil
-		}
-	} else {
-		return err
-	}
-
-	if !TeamExists(e.arg.Team, &e.arg.ManagerAuthArg) {
-		e.reply.IsAdmin = false
-		return errors.New("Team Does Not Exist")
-	}
-
-	filterStr := "(&(objectClass=" + aldap.TeamClass + ")(" + aldap.TeamCommonName + "=" + e.arg.Team + "))"
-	sr, err := NewSearchReq(filterStr, []string{aldap.TeamAdminAttr}, &e.arg.ManagerAuthArg)
-	if err != nil {
-		e.reply.IsAdmin = false
-		return err
-	} else if len(sr.Entries) == 0 {
-		e.reply.IsAdmin = false
-		return errors.New("Could not list team admin attribute")
-	}
-	e.reply.IsAdmin = ProcessTeamAdmin(aldap.UserCommonName+"="+e.arg.User+","+aldap.UserOu, sr)
+	//no more team admin
+	e.reply.IsAdmin = false
 	return nil
+	
 }
 
 func ProcessTeamAdmin(userdn string, sr *ldap.SearchResult) bool {
@@ -927,6 +800,9 @@ func (e *IsSuperUserExecutor) Description() string {
 }
 
 func (e *IsSuperUserExecutor) Execute(t *Task) error {
+	e.reply.IsSuperUser = true
+	return nil
+
 	if aldap.SkipAuthorization {
 		e.reply.IsSuperUser = true
 		return nil
@@ -983,18 +859,59 @@ func TeamExists(name string, auth *ManagerAuthArg) bool {
 }
 
 func ListTeams(auth *ManagerAuthArg) ([]string, error) {
-	filterStr := "(&(objectClass=" + aldap.TeamClass + ")"
-	sr, err := NewSearchReq(filterStr, []string{aldap.TeamCommonName}, auth)
+     /*
+		filterStr := "(&(objectClass=posixAccount)(uid=" + user + "))"
+		searchReq := ldap.NewSimpleSearchRequest(BaseDomain, 2, filterStr, []string{"memberOf"})
+        	sr, err := LDAPConn.Search(searchReq)
+
+
+        	ret := []string{}
+        	if err != nil || sr == nil {
+		   log.Println("======errr is %v====== and sr is %v", err, sr)
+	   	   //return ret, err
+        	}
+
+		for _, entry := range sr.Entries {
+                    vals := entry.GetAttributeValues("memberOf")
+		    r, _ := regexp.Compile("^cn=([^,]+)")
+		    if len(vals) > 0 {
+		       for _, teamDn := range vals {	       
+		          substrings := strings.Split(r.FindString(teamDn), "=")
+			  log.Println("=========", substrings[1])
+                          ret = append(ret, vals...)
+	  		  
+		       }
+		    }
+        	}
+
+*/
+
+	//should be something like (&(objectClass=posixAccount)(uid=xxxx))
+        filterStr := "(&(objectClass=" + aldap.UserClass + ")(" + aldap.UserCommonName + "=" + auth.User + "))" 
+	sr, err := NewSearchReq(filterStr, []string{"memberOf"}, auth)
 	ret := []string{}
 	if err != nil || sr == nil {
 		return ret, err
 	}
+
 	for _, entry := range sr.Entries {
+		vals := entry.GetAttributeValues("memberOf")
+		r, _ := regexp.Compile("^cn=([^,]+)")
+		if len(vals) > 0 {
+			for _, teamDn := range vals {
+				substrings := strings.Split(r.FindString(teamDn), "=")
+				log.Println("=========", substrings[1])
+				ret = append(ret, substrings[1])
+			}
+		}
+	}
+
+	/*for _, entry := range sr.Entries {
 		vals := entry.GetAttributeValues(aldap.TeamCommonName)
 		if len(vals) > 0 {
 			ret = append(ret, vals...)
 		}
-	}
+	}*/
 	return ret, nil
 }
 

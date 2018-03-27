@@ -61,6 +61,8 @@ type ServerConfig struct {
 	LdapUserClassAttr          string `toml:"ldap_user_class_attr"`
 	SkipAuthorization          bool   `toml:"skip_authorization"`
 	LdapSuperUserGroup         string `toml:"ldap_super_user_group"`
+	LdapSearchUserDn           string `toml:"ldap_search_user_dn"`
+	LdapSearchUserPwd      	   string `toml:"ldap_search_user_pwd"`
 	Host                       string `toml:"host"`
 	Region                     string `toml:"region"`
 	Zone                       string `toml:"zone"`
@@ -319,6 +321,8 @@ func (m *ManagerServer) LDAPInit() error {
 	ldap.SuperUserGroup = m.Config.LdapSuperUserGroup
 	ldap.UserClass = m.Config.LdapUserClass
 	ldap.UserClassAttr = m.Config.LdapUserClassAttr
+	ldap.SearchUserDn  = m.Config.LdapSearchUserDn
+	ldap.SearchUserPwd = m.Config.LdapSearchUserPwd
 	return nil
 }
 
