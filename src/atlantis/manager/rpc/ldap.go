@@ -18,7 +18,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/mavricknz/ldap"
-	//"log"
+	"log"
 	"regexp"
 	"sort"
 	"strings"
@@ -428,7 +428,8 @@ func (e *ListTeamAdminsExecutor) Description() string {
 }
 
 func (e *ListTeamAdminsExecutor) Execute(t *Task) (err error) {
-	return errors.New("Team Admin is no longer supported")
+	e.reply.TeamAdmins = nil
+	return nil
 }
 
 func (e *ListTeamAdminsExecutor) Authorize() error {
@@ -902,10 +903,18 @@ func ListTeamAttributes(team, attribute string, auth *ManagerAuthArg) ([]string,
 	if err != nil || sr == nil {
 		return ret, err
 	}
+
 	for _, entry := range sr.Entries {
 		vals := entry.GetAttributeValues(attribute)
 		if len(vals) > 0 {
-			ret = append(ret, vals...)
+			r, _ := regexp.Compile("^uid=([^,]+)")
+			for _, dn := range vals {
+				substrings := strings.Split(r.FindString(dn), "=")
+				if len(substrings) == 2 {
+					ret = append(ret, substrings[1])
+                                }
+
+			}
 		}
 	}
 	return ret, nil
