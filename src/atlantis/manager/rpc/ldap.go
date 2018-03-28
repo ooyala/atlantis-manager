@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/mavricknz/ldap"
+	"log"
 	"regexp"
 	"sort"
 	"strings"
@@ -801,27 +802,28 @@ func (e *IsSuperUserExecutor) Description() string {
 }
 
 func (e *IsSuperUserExecutor) Execute(t *Task) error {
-	e.reply.IsSuperUser = true
-	return nil
 
 	if aldap.SkipAuthorization {
 		e.reply.IsSuperUser = true
+		log.Println("isSuperUser is true because skip auth flag is set")
 		return nil
 	}
 	if !UserExists(e.arg.User, &e.arg.ManagerAuthArg) {
 		e.reply.IsSuperUser = false
 		return nil
 	}
-	filterStr := "(&(objectClass=" + aldap.TeamClass + ")(" + aldap.SuperUserGroup + ")(" + aldap.UsernameAttr + "=" + aldap.UserCommonName + "=" + e.arg.User + "," + aldap.UserOu + "))"
-	sr, err := NewSearchReq(filterStr, []string{aldap.TeamCommonName}, &e.arg.ManagerAuthArg)
+
+	teams, err := ListTeams(&e.arg.ManagerAuthArg)
 	if err != nil {
 		return err
 	}
-	if len(sr.Entries) > 0 {
+
+	if contains(teams, aldap.SuperUserGroup) {
 		e.reply.IsSuperUser = true
 	} else {
 		e.reply.IsSuperUser = false
 	}
+
 	t.Log("-> %t", e.reply.IsSuperUser)
 	return nil
 }
