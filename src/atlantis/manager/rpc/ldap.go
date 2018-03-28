@@ -13,12 +13,12 @@ package rpc
 
 import (
 	. "atlantis/common"
+	"atlantis/manager/datamodel"
 	aldap "atlantis/manager/ldap"
 	. "atlantis/manager/rpc/types"
 	"errors"
 	"fmt"
 	"github.com/mavricknz/ldap"
-	"log"
 	"regexp"
 	"sort"
 	"strings"
@@ -428,7 +428,7 @@ func (e *ListTeamAdminsExecutor) Description() string {
 }
 
 func (e *ListTeamAdminsExecutor) Execute(t *Task) (err error) {
-	e.reply.TeamAdmins = nil
+	e.reply.TeamAdmins = []string{}
 	return nil
 }
 
@@ -491,7 +491,7 @@ func (e *ListTeamAppsExecutor) Description() string {
 }
 
 func (e *ListTeamAppsExecutor) Execute(t *Task) (err error) {
-	e.reply.TeamApps, err = ListTeamApps(e.arg.Team, &e.arg.ManagerAuthArg)
+	e.reply.TeamApps, err = ListTeamApps(e.arg.Team)
 	if err == nil {
 		sort.Strings(e.reply.TeamApps)
 	}
@@ -940,20 +940,10 @@ func ListTeamMembers(team string, auth *ManagerAuthArg) ([]string, error) {
 	return ret, err
 }
 
-func ListTeamApps(team string, auth *ManagerAuthArg) ([]string, error) {
-	result := []string{}
-	filterStr := "(&(objectClass=" + aldap.AppClass + ")(" + aldap.TeamCommonName + ":dn:=" +
-		team + "))"
-	ss, err := NewSearchReq(filterStr, []string{aldap.AllowedAppAttr}, auth)
-	if err != nil {
-		return result, err
-	}
-	appCount := len(ss.Entries)
-	for j := 0; j < appCount; j++ {
-		app := ss.Entries[j].GetAttributeValues(aldap.AllowedAppAttr)[0]
-		result = append(result, app)
-	}
-	return result, nil
+func ListTeamApps(team string) ([]string, error) {
+
+	teamApps := datamodel.GetTeamapps(team)
+	return teamApps.Apps, nil
 }
 
 func UserExists(name string, auth *ManagerAuthArg) bool {

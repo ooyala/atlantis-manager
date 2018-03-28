@@ -220,3 +220,8 @@ func EmptyIfProdPrefix(env string) string {
 	}
 	return "." + env
 }
+
+func GetBaseTeamappsPath(args ...string) string {
+	base := fmt.Sprintf("/atlantis/team_apps/%s", Region)
+	return JoinWithBase(base, args...)
+}
