@@ -672,22 +672,15 @@ func (e *ListAllowedAppsExecutor) Authorize() error {
 
 func GetAllowedApps(auth *ManagerAuthArg, user string) map[string]bool {
 	result := map[string]bool{}
-	filterStr := "(&(objectClass=" + aldap.TeamClass + ")(" + aldap.UsernameAttr + "=" + aldap.UserCommonName + "=" + user +
-		"," + aldap.UserOu + "))"
-	sr, err := NewSearchReq(filterStr, []string{aldap.TeamCommonName}, auth)
+
+	teams, err := ListTeams(auth)
+	
 	if err != nil {
 		return result
 	}
-	for i := 0; i < len(sr.Entries); i++ {
-		filterStr := "(&(objectClass=" + aldap.AppClass + ")(" + aldap.TeamCommonName + ":dn:=" +
-			sr.Entries[i].GetAttributeValues(aldap.TeamCommonName)[0] + "))"
-		ss, err := NewSearchReq(filterStr, []string{aldap.AllowedAppAttr}, auth)
-		if err != nil {
-			return result
-		}
-		appCount := len(ss.Entries)
-		for j := 0; j < appCount; j++ {
-			app := ss.Entries[j].GetAttributeValues(aldap.AllowedAppAttr)[0]
+	for _, team := range teams {
+		teamApps := datamodel.GetTeamapps(team)
+		for _, app := range teamApps.Apps {
 			result[app] = true
 		}
 	}

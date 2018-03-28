@@ -300,9 +300,6 @@ func ModifyAllowedTeamApp(action, team, app string) error {
 	if err != nil {
 		return err
 	}
-	if err := IsTeamAdmin(team); err != nil {
-		return err
-	}
 	if app == "" && team == "" {
 		return errors.New("Missing App/Team Arguments")
 	}
