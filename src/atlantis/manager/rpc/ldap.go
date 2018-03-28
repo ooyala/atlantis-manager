@@ -529,42 +529,17 @@ func (e *AllowAppExecutor) Description() string {
 }
 
 func (e *AllowAppExecutor) Execute(t *Task) error {
-	conn, err := InitConnection(&e.arg.ManagerAuthArg)
-	if err != nil {
-		return err
-	}
 
 	if !TeamExists(e.arg.Team, &e.arg.ManagerAuthArg) {
 		return errors.New("Team Does Not Exist")
 	}
-
-	var addDNs []string = []string{aldap.AllowedAppAttr + "=" + e.arg.App + "," + aldap.TeamCommonName + "=" + e.arg.Team + "," + aldap.TeamOu}
-	var Attrs []ldap.EntryAttribute = []ldap.EntryAttribute{
-		ldap.EntryAttribute{
-			Name:   "objectclass",
-			Values: []string{aldap.AppClass, "top"},
-		},
-		ldap.EntryAttribute{
-			Name:   aldap.AllowedAppAttr,
-			Values: []string{e.arg.App},
-		},
-	}
-	addReq := ldap.NewAddRequest(addDNs[0])
-	for _, attr := range Attrs {
-		addReq.AddAttribute(&attr)
-	}
-	if err := conn.Add(addReq); err != nil {
-		return err
-	}
-
-	return nil
+	teamApps := datamodel.GetTeamapps(e.arg.Team)
+        return teamApps.AddApp(e.arg.App)
 }
 
 func (e *AllowAppExecutor) Authorize() error {
-	if err := checkRole("permissions", "write"); err != nil {
-		return err
-	}
-	return AuthorizeTeamAdmin(&e.arg.ManagerAuthArg, e.arg.Team)
+	//TODO need to check user in the team first
+	return nil
 }
 
 type DisallowAppExecutor struct {
@@ -588,23 +563,15 @@ func (e *DisallowAppExecutor) Execute(t *Task) error {
 	if !TeamExists(e.arg.Team, &e.arg.ManagerAuthArg) {
 		return errors.New("Team Does Not Exist")
 	}
-	conn, err := InitConnection(&e.arg.ManagerAuthArg)
-	if err != nil {
-		return err
-	}
-	delReq := ldap.NewDeleteRequest(aldap.AllowedAppAttr + "=" + e.arg.App + "," + aldap.TeamCommonName + "=" + e.arg.Team + "," + aldap.TeamOu)
-	if err := conn.Delete(delReq); err != nil {
-		return err
-	}
 
-	return nil
+	teamApps := datamodel.GetTeamapps(e.arg.Team)
+	return teamApps.DeleteApp(e.arg.App)
 }
 
 func (e *DisallowAppExecutor) Authorize() error {
-	if err := checkRole("permissions", "write"); err != nil {
-		return err
-	}
-	return AuthorizeTeamAdmin(&e.arg.ManagerAuthArg, e.arg.Team)
+	//return AuthorizeTeamAdmin(&e.arg.ManagerAuthArg, e.arg.Team)
+	//TODO: need check user is a member of the tea
+	return nil
 }
 
 func (m *ManagerRPC) AllowApp(arg ManagerAppArg, reply *ManagerAppReply) error {
