@@ -775,7 +775,8 @@ func (e *IsSuperUserExecutor) Execute(t *Task) error {
 
 	teams, err := ListTeams(&e.arg.ManagerAuthArg)
 	if err != nil {
-		return err
+		e.reply.IsSuperUser = false
+		return nil
 	}
 
 	if contains(teams, aldap.SuperUserGroup) {
