@@ -81,16 +81,16 @@ func Init(lserver string, lport uint16, baseDomain string) {
 func CreateSession(req *Request, lc *ldap.LDAPConnection) {
 	if SessionMap[req.User] == nil {
 		SessionMap[req.User] = map[string]*Session{req.Secret: &Session{LDAPConn: lc,
-			Timer: time.AfterFunc(30*time.Minute, func() {
+			Timer: time.AfterFunc(1*time.Minute, func() {
 				SessionDestroyChan <- req
 			})},
 		}
 	} else if SessionMap[req.User][req.Secret] == nil {
-		SessionMap[req.User][req.Secret] = &Session{LDAPConn: lc, Timer: time.AfterFunc(30*time.Minute, func() {
+		SessionMap[req.User][req.Secret] = &Session{LDAPConn: lc, Timer: time.AfterFunc(1*time.Minute, func() {
 			SessionDestroyChan <- req
 		})}
 	} else {
-		SessionMap[req.User][req.Secret].Timer.Reset(30 * time.Minute)
+		SessionMap[req.User][req.Secret].Timer.Reset(1*time.Minute)
 	}
 }
 
