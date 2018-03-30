@@ -55,50 +55,10 @@ func ListTeams(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"Teams": reply.Teams}, err))
 }
 
-func CreateTeam(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
-	arg := ManagerTeamArg{auth, vars["Team"]}
-	var reply ManagerTeamReply
-	err := manager.CreateTeam(arg, &reply)
-	fmt.Fprintf(w, "%s", Output(map[string]interface{}{}, err))
-}
-
-func DeleteTeam(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
-	arg := ManagerTeamArg{auth, vars["Team"]}
-	var reply ManagerTeamReply
-	err := manager.DeleteTeam(arg, &reply)
-	fmt.Fprintf(w, "%s", Output(map[string]interface{}{}, err))
-}
-
 func ListTeamAdmins(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
-	arg := ManagerListTeamAdminsArg{auth, vars["Team"]}
-	var reply ManagerListTeamAdminsReply
-	err := manager.ListTeamAdmins(arg, &reply)
-	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"TeamAdmins": reply.TeamAdmins}, err))
+	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"TeamAdmins": ""}, nil))
 }
 
-func AddTeamAdmin(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
-	arg := ManagerModifyTeamAdminArg{auth, vars["Team"], vars["Admin"]}
-	var reply ManagerModifyTeamAdminReply
-	err := manager.AddTeamAdmin(arg, &reply)
-	fmt.Fprintf(w, "%s", Output(map[string]interface{}{}, err))
-}
-
-func RemoveTeamAdmin(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
-	arg := ManagerModifyTeamAdminArg{auth, vars["Team"], vars["Admin"]}
-	var reply ManagerModifyTeamAdminReply
-	err := manager.RemoveTeamAdmin(arg, &reply)
-	fmt.Fprintf(w, "%s", Output(map[string]interface{}{}, err))
-}
 
 func ListTeamMembers(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
@@ -107,42 +67,6 @@ func ListTeamMembers(w http.ResponseWriter, r *http.Request) {
 	var reply ManagerListTeamMembersReply
 	err := manager.ListTeamMembers(arg, &reply)
 	fmt.Fprintf(w, "%s", Output(map[string]interface{}{"TeamMembers": reply.TeamMembers}, err))
-}
-
-func AddTeamMember(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
-	arg := ManagerTeamMemberArg{auth, vars["Team"], vars["Member"]}
-	var reply ManagerTeamMemberReply
-	err := manager.AddTeamMember(arg, &reply)
-	fmt.Fprintf(w, "%s", Output(map[string]interface{}{}, err))
-}
-
-func RemoveTeamMember(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
-	arg := ManagerTeamMemberArg{auth, vars["Team"], vars["Member"]}
-	var reply ManagerTeamMemberReply
-	err := manager.RemoveTeamMember(arg, &reply)
-	fmt.Fprintf(w, "%s", Output(map[string]interface{}{}, err))
-}
-
-func AddTeamEmail(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
-	arg := ManagerEmailArg{auth, vars["Team"], vars["Email"]}
-	var reply ManagerEmailReply
-	err := manager.AddTeamEmail(arg, &reply)
-	fmt.Fprintf(w, "%s", Output(map[string]interface{}{}, err))
-}
-
-func RemoveTeamEmail(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	auth := ManagerAuthArg{r.FormValue("User"), "", r.FormValue("Secret")}
-	arg := ManagerEmailArg{auth, vars["Team"], vars["Email"]}
-	var reply ManagerEmailReply
-	err := manager.RemoveTeamEmail(arg, &reply)
-	fmt.Fprintf(w, "%s", Output(map[string]interface{}{}, err))
 }
 
 func GetPermissions(w http.ResponseWriter, r *http.Request) {

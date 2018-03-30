@@ -165,15 +165,7 @@ func Init(listenAddr string) error {
 	gmux.HandleFunc("/teams/{Team}/apps/{App}", AllowApp).Methods("PUT")
 	gmux.HandleFunc("/teams/{Team}/apps/{App}", DisallowApp).Methods("DELETE")
 	gmux.HandleFunc("/teams/{Team}/admins", ListTeamAdmins).Methods("GET")
-	gmux.HandleFunc("/teams/{Team}/admins/{Admin}", AddTeamAdmin).Methods("PUT")
-	gmux.HandleFunc("/teams/{Team}/admins/{Admin}", RemoveTeamAdmin).Methods("DELETE")
-	gmux.HandleFunc("/teams/{Team}/emails/{Email}", AddTeamEmail).Methods("PUT")
-	gmux.HandleFunc("/teams/{Team}/emails/{Email}", RemoveTeamEmail).Methods("DELETE")
 	gmux.HandleFunc("/teams/{Team}/members", ListTeamMembers).Methods("GET")
-	gmux.HandleFunc("/teams/{Team}/members/{Member}", AddTeamMember).Methods("PUT")
-	gmux.HandleFunc("/teams/{Team}/members/{Member}", RemoveTeamMember).Methods("DELETE")
-	gmux.HandleFunc("/teams/{Team}", CreateTeam).Methods("PUT")
-	gmux.HandleFunc("/teams/{Team}", DeleteTeam).Methods("DELETE")
 	gmux.HandleFunc("/teams", ListTeams).Methods("GET")
 
 	// Environment Management

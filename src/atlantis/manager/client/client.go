@@ -290,23 +290,15 @@ func New() *ManagerClient {
 	o.AddCommand("list-app-envs-with-port", "list app envs with a router port", "", &ListAppEnvsWithPortCommand{})
 
 	// LDAP Management
-	o.AddCommand("create-team", "create a team", "", &CreateTeamCommand{})
-	o.AddCommand("delete-team", "delete a team", "", &DeleteTeamCommand{})
+	
 	o.AddCommand("list-teams", "list all teams", "", &ListTeamsCommand{})
-	o.AddCommand("list-team-emails", "list all team emails", "", &ListTeamEmailsCommand{})
-	o.AddCommand("list-team-admins", "list all team admins", "", &ListTeamAdminsCommand{})
 	o.AddCommand("list-team-members", "list all team members", "", &ListTeamMembersCommand{})
 	o.AddCommand("list-team-apps", "list all team appss", "", &ListTeamAppsCommand{})
-	o.AddCommand("add-team-member", "add member to a team", "", &AddTeamMemberCommand{})
-	o.AddCommand("remove-team-member", "remove member from team", "", &RemoveTeamMemberCommand{})
 	o.AddCommand("allow-app", "allow an app for deploy by a team", "", &AllowTeamAppCommand{})
 	o.AddCommand("disallow-app", "disallow an app for deploy by a team", "", &DisallowTeamAppCommand{})
 	o.AddCommand("is-app-allowed", "check if an app is allowed for deploy by a user", "", &IsAppAllowedCommand{})
 	o.AddCommand("list-allowed-apps", "list all allowed apps for a user", "", &ListAllowedAppsCommand{})
-	o.AddCommand("add-team-admin", "add team admin to a team", "", &AddTeamAdminCommand{})
-	o.AddCommand("remove-team-admin", "dellete team admin from a team", "", &RemoveTeamAdminCommand{})
-	o.AddCommand("add-team-email", "add an email address to a team", "", &AddTeamEmailCommand{})
-	o.AddCommand("remove-team-email", "delete an email address from a team", "", &RemoveTeamEmailCommand{})
+
 
 	// Container Utilities
 	o.AddCommand("ssh", "ssh into a container", "", &SSHCommand{})

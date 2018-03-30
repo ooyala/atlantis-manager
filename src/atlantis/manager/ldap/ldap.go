@@ -44,6 +44,9 @@ var (
 	UserClass            string
 	UserClassAttr        string
 	SkipAuthorization    bool
+	SearchUserDn         string
+	SearchUserPwd	     string
+	TeamBlackList        []string
 )
 
 type Request struct {
@@ -78,16 +81,16 @@ func Init(lserver string, lport uint16, baseDomain string) {
 func CreateSession(req *Request, lc *ldap.LDAPConnection) {
 	if SessionMap[req.User] == nil {
 		SessionMap[req.User] = map[string]*Session{req.Secret: &Session{LDAPConn: lc,
-			Timer: time.AfterFunc(30*time.Minute, func() {
+			Timer: time.AfterFunc(1*time.Minute, func() {
 				SessionDestroyChan <- req
 			})},
 		}
 	} else if SessionMap[req.User][req.Secret] == nil {
-		SessionMap[req.User][req.Secret] = &Session{LDAPConn: lc, Timer: time.AfterFunc(30*time.Minute, func() {
+		SessionMap[req.User][req.Secret] = &Session{LDAPConn: lc, Timer: time.AfterFunc(1*time.Minute, func() {
 			SessionDestroyChan <- req
 		})}
 	} else {
-		SessionMap[req.User][req.Secret].Timer.Reset(30 * time.Minute)
+		SessionMap[req.User][req.Secret].Timer.Reset(1*time.Minute)
 	}
 }
 
@@ -136,6 +139,13 @@ func Login(user, pass, secret string) (string, error) {
 		if err != nil {
 			return "", err
 		}
+
+		//bind with account with dn search enabled
+		err = LoginBind(SearchUserDn, SearchUserPwd, LDAPConn)
+		if err != nil {
+			log.Println("Warning: ldap binding with dn search account failed; ", err)
+		}
+
 		now := strconv.FormatInt(time.Now().Unix(), 10)
 		sec := string(crypto.Encrypt([]byte(pass + now)))
 		re := regexp.MustCompile("[^a-zA-Z0-9]")
@@ -147,20 +157,9 @@ func Login(user, pass, secret string) (string, error) {
 }
 
 func LoginBind(user, pass string, lc *ldap.LDAPConnection) error {
-	filterStr := "(&(objectClass=" + UserClass + ")(" + UserClassAttr + "=" + user + "))"
-	searchReq := ldap.NewSimpleSearchRequest(BaseDomain, 2, filterStr, []string{UserClassAttr})
-	sr, err := lc.Search(searchReq)
-	if err != nil {
-		return err
-	}
 	var dnInfo string
-	if len(sr.Entries) == 1 {
-		dnInfo = sr.Entries[0].DN
-	} else {
-		log.Println("No entries found")
-		return errors.New("Invalid Credentials")
-	}
-	err = lc.Bind(dnInfo, pass)
+	dnInfo = UserClassAttr + "=" + user + "," + UserOu
+	err := lc.Bind(dnInfo, pass)
 	if err != nil {
 		log.Println("ERROR : Login not Successful")
 		return errors.New("Session Expired/Invalid Credentials")
