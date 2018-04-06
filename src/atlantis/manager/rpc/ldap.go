@@ -736,13 +736,13 @@ func (e *IsSuperUserExecutor) Execute(t *Task) error {
 		log.Println("isSuperUser is true because skip auth flag is set")
 		return nil
 	}
-	log.Println("======get here 1")
+
 	if !UserExists(e.arg.User, &e.arg.ManagerAuthArg) {
 		e.reply.IsSuperUser = false
 		return nil
 	}
 
-	log.Println("=======get ehre 2")
+
 	teams, err := ListTeams(&e.arg.ManagerAuthArg)
 	if err != nil {
 		e.reply.IsSuperUser = false
