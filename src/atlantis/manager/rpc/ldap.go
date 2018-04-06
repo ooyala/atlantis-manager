@@ -513,6 +513,11 @@ func (e *AllowAppExecutor) Execute(t *Task) error {
 		return errors.New("Team Does Not Exist")
 	}
 	teamApps := datamodel.GetTeamapps(e.arg.Team)
+	
+	//
+	//TODO: check app exist before add it to team
+	//
+
         return teamApps.AddApp(e.arg.App)
 }
 
@@ -878,7 +883,7 @@ func ListTeamApps(team string) ([]string, error) {
 }
 
 func UserExists(name string, auth *ManagerAuthArg) bool {
-	//TODO check user against ldap
+	//TODO check user against ldap 
 	return true
 
 }
