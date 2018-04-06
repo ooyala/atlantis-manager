@@ -309,27 +309,6 @@ func (e *RemoveTeamMemberExecutor) Authorize() error {
 }
 
 func ModifyTeamMember(action int, arg ManagerTeamMemberArg, reply *ManagerTeamMemberReply) error {
-	conn, err := InitConnection(&arg.ManagerAuthArg)
-	if err != nil {
-		return err
-	}
-	if action != ldap.ModDelete && !UserExists(arg.User, &arg.ManagerAuthArg) {
-		return errors.New("User does not exist")
-	}
-
-	if !TeamExists(arg.Team, &arg.ManagerAuthArg) {
-		return errors.New("Team Does Not Exist")
-	}
-	var modDNs []string = []string{aldap.TeamCommonName + "=" + arg.Team + "," + aldap.TeamOu}
-	var Attrs []string = []string{aldap.UsernameAttr}
-	var vals []string = []string{aldap.UserCommonName + "=" + arg.User + "," + aldap.UserOu}
-	modReq := ldap.NewModifyRequest(modDNs[0])
-	mod := ldap.NewMod(uint8(action), Attrs[0], vals)
-	modReq.AddMod(mod)
-	if err := conn.Modify(modReq); err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -728,17 +707,6 @@ func (e *IsTeamAdminExecutor) Execute(t *Task) error {
 	
 }
 
-func ProcessTeamAdmin(userdn string, sr *ldap.SearchResult) bool {
-	srTeamAdmin := sr.Entries[0].GetAttributeValues(aldap.TeamAdminAttr)
-	teamAdminCount := len(srTeamAdmin)
-	for i := 0; i < teamAdminCount; i++ {
-		teamLead := sr.Entries[0].GetAttributeValues(aldap.TeamAdminAttr)[i]
-		if teamLead == userdn {
-			return true
-		}
-	}
-	return false
-}
 
 func (e *IsTeamAdminExecutor) Authorize() error {
 	return nil
@@ -768,11 +736,13 @@ func (e *IsSuperUserExecutor) Execute(t *Task) error {
 		log.Println("isSuperUser is true because skip auth flag is set")
 		return nil
 	}
+	log.Println("======get here 1")
 	if !UserExists(e.arg.User, &e.arg.ManagerAuthArg) {
 		e.reply.IsSuperUser = false
 		return nil
 	}
 
+	log.Println("=======get ehre 2")
 	teams, err := ListTeams(&e.arg.ManagerAuthArg)
 	if err != nil {
 		e.reply.IsSuperUser = false
@@ -823,45 +793,35 @@ func contains(arr []string, str string) bool {
 
 
 func TeamExists(name string, auth *ManagerAuthArg) bool {
-	filterStr := "(&(objectClass=" + aldap.TeamClass + ")(" + aldap.TeamCommonName + "=" + name + "))"
-	sr, err := NewSearchReq(filterStr, []string{aldap.TeamCommonName}, auth)
-	if err != nil || len(sr.Entries) == 0 {
-		return false
+	if ret := aldap.LookupTeam(auth.User, auth.Secret); ret != nil {
+		if contains(ret, name) {
+			return true
+		}
 	}
-	return true
+	return false
+
 }
 
 func ListTeams(auth *ManagerAuthArg) ([]string, error) {
 
-	//should be something like (&(objectClass=posixAccount)(uid=xxxx))
-        filterStr := "(&(objectClass=" + aldap.UserClass + ")(" + aldap.UserCommonName + "=" + auth.User + "))" 
-
-	sr, err := NewSearchReq(filterStr, []string{"memberOf"}, auth)
-	ret := []string{}
-	if err != nil || sr == nil {
-		return ret, err
+	if ret := aldap.LookupTeam(auth.User, auth.Secret); ret != nil {
+		return ret, nil
 	}
+	return []string{}, nil 
 
-	for _, entry := range sr.Entries {
-		vals := entry.GetAttributeValues("memberOf")
-		r, _ := regexp.Compile("^cn=([^,]+)")
-		if len(vals) > 0 {
-			for _, teamDn := range vals {
-				substrings := strings.Split(r.FindString(teamDn), "=")
-				
-				if len(substrings) == 2 && !contains(aldap.TeamBlackList, substrings[1]) {
-					ret = append(ret, substrings[1])
-				}
-			}
-		}
-	}
-
-	return ret, nil
 }
 
-func ListTeamAttributes(team, attribute string, auth *ManagerAuthArg) ([]string, error) {
+func ListTeamAttributes(team, attribute string, ldapConn *ldap.LDAPConnection) ([]string, error) {
 	filterStr := "(&(objectClass=" + aldap.TeamClass + ")(" + aldap.TeamCommonName + "=" + team + "))"
-	sr, err := NewSearchReq(filterStr, []string{attribute}, auth)
+	
+	searchReq := ldap.NewSimpleSearchRequest(aldap.BaseDomain, 2, filterStr, []string{attribute})
+	sr, err := ldapConn.Search(searchReq)
+	if err != nil {
+		log.Println("Warning: error search team attribute for team ", team, " attribute ", attribute)
+		log.Println("Warning: error search team attribute; error is ", err)
+		return []string{}, err
+	}
+
 	ret := []string{}
 	if err != nil || sr == nil {
 		return ret, err
@@ -884,22 +844,30 @@ func ListTeamAttributes(team, attribute string, auth *ManagerAuthArg) ([]string,
 }
 
 func ListTeamEmails(team string, auth *ManagerAuthArg) ([]string, error) {
-	return ListTeamAttributes(team, "email", auth)
+	return []string{}, nil
 }
 
 func ListTeamAdmins(team string, auth *ManagerAuthArg) ([]string, error) {
-	ret, err := ListTeamAttributes(team, aldap.TeamAdminAttr, auth)
-	for i, val := range ret {
-		ret[i] = ExtractUsername(val)
-	}
-	return ret, err
+	return []string{}, nil
+
 }
 
 func ListTeamMembers(team string, auth *ManagerAuthArg) ([]string, error) {
-	ret, err := ListTeamAttributes(team, aldap.UsernameAttr, auth)
-	for i, val := range ret {
-		ret[i] = ExtractUsername(val)
+
+	ldapConn, err := aldap.CreateLdapConn(aldap.LdapServer, aldap.LdapPort, aldap.TlsConfig)
+	if err != nil {
+		log.Println("Warning: Unalbe to connect to ldap to fetch team members; ", err)
+		return []string{}, nil
 	}
+	defer ldapConn.Close()
+
+	err = aldap.LoginBind(aldap.SearchUserDn, aldap.SearchUserPwd, ldapConn)
+	if err != nil {
+		log.Println("Warning: Unalbe to bind to LDAP to fetch team members; ", err)
+		return []string{}, nil
+	}
+	ret, err := ListTeamAttributes(team, aldap.UsernameAttr, ldapConn)
+
 	return ret, err
 }
 
@@ -910,50 +878,12 @@ func ListTeamApps(team string) ([]string, error) {
 }
 
 func UserExists(name string, auth *ManagerAuthArg) bool {
-	filterStr := "(&(objectClass=" + aldap.UserClass + ")(" + aldap.UserClassAttr + "=" + name + "))"
-	sr, err := NewSearchReq(filterStr, []string{aldap.UserClassAttr}, auth)
-	if err != nil || len(sr.Entries) == 0 {
-		return false
-	}
+	//TODO check user against ldap
 	return true
+
 }
 
-func EmailExists(email string, team string, auth *ManagerAuthArg) bool {
-	filterStr := "(&(objectClass=" + aldap.TeamClass + ")(" + aldap.TeamCommonName + "=" + team + ")(email=" + email + "))"
-	sr, err := NewSearchReq(filterStr, []string{"email"}, auth)
-	if err != nil || len(sr.Entries) == 0 {
-		return false
-	}
-	return true
-}
 
-func ExtractUsername(fullname string) string {
-	return strings.Replace(strings.Replace(fullname, ","+aldap.UserOu, "", 1), aldap.UserCommonName+"=", "", 1)
-}
 
-// ----------------------------------------------------------------------------------------------------------
-// Init
-// ----------------------------------------------------------------------------------------------------------
 
-func InitConnection(auth *ManagerAuthArg) (*ldap.LDAPConnection, error) {
-	if conn := aldap.LookupConnection(auth.User, auth.Secret); conn != nil {
-		return conn, nil
-	}
-	return nil, errors.New("No connection found.")
-}
-
-// ----------------------------------------------------------------------------------------------------------
-// Search Requests
-// ----------------------------------------------------------------------------------------------------------
-
-func NewSearchReq(filter string, attributes []string, auth *ManagerAuthArg) (*ldap.SearchResult, error) {
-	// 2 => Searching the Whole Subtree
-	conn, err := InitConnection(auth)
-	if err != nil {
-		return nil, err
-	}
-	searchReq := ldap.NewSimpleSearchRequest(aldap.BaseDomain, 2, filter, attributes)
-	sr, err := conn.Search(searchReq)
-	return sr, err
-}
 
