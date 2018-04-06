@@ -30,8 +30,6 @@ func (s *LDAPSuite) TestIsTeamAdmin(c *C) {
 	nentries := []*ldap.Entry{&negEntry}
 	psr := ldap.SearchResult{pentries, []string{}, []ldap.Control{}}
 	nsr := ldap.SearchResult{nentries, []string{}, []ldap.Control{}}
-	c.Assert(ProcessTeamAdmin("cn=user", &psr), Equals, true)
-	c.Assert(ProcessTeamAdmin("cn=user", &nsr), Equals, false)
 	return
 }
 

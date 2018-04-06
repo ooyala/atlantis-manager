@@ -19,6 +19,7 @@ import (
 	"log"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -57,7 +58,12 @@ type Request struct {
 }
 
 type Session struct {
+
+	//TODO remove LDAPConn from session
+	//since we can no longer re-use ldap conn with jump cloud
+ 
 	LDAPConn *ldap.LDAPConnection
+	Team     []string
 	Timer    *time.Timer
 }
 
@@ -78,19 +84,19 @@ func Init(lserver string, lport uint16, baseDomain string) {
 	go SessionExpiryRoutine()
 }
 
-func CreateSession(req *Request, lc *ldap.LDAPConnection) {
+func CreateSession(req *Request, lc *ldap.LDAPConnection, team []string) {
 	if SessionMap[req.User] == nil {
-		SessionMap[req.User] = map[string]*Session{req.Secret: &Session{LDAPConn: lc,
-			Timer: time.AfterFunc(1*time.Minute, func() {
+		SessionMap[req.User] = map[string]*Session{req.Secret: &Session{LDAPConn: lc, Team: team,
+			Timer: time.AfterFunc(30*time.Minute, func() {
 				SessionDestroyChan <- req
 			})},
 		}
 	} else if SessionMap[req.User][req.Secret] == nil {
-		SessionMap[req.User][req.Secret] = &Session{LDAPConn: lc, Timer: time.AfterFunc(1*time.Minute, func() {
+		SessionMap[req.User][req.Secret] = &Session{LDAPConn: lc, Team: team, Timer: time.AfterFunc(30*time.Minute, func() {
 			SessionDestroyChan <- req
 		})}
 	} else {
-		SessionMap[req.User][req.Secret].Timer.Reset(1*time.Minute)
+		SessionMap[req.User][req.Secret].Timer.Reset(30*time.Minute)
 	}
 }
 
@@ -110,6 +116,14 @@ func LookupConnection(user, secret string) *ldap.LDAPConnection {
 	return nil
 }
 
+func LookupTeam(user, secret string) []string {
+	if SessionMap[user] != nil && SessionMap[user][secret] != nil {
+		return SessionMap[user][secret].Team
+	}
+	return nil
+}
+
+
 func SessionExpiryRoutine() {
 	for {
 		select {
@@ -127,11 +141,13 @@ func Login(user, pass, secret string) (string, error) {
 	}
 	// Checking if we are already logged in
 	var LDAPConn *ldap.LDAPConnection
+	var err error
 	req := &Request{user, secret, false, make(chan bool)}
 	LookupSession(req)
+	teamList := []string{}
 	if !req.LoggedIn {
-		LDAPConn = ldap.NewLDAPSSLConnection(LdapServer, LdapPort, TlsConfig)
-		err := LDAPConn.Connect()
+		LDAPConn, err = CreateLdapConn(LdapServer, LdapPort, TlsConfig)
+		
 		if err != nil {
 			return "", err
 		}
@@ -151,10 +167,53 @@ func Login(user, pass, secret string) (string, error) {
 		re := regexp.MustCompile("[^a-zA-Z0-9]")
 		sec = re.ReplaceAllString(sec, "")
 		req.Secret = sec
+		teamList, err = GetTeamList(LDAPConn, user)
+		if err != nil {
+			log.Println("Warning: get team list failed for user; ", err)
+		}
 	}
-	CreateSession(req, LDAPConn)
+	CreateSession(req, LDAPConn, teamList)
 	return req.Secret, nil
 }
+
+func CreateLdapConn(server string, port uint16, tlsConf *tls.Config) (*ldap.LDAPConnection, error) {
+	LDAPConn := ldap.NewLDAPSSLConnection(server, port, tlsConf)
+	err := LDAPConn.Connect()
+	if err != nil {
+		return nil, err
+	}
+	return LDAPConn, nil
+}
+
+func GetTeamList(LDAPConn *ldap.LDAPConnection , user string) ([]string, error){
+	//should be something like (&(objectClass=posixAccount)(uid=xxxx))
+        filterStr := "(&(objectClass=" + UserClass + ")(" + UserCommonName + "=" + user + "))" 
+
+	searchReq := ldap.NewSimpleSearchRequest(BaseDomain, 2, filterStr, []string{"memberOf"})
+	sr, err := LDAPConn.Search(searchReq)
+
+	ret := []string{}
+	if err != nil || sr == nil {
+		return ret, err
+	}
+
+	for _, entry := range sr.Entries {
+		vals := entry.GetAttributeValues("memberOf")
+		r, _ := regexp.Compile("^cn=([^,]+)")
+		if len(vals) > 0 {
+			for _, teamDn := range vals {
+				substrings := strings.Split(r.FindString(teamDn), "=")
+				
+				if len(substrings) == 2 && !contains(TeamBlackList, substrings[1]) {
+					ret = append(ret, substrings[1])
+				}
+			}
+		}
+	}
+
+	return ret, nil
+}
+
 
 func LoginBind(user, pass string, lc *ldap.LDAPConnection) error {
 	var dnInfo string
@@ -165,4 +224,13 @@ func LoginBind(user, pass string, lc *ldap.LDAPConnection) error {
 		return errors.New("Session Expired/Invalid Credentials")
 	}
 	return nil
+}
+
+func contains(arr []string, str string) bool {
+   for _, a := range arr {
+      if a == str {
+         return true
+      }
+   }
+   return false
 }

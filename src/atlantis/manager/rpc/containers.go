@@ -106,7 +106,7 @@ func (e *ListContainersExecutor) Execute(t *Task) error {
 			allowedApps := GetAllowedApps(&e.arg.ManagerAuthArg, e.arg.ManagerAuthArg.User)
 			e.reply.ContainerIDs = []string{}
 			for _, cid := range allContainerIDs {
-				if inst, err := datamodel.GetInstance(cid); err != nil && allowedApps[inst.App] {
+				if inst, err := datamodel.GetInstance(cid); err == nil && allowedApps[inst.App] {
 					e.reply.ContainerIDs = append(e.reply.ContainerIDs, cid)
 				}
 			}
