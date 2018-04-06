@@ -58,6 +58,10 @@ type Request struct {
 }
 
 type Session struct {
+
+	//TODO remove LDAPConn from session
+	//since we can no longer re-use ldap conn with jump cloud
+ 
 	LDAPConn *ldap.LDAPConnection
 	Team     []string
 	Timer    *time.Timer
