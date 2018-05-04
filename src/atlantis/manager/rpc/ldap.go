@@ -508,9 +508,14 @@ func (e *AllowAppExecutor) Description() string {
 }
 
 func (e *AllowAppExecutor) Execute(t *Task) error {
+	var suReply ManagerSuperUserReply
+	if err := NewTask("IsAppAllowed-IsSuperUser",
+		&IsSuperUserExecutor{ManagerSuperUserArg{e.arg.ManagerAuthArg}, &suReply}).Run(); err != nil {
+			return err
+	}
 
-	if !TeamExists(e.arg.Team, &e.arg.ManagerAuthArg) {
-		return errors.New("Team Does Not Exist")
+	if !TeamExists(e.arg.Team, &e.arg.ManagerAuthArg) && !suReply.IsSuperUser {
+		return errors.New("You do not have permission to allow apps for team " + e.arg.Team)
 	}
 	teamApps := datamodel.GetTeamapps(e.arg.Team)
 	
@@ -544,8 +549,14 @@ func (e *DisallowAppExecutor) Description() string {
 }
 
 func (e *DisallowAppExecutor) Execute(t *Task) error {
-	if !TeamExists(e.arg.Team, &e.arg.ManagerAuthArg) {
-		return errors.New("Team Does Not Exist")
+	var suReply ManagerSuperUserReply
+	if err := NewTask("IsAppAllowed-IsSuperUser",
+		&IsSuperUserExecutor{ManagerSuperUserArg{e.arg.ManagerAuthArg}, &suReply}).Run(); err != nil {
+			return err
+	}
+
+	if !TeamExists(e.arg.Team, &e.arg.ManagerAuthArg) && !suReply.IsSuperUser {
+		return errors.New("You do not have permission to disallow apps for team " + e.arg.Team)
 	}
 
 	teamApps := datamodel.GetTeamapps(e.arg.Team)
