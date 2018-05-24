@@ -24,7 +24,9 @@ import (
 	. "atlantis/supervisor/rpc/types"
 	"errors"
 	"fmt"
+	"log"
 	"strconv"
+  
 )
 
 //
@@ -142,6 +144,12 @@ func ResolveDepValues(app string, zkEnv *datamodel.ZkEnv, names []string, encryp
 
 func validateDeploy(auth *ManagerAuthArg, manifest *Manifest, sha, env string, t *Task) (deps map[string]DepsType, err error) {
 	t.LogStatus("Validate Deploy")
+
+	
+	if err = appExceedShaLimit(manifest.Name, env, sha); err != nil {
+		return nil, err
+	}
+
 	// authorize that we're allowed to use the app
 	if err = AuthorizeApp(auth, manifest.Name); err != nil {
 		return nil, errors.New("Permission Denied: " + err.Error())
@@ -171,6 +179,43 @@ func validateDeploy(auth *ManagerAuthArg, manifest *Manifest, sha, env string, t
 	}
 	t.LogStatus("Resolving Dependencies")
 	return ResolveDepValues(manifest.Name, zkEnv, manifest.DepNames(), true, t)
+}
+
+func appExceedShaLimit(app, env, sha string) (err error) {
+
+	if ShaLimit == 0 {
+		//0 means there is no limit
+		return nil
+	}
+	shas, err := datamodel.ListShas(app)
+	if err != nil || len(shas) == 0 {
+		return nil
+	}
+
+	var count uint = 0
+	for _, tempSha := range shas {
+		if tempSha == sha {
+			//sha has been deployed, it is OK to proceed
+			return nil
+		}
+		envs, err := datamodel.ListAppEnvs(app, tempSha)
+		if err != nil {
+                	return err
+		}
+
+		for _, tempEnv := range envs {
+			if tempEnv == env {
+				count++
+			}	
+		}
+	}
+	
+	if count >= ShaLimit {
+		log.Println("Error:", app, "has", count, "SHAs deployed in env", env, "while the limit is", ShaLimit)
+		return errors.New(fmt.Sprintf("Cannot have more than %d SHA in one environmnet. Teardown unused SHA before re-try deploy.", ShaLimit))
+	}
+
+	return nil
 }
 
 type DeployHostResult struct {
