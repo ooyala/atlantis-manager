@@ -41,6 +41,7 @@ type ServerConfig struct {
 	ApiAddr                    string `toml:"api_addr"`
 	SupervisorPort             uint16 `toml:"supervisor_port"`
 	ZookeeperUri               string `toml:"zookeeper_uri"`
+	ShaLimit                   uint   `toml:"sha_limit"`
 	LdapHost                   string `toml:"ldap_host"`
 	LdapPort                   uint16 `toml:"ldap_port"`
 	LdapBaseDomain             string `toml:"ldap_basedomain"`
@@ -85,6 +86,7 @@ type ServerOpts struct {
 	ApiAddr                    string `long:"api" description:"the API listen addr"`
 	ZookeeperUri               string `long:"zookeeper" description:"the uri of the zookeeper to connect to"`
 	ConfigFile                 string `long:"config-file" default:"/etc/atlantis/manager/server.toml" description:"the config file to use"`
+	ShaLimit                   uint   `long:"sha-limit" default:0 description:"max number of sha allowed per app per env; set to 0 to disable"`
 	LdapHost                   string `long:"ldap-host" description:"LDAP server to contact"`
 	LdapPort                   uint16 `long:"ldap-port" description:"LDAP port to use"`
 	LdapBaseDomain             string `long:"ldap-base-domain" description:"LDAP Base Domain Name to use"`
@@ -124,6 +126,7 @@ func New() *ManagerServer {
 			ApiAddr:                    fmt.Sprintf(":%d", DefaultManagerAPIPort),
 			LdapPort:                   DefaultLDAPPort,
 			ZookeeperUri:               "localhost:2181",
+			ShaLimit:                   0,
 			CPUSharesIncrement:         1,
 			MemoryLimitIncrement:       1,
 			ResultDuration:             DefaultResultDuration,
@@ -179,6 +182,7 @@ func (m *ManagerServer) Run(bldr builder.Builder) {
 	Region = m.Config.Region
 	Zone = m.Config.Zone
 	AvailableZones = strings.Split(m.Config.AvailableZones, ",")
+	ShaLimit = m.Config.ShaLimit
 	log.Printf("Initializing Manager [%s] [%s] [%s]", Region, Zone, Host)
 	datamodel.Init(m.Config.ZookeeperUri)
 	datamodel.MinRouterPort = m.Config.MinRouterPort
@@ -234,6 +238,9 @@ func (m *ManagerServer) overlayConfig() {
 	}
 	if m.Opts.ZookeeperUri != "" {
 		m.Config.ZookeeperUri = m.Opts.ZookeeperUri
+	}
+	if m.Opts.ShaLimit !=0 {
+		m.Config.ShaLimit = m.Opts.ShaLimit
 	}
 	if m.Opts.LdapPort != 0 {
 		m.Config.LdapPort = m.Opts.LdapPort
