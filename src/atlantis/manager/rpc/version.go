@@ -36,8 +36,7 @@ func (e *VersionExecutor) Description() string {
 func (e *VersionExecutor) Execute(t *Task) error {
 	e.reply.RPCVersion = ManagerRPCVersion
 	e.reply.APIVersion = ManagerAPIVersion
-	t.Log("-> RPC: %s", ManagerRPCVersion)
-	t.Log("-> API: %s", ManagerAPIVersion)
+	t.Log("-> RPC: %s, API: %s", ManagerRPCVersion, ManagerAPIVersion)
 	return nil
 }
 
