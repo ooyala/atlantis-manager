@@ -42,9 +42,8 @@ func (e *HealthCheckExecutor) Execute(t *Task) error {
 	} else {
 		e.reply.Status = StatusOk
 	}
-	t.Log("[RPC][HealthCheck] -> region: %s", e.reply.Region)
-	t.Log("[RPC][HealthCheck] -> zone: %s", e.reply.Zone)
-	t.Log("[RPC][HealthCheck] -> status: %s", e.reply.Status)
+	t.Log("[RPC][HealthCheck] -> region: %s, zone: %s, status: %s", e.reply.Region,
+		e.reply.Zone, e.reply.Status)
 	return nil
 }
 

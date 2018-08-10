@@ -173,6 +173,10 @@ func validateDeploy(auth *ManagerAuthArg, manifest *Manifest, sha, env string, t
 		(manifest.CPUShares > 0 && manifest.CPUShares != 1 && manifest.CPUShares%CPUSharesIncrement != 0) {
 		return nil, errors.New(fmt.Sprintf("CPU Shares should be 1 or a multiple of %d", CPUSharesIncrement))
 	}
+	if manifest.CPUShares == 1 {
+		manifest.CPUShares = 2
+		t.LogStatus("Changed CPUShares from 1 to 2")
+	}
 	if manifest.MemoryLimit < 0 ||
 		(manifest.MemoryLimit > 0 && manifest.MemoryLimit%MemoryLimitIncrement != 0) {
 		return nil, errors.New(fmt.Sprintf("Memory Limit should be a multiple of %d", MemoryLimitIncrement))
