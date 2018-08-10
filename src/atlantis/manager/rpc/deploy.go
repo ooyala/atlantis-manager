@@ -447,6 +447,10 @@ func (m *ManagerRPC) Teardown(arg ManagerTeardownArg, reply *AsyncReply) error {
 	return NewTask("Teardown", &TeardownExecutor{arg, &ManagerTeardownReply{}}).RunAsync(reply)
 }
 
+func (m *ManagerRPC) CopyContainerResult(id string, result *ManagerDeployReply) error {
+	return m.DeployResult(id, result)
+}
+
 func (m *ManagerRPC) DeployResult(id string, result *ManagerDeployReply) error {
 	if id == "" {
 		return errors.New("ID empty")
