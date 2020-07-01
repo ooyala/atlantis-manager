@@ -114,7 +114,7 @@ func checkCommand(t *testing.T, command interface{}, line string, expected inter
 }
 
 func TestRegisterApp(t *testing.T) {
-	testName := "e2e-test-" + time.Now().Format("2006-01-02T15-04-05-0700")
+	testName := "e2e-test-" + time.Now().Format("2006-01-02T15-04-05")
 
 	log.Print("== Registering dummy app ==")
 	registerCommand := &RegisterAppCommand{Name: testName, Repo: "fake-git-repo", Root: "/path/to/app",
@@ -163,7 +163,7 @@ func checkUrl(t *testing.T, url, name, expected string) bool {
 }
 
 func TestFullDeploy(t *testing.T) {
-	testName := "e2e-test-" + time.Now().Format("2006-01-02T15-04-05-0700")
+	testName := "e2e-test-" + time.Now().Format("2006-01-02T15-04-05")
 
 	checkCommand(t, &ListAppsCommand{}, "", &ManagerListAppsReply{[]string{"hello-go"}, "OK"})
 
